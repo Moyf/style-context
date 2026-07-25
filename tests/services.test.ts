@@ -31,6 +31,9 @@ beforeEach(() => {
 describe('ThemeContextService', () => {
 	it('cleans up when disabled and does not duplicate its listener', () => {
 		const listeners: ListenerMap = new Map();
+		const themeWindowDocument = document.implementation.createHTMLDocument(
+			'Theme',
+		);
 		const workspace = { on: createEventSource(listeners) };
 		const plugin = {
 			app: {
@@ -44,14 +47,21 @@ describe('ThemeContextService', () => {
 
 		service.enable();
 		expect(document.body.classList.contains('theme-mod-brutal-gum')).toBe(true);
-		expect(workspace.on).toHaveBeenCalledTimes(1);
+		expect(workspace.on).toHaveBeenCalledTimes(3);
+		service.applyToDocument(themeWindowDocument);
+		expect(
+			themeWindowDocument.body.classList.contains('theme-mod-brutal-gum'),
+		).toBe(true);
 
 		service.disable();
 		listeners.get('css-change')?.();
 		expect(document.body.classList.contains('theme-mod-brutal-gum')).toBe(false);
+		expect(
+			themeWindowDocument.body.classList.contains('theme-mod-brutal-gum'),
+		).toBe(false);
 
 		service.enable();
-		expect(workspace.on).toHaveBeenCalledTimes(1);
+		expect(workspace.on).toHaveBeenCalledTimes(3);
 		expect(service.currentSelector()).toBe('body.theme-mod-brutal-gum');
 	});
 });
@@ -59,6 +69,10 @@ describe('ThemeContextService', () => {
 describe('ResourceVariableService', () => {
 	it('publishes valid resources, reports missing files, and registers once', () => {
 		const listeners: ListenerMap = new Map();
+		const workspaceListeners: ListenerMap = new Map();
+		const settingsWindowDocument = document.implementation.createHTMLDocument(
+			'Settings',
+		);
 		const file = new TFile('assets/Hero.PNG');
 		const files = new Map([[file.path, file]]);
 		const vault = {
@@ -66,7 +80,11 @@ describe('ResourceVariableService', () => {
 			getAbstractFileByPath: vi.fn((path: string) => files.get(path) ?? null),
 			getResourcePath: vi.fn((target: TFile) => `app://vault/${target.path}`),
 		};
-		const plugin = { app: { vault }, registerEvent: vi.fn() };
+		const workspace = {
+			rootSplit: { doc: document },
+			on: createEventSource(workspaceListeners),
+		};
+		const plugin = { app: { vault, workspace }, registerEvent: vi.fn() };
 		const currentSettings = settings({
 			resourceRules: [
 				{
@@ -101,12 +119,19 @@ describe('ResourceVariableService', () => {
 				error: 'File not found: assets/missing.png',
 			}),
 		]);
+		service.applyToDocument(settingsWindowDocument);
+		expect(
+			settingsWindowDocument.documentElement.style.getPropertyValue('--hero-image'),
+		).toContain('app://vault/assets/Hero.PNG');
 
 		service.disable();
 		expect(document.documentElement.style.getPropertyValue('--hero-image')).toBe('');
 		expect(
 			document.documentElement.style.getPropertyValue('--external-variable'),
 		).toBe('keep-me');
+		expect(
+			settingsWindowDocument.documentElement.style.getPropertyValue('--hero-image'),
+		).toBe('');
 		service.enable();
 		expect(vault.on).toHaveBeenCalledTimes(2);
 	});

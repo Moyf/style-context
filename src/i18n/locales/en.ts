@@ -27,6 +27,7 @@ const en: Messages = {
 		},
 		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: 'Folder prefix', keywordInPath: 'Keyword in path', classNames: 'Class1, class2', vaultFilePath: 'Vault file path', cssVariable: '--my-var' },
 		buttons: { addPathRule: 'Add path rule', addImageVariable: 'Add image variable', deleteRule: 'Delete rule', refresh: 'Refresh', copySnapshot: 'Copy snapshot' },
+		emptyStates: { noPathRules: 'No path rules yet.', noImageVariables: 'No image variables yet.' },
 		tooltips: {
 			clickToCopy: (value) => `Click to copy: ${value}`,
 			ruleDisabled: 'Rule disabled', setCssVariableName: 'Set a CSS variable name', variableNameInvalid: 'Variable name is invalid', setVaultImagePath: 'Set a vault image path', imageFileNotFound: 'Image file not found', notAnImageFile: 'Not an image file', variableNotPublished: 'Variable not published (check module toggle)',

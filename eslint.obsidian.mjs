@@ -47,12 +47,4 @@ export default defineConfig([
       },
     },
   },
-  // This tab supports Obsidian 1.7.2 and relies on dynamic multi-field rule
-  // rows, so the 1.13 declarative settings API cannot replace display() yet.
-  {
-    files: ["src/settings/SettingsTab.ts"],
-    rules: {
-      "@typescript-eslint/no-deprecated": "off",
-    },
-  },
 ]);

@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting, TFile, normalizePath, setTooltip } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, type SettingDefinitionItem, TFile, normalizePath, setTooltip } from 'obsidian';
 import type StyleContextPlugin from '../../main';
 import { DEFAULT_THEME_SLUG } from '../constants';
 import { ContextInspector } from '../services/ContextInspector';
@@ -13,7 +13,6 @@ import {
 import { isImageFile } from '../utils/media';
 import { readThemeName } from '../utils/internals';
 import { themeSlug } from '../utils/slug';
-import { createSettingsGroup } from '../utils/settingsGroup';
 import { t } from '../i18n/i18n';
 import type { PathRule, ResourceRule } from '../types';
 
@@ -33,88 +32,123 @@ export class SettingsTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		const messages = t();
 		this.rulePreviewTiles.clear();
 
-		this.renderGeneralGroup(containerEl);
-		this.renderResourceGroup(containerEl);
-		this.renderThemeGroup(containerEl);
-		this.renderNotePathGroup(containerEl);
-		this.renderDiagnosticsSection(containerEl);
-
-		this.startDiagnosticsRefresh();
-	}
-
-	hide(): void {
-		this.stopDiagnosticsRefresh();
-		super.hide();
-	}
-
-	// ------------------------------------------------------------------
-	// General intro group (no heading)
-	// ------------------------------------------------------------------
-
-	private renderGeneralGroup(containerEl: HTMLElement): void {
-		const messages = t();
-		const group = createSettingsGroup(containerEl);
-		group.addSetting((setting) => {
-			setting.setClass('sc-general-intro');
-			const descEl = setting.descEl;
-			descEl.empty();
-			descEl.appendText(
-				messages.settings.intro,
-			);
-			const linkLine = descEl.createDiv();
-			linkLine.createEl('a', {
-				text: messages.settings.documentation.link,
-				href: 'https://obsidian.md/help/snippets',
-				attr: { target: '_blank', rel: 'noopener' },
-			});
-		});
-	}
-
-	// ------------------------------------------------------------------
-	// Theme context group
-	// ------------------------------------------------------------------
-
-	private renderThemeGroup(containerEl: HTMLElement): void {
-		const messages = t();
-		const group = createSettingsGroup(containerEl, messages.settings.groups.themeContext);
-		group.addSetting((setting) => {
-			setting
-				.setName(messages.settings.labels.publishThemeClass)
-				.setDesc(
-					messages.settings.descriptions.publishThemeClass,
-				)
-				.addToggle((toggle) =>
-					toggle
-						.setValue(this.plugin.settings.themeContextEnabled)
-						.onChange(async (value) => {
-							this.plugin.settings.themeContextEnabled = value;
-							await this.persistAndApply();
-						}),
-				);
-		});
-
-		group.addSetting((setting) => {
-			setting.setName(messages.settings.labels.themeClassPrefix);
-			this.renderThemePrefixDesc(setting);
-			setting.addText((text) => {
-				text.setPlaceholder(messages.settings.placeholders.themeClassPrefix)
-					.setValue(this.plugin.settings.themeClassPrefix)
-					.onChange(async (value) => {
-						if (!isValidThemePrefix(value)) {
-							this.showInputError(text.inputEl, messages.settings.validation.invalidPrefix);
-							return;
-						}
-						this.clearInputError(text.inputEl);
-						this.plugin.settings.themeClassPrefix = value;
-						await this.persistAndApply();
-						this.renderThemePrefixDesc(setting);
+		return [
+			{
+				name: '',
+				desc: messages.settings.intro,
+				searchable: false,
+				render: (setting) => {
+					setting.setClass('sc-general-intro');
+					const linkLine = setting.descEl.createDiv();
+					linkLine.createEl('a', {
+						text: messages.settings.documentation.link,
+						href: 'https://obsidian.md/help/snippets',
+						attr: { target: '_blank', rel: 'noopener' },
 					});
-			});
+				},
+			},
+			{
+				type: 'group',
+				heading: messages.settings.groups.themeContext,
+				items: [
+					{
+						name: messages.settings.labels.publishThemeClass,
+						desc: messages.settings.descriptions.publishThemeClass,
+						control: { type: 'toggle', key: 'themeContextEnabled' },
+					},
+					{
+						name: messages.settings.labels.themeClassPrefix,
+						render: (setting) => this.renderThemePrefixControl(setting),
+					},
+				],
+			},
+			{
+				type: 'group',
+				heading: messages.settings.groups.notePathRules,
+				items: [{
+					name: messages.settings.labels.publishPathClasses,
+					desc: messages.settings.descriptions.publishPathClasses,
+					control: { type: 'toggle', key: 'notePathContextEnabled' },
+				}],
+			},
+			{
+				type: 'list',
+				emptyState: messages.settings.emptyStates.noPathRules,
+				addItem: {
+					name: messages.settings.buttons.addPathRule,
+					action: () => void this.addPathRule(),
+				},
+				onDelete: (index) => void this.deletePathRule(index),
+				onReorder: (oldIndex, newIndex) =>
+					void this.reorderPathRules(oldIndex, newIndex),
+				items: this.plugin.settings.pathRules.map((rule) => ({
+					name: rule.pattern || messages.settings.buttons.addPathRule,
+					searchable: false,
+					render: (setting) => this.renderPathRuleRow(setting, rule),
+				})),
+			},
+			{
+				type: 'group',
+				heading: messages.settings.groups.localImageVariable,
+				items: [{
+					name: messages.settings.labels.publishLocalImageVariables,
+					render: (setting) => this.renderResourceToggle(setting),
+				}],
+			},
+			{
+				type: 'list',
+				emptyState: messages.settings.emptyStates.noImageVariables,
+				addItem: {
+					name: messages.settings.buttons.addImageVariable,
+					action: () => void this.addResourceRule(),
+				},
+				onDelete: (index) => void this.deleteResourceRule(index),
+				onReorder: (oldIndex, newIndex) =>
+					void this.reorderResourceRules(oldIndex, newIndex),
+				items: this.plugin.settings.resourceRules.map((rule) => ({
+					name: rule.variableName || messages.settings.buttons.addImageVariable,
+					searchable: false,
+					render: (setting) => this.renderResourceRuleRow(setting, rule),
+				})),
+			},
+			{
+				type: 'group',
+				heading: messages.settings.groups.diagnostics,
+				items: [{
+					name: messages.settings.labels.liveStatus,
+					desc: messages.settings.descriptions.liveStatus,
+					render: (setting) => this.renderDiagnosticsSection(setting),
+				}],
+			},
+		];
+	}
+
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		const settings = this.plugin.settings as unknown as Record<string, unknown>;
+		settings[key] = value;
+		await this.persistAndApply();
+	}
+
+	private renderThemePrefixControl(setting: Setting): void {
+		const messages = t();
+		this.renderThemePrefixDesc(setting);
+		setting.addText((text) => {
+			text.setPlaceholder(messages.settings.placeholders.themeClassPrefix)
+				.setValue(this.plugin.settings.themeClassPrefix)
+				.onChange(async (value) => {
+					if (!isValidThemePrefix(value)) {
+						this.showInputError(text.inputEl, messages.settings.validation.invalidPrefix);
+						return;
+					}
+					this.clearInputError(text.inputEl);
+					this.plugin.settings.themeClassPrefix = value;
+					await this.persistAndApply();
+					this.renderThemePrefixDesc(setting);
+				});
 		});
 	}
 
@@ -155,186 +189,149 @@ export class SettingsTab extends PluginSettingTab {
 		};
 	}
 
-	// ------------------------------------------------------------------
-	// Note path rules group
-	// ------------------------------------------------------------------
-
-	private renderNotePathGroup(containerEl: HTMLElement): void {
-		const messages = t();
-		const group = createSettingsGroup(containerEl, messages.settings.groups.notePathRules);
-		group.addSetting((setting) => {
-			setting
-				.setName(messages.settings.labels.publishPathClasses)
-				.setDesc(
-					messages.settings.descriptions.publishPathClasses,
-				)
-				.addToggle((toggle) =>
-					toggle
-						.setValue(this.plugin.settings.notePathContextEnabled)
-						.onChange(async (value) => {
-							this.plugin.settings.notePathContextEnabled = value;
-							await this.persistAndApply();
-						}),
-				);
+	private async addPathRule(): Promise<void> {
+		this.plugin.settings.pathRules.push({
+			id: generateId('pr'),
+			matchMode: 'folder',
+			pattern: '',
+			className: '',
+			enabled: true,
 		});
-
-		for (const rule of this.plugin.settings.pathRules) {
-			this.renderPathRuleRow(group, rule);
-		}
-
-		group.addSetting((setting) => {
-			setting.addButton((button) =>
-				button
-					.setButtonText(messages.settings.buttons.addPathRule)
-					.setCta()
-					.onClick(async () => {
-						this.plugin.settings.pathRules.push({
-							id: generateId('pr'),
-							matchMode: 'folder',
-							pattern: '',
-							className: '',
-							enabled: true,
-						});
-						await this.persistAndApply();
-						this.display();
-					}),
-			);
-		});
+		await this.persistAndApply();
+		this.update();
 	}
 
-	private renderPathRuleRow(
-		group: ReturnType<typeof createSettingsGroup>,
-		rule: PathRule,
-	): void {
-		const messages = t();
-		group.addSetting((setting) => {
-			setting.setClass('sc-path-rule-row');
-			setting
-				// Match-mode dropdown (leftmost) — switches the pattern
-				// input's behavior and placeholder below. Defaults to
-				// Folder for new and legacy rules.
-				.addDropdown((dropdown) => {
-					dropdown.addOption('folder', messages.settings.labels.folder);
-					dropdown.addOption('keyword', messages.settings.labels.keyword);
-					dropdown.setValue(rule.matchMode ?? 'folder');
-					dropdown.onChange(async (value) => {
-						rule.matchMode =
-							value === 'keyword' ? 'keyword' : 'folder';
-						await this.persistAndApply();
-						// Rebuild the row so the suggester / placeholder updates.
-						this.display();
-					});
-				})
-				.addText((text) => {
-					if (rule.matchMode === 'folder') {
-						text.setPlaceholder(messages.settings.placeholders.folderPrefix);
-						new FolderSuggest(this.app, text.inputEl);
-					} else {
-						text.setPlaceholder(messages.settings.placeholders.keywordInPath);
-					}
-					text.setValue(rule.pattern)
-						.onChange(async (value) => {
-							rule.pattern = value;
-							await this.persistAndApply();
-						});
-				})
-				.addText((text) => {
-					text.setPlaceholder(messages.settings.placeholders.classNames)
-						.setValue(rule.className)
-						.onChange(async (value) => {
-							if (
-								value.trim().length > 0 &&
-								!areValidClassNames(value)
-							) {
-								this.showInputError(
-									text.inputEl,
-									messages.settings.validation.invalidClassNames,
-								);
-								return;
-							}
-							this.clearInputError(text.inputEl);
-							rule.className = value;
-							await this.persistAndApply();
-						});
-				})
-				.addToggle((toggle) =>
-					toggle
-						.setValue(rule.enabled)
-						.onChange(async (value) => {
-							rule.enabled = value;
-							await this.persistAndApply();
-						}),
-				)
-				.addExtraButton((button) =>
-					button
-						.setIcon('trash')
-						.setTooltip(messages.settings.buttons.deleteRule)
-						.onClick(async () => {
-							this.plugin.settings.pathRules =
-								this.plugin.settings.pathRules.filter(
-									(r) => r.id !== rule.id,
-								);
-							await this.persistAndApply();
-							this.display();
-						}),
-				);
-		});
+	private async deletePathRule(index: number): Promise<void> {
+		if (index < 0 || index >= this.plugin.settings.pathRules.length) return;
+		this.plugin.settings.pathRules.splice(index, 1);
+		await this.persistAndApply();
+		this.update();
 	}
 
-	// ------------------------------------------------------------------
-	// Resource variables group
-	// ------------------------------------------------------------------
+	private async reorderPathRules(
+		oldIndex: number,
+		newIndex: number,
+	): Promise<void> {
+		const rules = this.plugin.settings.pathRules;
+		const [rule] = rules.splice(oldIndex, 1);
+		if (!rule) return;
+		rules.splice(newIndex, 0, rule);
+		await this.persistAndApply();
+	}
 
-	private renderResourceGroup(containerEl: HTMLElement): void {
+	private renderPathRuleRow(setting: Setting, rule: PathRule): void {
 		const messages = t();
-		const group = createSettingsGroup(containerEl, messages.settings.groups.localImageVariable);
-		group.addSetting((setting) => {
-			setting.setClass('sc-resource-toggle');
-			setting.setName(messages.settings.labels.publishLocalImageVariables);
-			// Rich description: explain why this module exists + show the
-			// CSS contract. descEl is rebuilt (not setDesc) so we can embed
-			// a <pre><code> block the way Obsidian's own settings do.
-			const descEl = setting.descEl;
-			descEl.empty();
-			descEl.appendText(
-				messages.settings.descriptions.publishLocalImageVariables,
-			);
-			const pre = descEl.createEl('pre');
-			pre.createEl('code', {
-				text: '.hero {\n  background-image: var(--my-banner);\n}',
-			});
-			setting.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.resourceVariablesEnabled)
+		setting.setClass('sc-path-rule-row');
+		setting
+			// Match-mode dropdown (leftmost) — switches the pattern input's
+			// behavior and placeholder below. Defaults to Folder for new and
+			// legacy rules.
+			.addDropdown((dropdown) => {
+				dropdown.addOption('folder', messages.settings.labels.folder);
+				dropdown.addOption('keyword', messages.settings.labels.keyword);
+				dropdown.setValue(rule.matchMode ?? 'folder');
+				dropdown.onChange(async (value) => {
+					rule.matchMode = value === 'keyword' ? 'keyword' : 'folder';
+					await this.persistAndApply();
+					// Rebuild only after the rule shape changes, so the
+					// appropriate suggester and placeholder are recreated.
+					this.update();
+				});
+			})
+			.addText((text) => {
+				if (rule.matchMode === 'folder') {
+					text.setPlaceholder(messages.settings.placeholders.folderPrefix);
+					new FolderSuggest(this.app, text.inputEl);
+				} else {
+					text.setPlaceholder(messages.settings.placeholders.keywordInPath);
+				}
+				text.setValue(rule.pattern)
 					.onChange(async (value) => {
-						this.plugin.settings.resourceVariablesEnabled =
-							value;
+						rule.pattern = value;
+						await this.persistAndApply();
+					});
+			})
+			.addText((text) => {
+				text.setPlaceholder(messages.settings.placeholders.classNames)
+					.setValue(rule.className)
+					.onChange(async (value) => {
+						if (
+							value.trim().length > 0 &&
+							!areValidClassNames(value)
+						) {
+							this.showInputError(
+								text.inputEl,
+								messages.settings.validation.invalidClassNames,
+							);
+							return;
+						}
+						this.clearInputError(text.inputEl);
+						rule.className = value;
+						await this.persistAndApply();
+					});
+			})
+			.addToggle((toggle) =>
+				toggle
+					.setValue(rule.enabled)
+					.onChange(async (value) => {
+						rule.enabled = value;
 						await this.persistAndApply();
 					}),
 			);
-		});
+	}
 
-		for (const rule of this.plugin.settings.resourceRules) {
-			this.renderResourceRuleRow(group, rule);
-		}
-
-		group.addSetting((setting) => {
-			setting.addButton((button) =>
-				button
-					.setButtonText(messages.settings.buttons.addImageVariable)
-					.setCta()
-					.onClick(async () => {
-						this.plugin.settings.resourceRules.push({
-							id: generateId('rr'),
-							filePath: '',
-							variableName: this.generateDefaultVarName(),
-							enabled: true,
-						});
-						await this.persistAndApply();
-						this.display();
-					}),
-			);
+	private renderResourceToggle(setting: Setting): () => void {
+		const messages = t();
+		setting.setClass('sc-resource-toggle');
+		// Rich description: explain why this module exists + show the CSS
+		// contract the way Obsidian's own settings do.
+		const descEl = setting.descEl;
+		descEl.appendText(messages.settings.descriptions.publishLocalImageVariables);
+		const pre = descEl.createEl('pre');
+		pre.createEl('code', {
+			text: '.hero {\n  background-image: var(--my-banner);\n}',
 		});
+		setting.addToggle((toggle) =>
+			toggle
+				.setValue(this.plugin.settings.resourceVariablesEnabled)
+				.onChange(async (value) => {
+					this.plugin.settings.resourceVariablesEnabled = value;
+					await this.persistAndApply();
+				}),
+		);
+
+		const document = setting.settingEl.ownerDocument;
+		this.plugin.resourceVarCtx.applyToDocument(document);
+		return () => this.plugin.resourceVarCtx.releaseDocument(document);
+	}
+
+	private async addResourceRule(): Promise<void> {
+		this.plugin.settings.resourceRules.push({
+			id: generateId('rr'),
+			filePath: '',
+			variableName: this.generateDefaultVarName(),
+			enabled: true,
+		});
+		await this.persistAndApply();
+		this.update();
+	}
+
+	private async deleteResourceRule(index: number): Promise<void> {
+		if (index < 0 || index >= this.plugin.settings.resourceRules.length) return;
+		this.plugin.settings.resourceRules.splice(index, 1);
+		await this.persistAndApply();
+		this.update();
+	}
+
+	private async reorderResourceRules(
+		oldIndex: number,
+		newIndex: number,
+	): Promise<void> {
+		const rules = this.plugin.settings.resourceRules;
+		const [rule] = rules.splice(oldIndex, 1);
+		if (!rule) return;
+		rules.splice(newIndex, 0, rule);
+		await this.persistAndApply();
 	}
 
 	/**
@@ -355,24 +352,20 @@ export class SettingsTab extends PluginSettingTab {
 		return name;
 	}
 
-	private renderResourceRuleRow(
-		group: ReturnType<typeof createSettingsGroup>,
-		rule: ResourceRule,
-	): void {
+	private renderResourceRuleRow(setting: Setting, rule: ResourceRule): void {
 		const messages = t();
-		group.addSetting((setting) => {
-			setting.setClass('sc-resource-rule-row');
-			setting
-				.addText((text) => {
-					text.setPlaceholder(messages.settings.placeholders.vaultFilePath)
-						.setValue(rule.filePath)
-						.onChange(async (value) => {
-							rule.filePath = value;
-							await this.persistAndApply();
-							this.refreshRuleTile(rule);
-						});
-					new FileSuggest(this.app, text.inputEl);
-				})
+		setting.setClass('sc-resource-rule-row');
+		setting
+			.addText((text) => {
+				text.setPlaceholder(messages.settings.placeholders.vaultFilePath)
+					.setValue(rule.filePath)
+					.onChange(async (value) => {
+						rule.filePath = value;
+						await this.persistAndApply();
+						this.refreshRuleTile(rule);
+					});
+				new FileSuggest(this.app, text.inputEl);
+			})
 			.addText((text) => {
 				text.setPlaceholder(messages.settings.placeholders.cssVariable)
 					.setValue(rule.variableName)
@@ -388,7 +381,7 @@ export class SettingsTab extends PluginSettingTab {
 							return;
 						}
 						this.clearInputError(text.inputEl);
-						// Warn (not block) on duplicate variable name across rules
+						// Warn (not block) on duplicate variable name across rules.
 						const dupCount = this.plugin.settings.resourceRules.filter(
 							(r) => r.id !== rule.id && r.variableName === value,
 						).length;
@@ -405,39 +398,25 @@ export class SettingsTab extends PluginSettingTab {
 						this.refreshRuleTile(rule);
 					});
 			})
-				.addToggle((toggle) =>
-					toggle
-						.setValue(rule.enabled)
-						.onChange(async (value) => {
-							rule.enabled = value;
-							await this.persistAndApply();
-							this.refreshRuleTile(rule);
-						}),
-				)
-				.addExtraButton((button) =>
-					button
-						.setIcon('trash')
-						.setTooltip(messages.settings.buttons.deleteRule)
-						.onClick(async () => {
-							this.plugin.settings.resourceRules =
-								this.plugin.settings.resourceRules.filter(
-									(r) => r.id !== rule.id,
-								);
-							await this.persistAndApply();
-							this.display();
-						}),
-				);
+			.addToggle((toggle) =>
+				toggle
+					.setValue(rule.enabled)
+					.onChange(async (value) => {
+						rule.enabled = value;
+						await this.persistAndApply();
+						this.refreshRuleTile(rule);
+					}),
+			);
 
-			// Prepend a per-rule preview tile to the control area so each
-			// rule shows its own live image preview on the left side.
-			const tile = setting.controlEl.createDiv({
-				cls: 'sc-rule-preview-tile',
-			});
-			tile.setAttribute('data-rule-id', rule.id);
-			setting.controlEl.prepend(tile);
-			this.rulePreviewTiles.set(rule.id, tile);
-			this.refreshRuleTile(rule);
+		// Prepend a per-rule preview tile to the control area so each rule
+		// shows its own live image preview on the left side.
+		const tile = setting.controlEl.createDiv({
+			cls: 'sc-rule-preview-tile',
 		});
+		tile.setAttribute('data-rule-id', rule.id);
+		setting.controlEl.prepend(tile);
+		this.rulePreviewTiles.set(rule.id, tile);
+		this.refreshRuleTile(rule);
 	}
 
 	/**
@@ -489,7 +468,7 @@ export class SettingsTab extends PluginSettingTab {
 		// Final guard: confirm the variable is actually published on :root.
 		// Without this, an unset var() would resolve to nothing but still
 		// override the checkerboard via inline style — leaving the tile blank.
-		const published = activeDocument.documentElement.style.getPropertyValue(varName);
+		const published = tile.ownerDocument.documentElement.style.getPropertyValue(varName);
 		if (!published) {
 			placeholder(messages.settings.tooltips.variableNotPublished);
 			return;
@@ -526,44 +505,36 @@ export class SettingsTab extends PluginSettingTab {
 		return messages.unresolved;
 	}
 
-	// ------------------------------------------------------------------
-	// Diagnostics panel (SC-04)
-	// ------------------------------------------------------------------
-
-	private renderDiagnosticsSection(containerEl: HTMLElement): void {
+	private renderDiagnosticsSection(setting: Setting): () => void {
 		const messages = t();
-		const group = createSettingsGroup(containerEl, messages.settings.groups.diagnostics);
-		group.addSetting((setting) => {
-			setting
-				.setName(messages.settings.labels.liveStatus)
-				.setDesc(
-					messages.settings.descriptions.liveStatus,
-				)
-				.addExtraButton((button) =>
-					button
-						.setIcon('refresh-cw')
-						.setTooltip(messages.settings.buttons.refresh)
-						.onClick(() => this.refreshDiagnostics()),
-				)
-				.addExtraButton((button) =>
-					button
-						.setIcon('copy')
-						.setTooltip(messages.settings.buttons.copySnapshot)
-						.onClick(async () => {
-							const snapshot = ContextInspector.collect(
-								this.plugin,
-							);
-							await navigator.clipboard.writeText(
-								JSON.stringify(snapshot, null, 2),
-							);
-							new Notice(messages.notices.styleContextCopied);
-						}),
-				);
-		});
+		setting
+			.addExtraButton((button) =>
+				button
+					.setIcon('refresh-cw')
+					.setTooltip(messages.settings.buttons.refresh)
+					.onClick(() => this.refreshDiagnostics()),
+			)
+			.addExtraButton((button) =>
+				button
+					.setIcon('copy')
+					.setTooltip(messages.settings.buttons.copySnapshot)
+					.onClick(async () => {
+						const snapshot = ContextInspector.collect(this.plugin);
+						await navigator.clipboard.writeText(
+							JSON.stringify(snapshot, null, 2),
+						);
+						new Notice(messages.notices.styleContextCopied);
+					}),
+			);
 
-		const panel = containerEl.createDiv('sc-settings-diagnostics');
+		const panel = setting.settingEl.createDiv('sc-settings-diagnostics');
 		this.diagnosticsEl = panel;
 		this.refreshDiagnostics();
+		this.startDiagnosticsRefresh();
+		return () => {
+			if (this.diagnosticsEl === panel) this.diagnosticsEl = null;
+			this.stopDiagnosticsRefresh();
+		};
 	}
 
 	private refreshDiagnostics(): void {

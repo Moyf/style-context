@@ -51,6 +51,10 @@ export interface Messages {
 			refresh: string;
 			copySnapshot: string;
 		};
+		emptyStates: {
+			noPathRules: string;
+			noImageVariables: string;
+		};
 		tooltips: {
 			clickToCopy: (value: string) => string;
 			ruleDisabled: string;

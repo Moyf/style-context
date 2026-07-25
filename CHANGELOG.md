@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - Unreleased
+
+### ⚠️ Breaking Changes
+
+- **Minimum Obsidian version**: Require 1.13.0 and adopt its declarative Settings API. Earlier app versions can no longer load this release.
+
+### ⚡ Changed
+
+- **Native settings lists**: Manage path rules and image variables with searchable declarative settings, native add/delete/reorder controls, and render callbacks for complex rows.
+- **Window-local resources**: Publish resource CSS variables to the main window, popouts, and the separate Settings window so image previews resolve immediately.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### ⚠️ 破坏性变更
+
+- **最低 Obsidian 版本**：升级至 1.13.0，并采用其声明式 Settings API；更早的版本无法加载此版本插件。
+
+### ⚡ 变更
+
+- **原生设置列表**：路径规则和图片变量改用可搜索的声明式设置、原生添加/删除/排序控件，并为复杂行保留 render 回调。
+- **窗口内资源变量**：将资源 CSS 变量发布到主窗口、弹出窗口和独立设置窗口，让图片预览立即解析。
+
+</details>
+
+---
+
 ## [0.2.0] - 2026-07-26
 
 ### 🚀 Added

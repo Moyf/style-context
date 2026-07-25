@@ -27,6 +27,7 @@ const ja: Messages = {
 		},
 		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: 'フォルダの接頭辞', keywordInPath: 'パス内のキーワード', classNames: 'class1, class2', vaultFilePath: '保管庫内のファイルパス', cssVariable: '--my-var' },
 		buttons: { addPathRule: 'パスのルールを追加', addImageVariable: '画像変数を追加', deleteRule: 'ルールを削除', refresh: '更新', copySnapshot: 'スナップショットをコピー' },
+		emptyStates: { noPathRules: 'パスのルールはまだありません。', noImageVariables: '画像変数はまだありません。' },
 		tooltips: {
 			clickToCopy: (value) => `クリックしてコピー: ${value}`,
 			ruleDisabled: 'ルールは無効です', setCssVariableName: 'CSS 変数名を設定してください', variableNameInvalid: '変数名が無効です', setVaultImagePath: '保管庫内の画像パスを設定してください', imageFileNotFound: '画像ファイルが見つかりません', notAnImageFile: '画像ファイルではありません', variableNotPublished: '変数が公開されていません（モジュールの切り替えを確認してください）',

@@ -23,8 +23,10 @@ export class ThemeContextService {
 	private enabled = false;
 	private listenersRegistered = false;
 
-	/** Tracks every theme class this service has added to the body. */
-	private appliedClasses = new Set<string>();
+	/** Every document that needs the theme context (main + popouts). */
+	private documents = new Set<Document>();
+	/** Tracks every theme class this service has added, per document. */
+	private appliedClasses = new Map<Document, Set<string>>();
 
 	constructor(plugin: Plugin, getSettings: () => StyleContextSettings) {
 		this.plugin = plugin;
@@ -39,12 +41,23 @@ export class ThemeContextService {
 	enable(): void {
 		if (this.enabled) return;
 		this.enabled = true;
+		this.documents.add(this.getMainDocument());
 		if (!this.listenersRegistered) {
 			this.listenersRegistered = true;
 			this.plugin.registerEvent(
 				this.plugin.app.workspace.on('css-change', () => {
 					if (this.enabled) this.apply();
 				}),
+			);
+			this.plugin.registerEvent(
+				this.plugin.app.workspace.on('window-open', (_workspaceWindow, win) =>
+					this.applyToDocument(win.document),
+				),
+			);
+			this.plugin.registerEvent(
+				this.plugin.app.workspace.on('window-close', (_workspaceWindow, win) =>
+					this.releaseDocument(win.document),
+				),
 			);
 		}
 		this.apply();
@@ -73,8 +86,31 @@ export class ThemeContextService {
 		this.sweepLegacyClasses();
 
 		const cls = prefix + slug;
-		activeDocument.body.classList.add(cls);
-		this.appliedClasses.add(cls);
+		this.documents.add(this.getMainDocument());
+		for (const document of this.documents) {
+			document.body.classList.add(cls);
+			this.appliedClasses.set(document, new Set([cls]));
+		}
+	}
+
+	/** Publishes the current theme class to a newly-created window. */
+	applyToDocument(document: Document): void {
+		this.documents.add(document);
+		if (!this.enabled) return;
+
+		this.removeTrackedClasses(document);
+		this.sweepLegacyClasses(document);
+		const { slug } = this.resolve();
+		const cls = this.getSettings().themeClassPrefix + slug;
+		document.body.classList.add(cls);
+		this.appliedClasses.set(document, new Set([cls]));
+	}
+
+	/** Removes a closed transient document from the publication set. */
+	releaseDocument(document: Document): void {
+		if (document === this.getMainDocument()) return;
+		this.removeTrackedClasses(document);
+		this.documents.delete(document);
 	}
 
 	/**
@@ -95,10 +131,16 @@ export class ThemeContextService {
 	}
 
 	private removeAllTrackedClasses(): void {
-		for (const cls of this.appliedClasses) {
-			activeDocument.body.classList.remove(cls);
+		for (const document of this.appliedClasses.keys()) {
+			this.removeTrackedClasses(document);
 		}
-		this.appliedClasses.clear();
+	}
+
+	private removeTrackedClasses(document: Document): void {
+		const classes = this.appliedClasses.get(document);
+		if (!classes) return;
+		document.body.classList.remove(...classes);
+		this.appliedClasses.delete(document);
 	}
 
 	/**
@@ -106,13 +148,20 @@ export class ThemeContextService {
 	 * previous deployment that used a hardcoded prefix. Idempotent and
 	 * cheap; kept forever (harmless once old classes are gone).
 	 */
-	private sweepLegacyClasses(): void {
-		const legacy = Array.from(activeDocument.body.classList).filter((c) =>
-			c.startsWith(LEGACY_THEME_CLASS_PREFIX),
-		);
-		if (legacy.length > 0) {
-			activeDocument.body.classList.remove(...legacy);
+	private sweepLegacyClasses(document?: Document): void {
+		const documents = document ? [document] : this.documents;
+		for (const currentDocument of documents) {
+			const legacy = Array.from(currentDocument.body.classList).filter((c) =>
+				c.startsWith(LEGACY_THEME_CLASS_PREFIX),
+			);
+			if (legacy.length > 0) {
+				currentDocument.body.classList.remove(...legacy);
+			}
 		}
+	}
+
+	private getMainDocument(): Document {
+		return this.plugin.app.workspace?.rootSplit?.doc ?? activeDocument;
 	}
 
 	/**

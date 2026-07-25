@@ -27,6 +27,7 @@ const zhCN: Messages = {
 		},
 		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '文件夹前缀', keywordInPath: '路径中的关键词', classNames: '类名1, 类名2', vaultFilePath: '库内文件路径', cssVariable: '--my-var' },
 		buttons: { addPathRule: '添加路径规则', addImageVariable: '添加图片变量', deleteRule: '删除规则', refresh: '刷新', copySnapshot: '复制快照' },
+		emptyStates: { noPathRules: '尚未添加路径规则。', noImageVariables: '尚未添加图片变量。' },
 		tooltips: {
 			clickToCopy: (value) => `点击复制：${value}`,
 			ruleDisabled: '规则已禁用', setCssVariableName: '请设置 CSS 变量名', variableNameInvalid: '变量名无效', setVaultImagePath: '请设置库内图片路径', imageFileNotFound: '未找到图片文件', notAnImageFile: '不是图片文件', variableNotPublished: '变量尚未发布（请检查模块开关）',

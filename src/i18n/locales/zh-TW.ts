@@ -27,6 +27,7 @@ const zhTW: Messages = {
 		},
 		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '資料夾前綴', keywordInPath: '路徑中的關鍵字', classNames: '類別1, 類別2', vaultFilePath: '庫內檔案路徑', cssVariable: '--my-var' },
 		buttons: { addPathRule: '新增路徑規則', addImageVariable: '新增圖片變數', deleteRule: '刪除規則', refresh: '重新整理', copySnapshot: '複製快照' },
+		emptyStates: { noPathRules: '尚未新增路徑規則。', noImageVariables: '尚未新增圖片變數。' },
 		tooltips: {
 			clickToCopy: (value) => `按一下即可複製：${value}`,
 			ruleDisabled: '規則已停用', setCssVariableName: '請設定 CSS 變數名稱', variableNameInvalid: '變數名稱無效', setVaultImagePath: '請設定庫內圖片路徑', imageFileNotFound: '找不到圖片檔案', notAnImageFile: '不是圖片檔案', variableNotPublished: '變數尚未發布（請檢查模組開關）',
