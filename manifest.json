@@ -3,7 +3,7 @@
   "name": "Style Context",
   "version": "0.0.1",
   "minAppVersion": "1.7.2",
-  "description": "Publishes Obsidian runtime state (theme, note path rules, vault resources) as CSS classes and variables.",
+  "description": "An Obsidian plugin that publishes runtime context as CSS classes and variables. It turns things like your current theme and vault image paths into predictable hooks for your own custom CSS snippets.",
   "author": "Moy",
   "isDesktopOnly": false
 }
