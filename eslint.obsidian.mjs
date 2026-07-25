@@ -6,7 +6,7 @@ export default defineConfig([
   {
     ignores: ["tests/**", "vitest.config.mts"],
   },
-  ...obsidianmd.configs.recommended,
+  ...obsidianmd.configs.recommendedWithLocalesEn,
   {
     files: ["src/**/*.ts", "main.ts"],
     languageOptions: {

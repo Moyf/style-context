@@ -1,8 +1,8 @@
 {
   "id": "style-context",
   "name": "Style Context",
-  "version": "0.1.1",
-  "minAppVersion": "1.7.2",
+  "version": "0.2.0",
+  "minAppVersion": "1.8.7",
   "description": "A CSS snippet helper. Publish runtime context as CSS classes and variables, turns things like your current theme and vault image paths into predictable hooks for your own custom CSS snippets.",
   "author": "Moy",
   "isDesktopOnly": false

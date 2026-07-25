@@ -14,6 +14,7 @@ import { isImageFile } from '../utils/media';
 import { readThemeName } from '../utils/internals';
 import { themeSlug } from '../utils/slug';
 import { createSettingsGroup } from '../utils/settingsGroup';
+import { t } from '../i18n/i18n';
 import type { PathRule, ResourceRule } from '../types';
 
 const DIAG_REFRESH_MS = 2000;
@@ -56,22 +57,21 @@ export class SettingsTab extends PluginSettingTab {
 	// ------------------------------------------------------------------
 
 	private renderGeneralGroup(containerEl: HTMLElement): void {
+		const messages = t();
 		const group = createSettingsGroup(containerEl);
 		group.addSetting((setting) => {
 			setting.setClass('sc-general-intro');
 			const descEl = setting.descEl;
 			descEl.empty();
 			descEl.appendText(
-				'This plugin exposes the current theme, note path rules, and vault image paths as CSS classes and variables, so your CSS snippets can react to runtime state without JavaScript.',
+				messages.settings.intro,
 			);
-			const linkLine = descEl.createEl('div');
-			linkLine.appendText('See the ');
+			const linkLine = descEl.createDiv();
 			linkLine.createEl('a', {
-				text: 'Official CSS snippets documentation',
+				text: messages.settings.documentation.link,
 				href: 'https://obsidian.md/help/snippets',
 				attr: { target: '_blank', rel: 'noopener' },
 			});
-			linkLine.appendText(' for details.');
 		});
 	}
 
@@ -80,12 +80,13 @@ export class SettingsTab extends PluginSettingTab {
 	// ------------------------------------------------------------------
 
 	private renderThemeGroup(containerEl: HTMLElement): void {
-		const group = createSettingsGroup(containerEl, 'Theme context');
+		const messages = t();
+		const group = createSettingsGroup(containerEl, messages.settings.groups.themeContext);
 		group.addSetting((setting) => {
 			setting
-				.setName('Publish theme class')
+				.setName(messages.settings.labels.publishThemeClass)
 				.setDesc(
-					"Add a unique theme class to the body for the current theme. This lets you adjust a specific theme via CSS snippets without modifying the theme's own files.",
+					messages.settings.descriptions.publishThemeClass,
 				)
 				.addToggle((toggle) =>
 					toggle
@@ -98,14 +99,14 @@ export class SettingsTab extends PluginSettingTab {
 		});
 
 		group.addSetting((setting) => {
-			setting.setName('Theme class prefix');
+			setting.setName(messages.settings.labels.themeClassPrefix);
 			this.renderThemePrefixDesc(setting);
 			setting.addText((text) => {
-				text.setPlaceholder('Theme-mod-')
+				text.setPlaceholder(messages.settings.placeholders.themeClassPrefix)
 					.setValue(this.plugin.settings.themeClassPrefix)
 					.onChange(async (value) => {
 						if (!isValidThemePrefix(value)) {
-							this.showInputError(text.inputEl, 'Invalid prefix');
+							this.showInputError(text.inputEl, messages.settings.validation.invalidPrefix);
 							return;
 						}
 						this.clearInputError(text.inputEl);
@@ -124,31 +125,33 @@ export class SettingsTab extends PluginSettingTab {
 	 * without rebuilding the whole tab.
 	 */
 	private renderThemePrefixDesc(setting: Setting): void {
+		const messages = t();
 		const descEl = setting.descEl;
 		descEl.empty();
 		const prefix = this.plugin.settings.themeClassPrefix;
 
 		// Conversion-rule explanation
-		const ruleLine = descEl.createEl('div');
+		const ruleLine = descEl.createDiv();
 		ruleLine.appendText(
-			'Adds a body class derived from the current theme name, for per-theme styling. The class lowercases the name and replaces non-alphanumeric characters with ',
+			messages.settings.descriptions.themePrefixBefore,
 		);
-		ruleLine.createEl('code', { text: '-' });
-		ruleLine.appendText('. e.g., "Brutal Gum" becomes ');
-		ruleLine.createEl('code', { text: `.${prefix}brutal-gum` });
+		const exampleLine = descEl.createDiv();
+		exampleLine.appendText(messages.settings.descriptions.themePrefixExample);
+		exampleLine.appendText(' ');
+		exampleLine.createEl('code', { text: `.${prefix}brutal-gum` });
 
 		// Current preview — clickable to copy the full selector
 		const rawName = readThemeName(this.app);
 		const slug = themeSlug(rawName || DEFAULT_THEME_SLUG);
 		const selector = `body.${prefix}${slug}`;
-		const previewLine = descEl.createEl('div');
-		previewLine.appendText("Current theme's mod CSS class: ");
+		const previewLine = descEl.createDiv();
+		previewLine.appendText(messages.settings.descriptions.currentThemeClass);
 		const previewCode = previewLine.createEl('code', { text: selector });
 		previewCode.addClass('sc-clickable-code');
-		setTooltip(previewCode, 'Click to copy', { placement: 'top' });
+		setTooltip(previewCode, messages.settings.tooltips.clickToCopy(selector), { placement: 'top' });
 		previewCode.onclick = async () => {
 			await navigator.clipboard.writeText(selector);
-			new Notice(`Copied: ${selector}`);
+			new Notice(messages.notices.copied(selector));
 		};
 	}
 
@@ -157,12 +160,13 @@ export class SettingsTab extends PluginSettingTab {
 	// ------------------------------------------------------------------
 
 	private renderNotePathGroup(containerEl: HTMLElement): void {
-		const group = createSettingsGroup(containerEl, 'Note path rules');
+		const messages = t();
+		const group = createSettingsGroup(containerEl, messages.settings.groups.notePathRules);
 		group.addSetting((setting) => {
 			setting
-				.setName('Publish path classes')
+				.setName(messages.settings.labels.publishPathClasses)
 				.setDesc(
-					'Add one or more CSS classes (comma-separated) to notes whose path matches a rule. This lets notes share styling without configuring cssclasses on each note.',
+					messages.settings.descriptions.publishPathClasses,
 				)
 				.addToggle((toggle) =>
 					toggle
@@ -181,7 +185,7 @@ export class SettingsTab extends PluginSettingTab {
 		group.addSetting((setting) => {
 			setting.addButton((button) =>
 				button
-					.setButtonText('Add path rule')
+					.setButtonText(messages.settings.buttons.addPathRule)
 					.setCta()
 					.onClick(async () => {
 						this.plugin.settings.pathRules.push({
@@ -202,6 +206,7 @@ export class SettingsTab extends PluginSettingTab {
 		group: ReturnType<typeof createSettingsGroup>,
 		rule: PathRule,
 	): void {
+		const messages = t();
 		group.addSetting((setting) => {
 			setting.setClass('sc-path-rule-row');
 			setting
@@ -209,8 +214,8 @@ export class SettingsTab extends PluginSettingTab {
 				// input's behavior and placeholder below. Defaults to
 				// Folder for new and legacy rules.
 				.addDropdown((dropdown) => {
-					dropdown.addOption('folder', 'Folder');
-					dropdown.addOption('keyword', 'Keyword');
+					dropdown.addOption('folder', messages.settings.labels.folder);
+					dropdown.addOption('keyword', messages.settings.labels.keyword);
 					dropdown.setValue(rule.matchMode ?? 'folder');
 					dropdown.onChange(async (value) => {
 						rule.matchMode =
@@ -222,10 +227,10 @@ export class SettingsTab extends PluginSettingTab {
 				})
 				.addText((text) => {
 					if (rule.matchMode === 'folder') {
-						text.setPlaceholder('Folder prefix');
+						text.setPlaceholder(messages.settings.placeholders.folderPrefix);
 						new FolderSuggest(this.app, text.inputEl);
 					} else {
-						text.setPlaceholder('Keyword in path');
+						text.setPlaceholder(messages.settings.placeholders.keywordInPath);
 					}
 					text.setValue(rule.pattern)
 						.onChange(async (value) => {
@@ -234,7 +239,7 @@ export class SettingsTab extends PluginSettingTab {
 						});
 				})
 				.addText((text) => {
-					text.setPlaceholder('Class1, class2')
+					text.setPlaceholder(messages.settings.placeholders.classNames)
 						.setValue(rule.className)
 						.onChange(async (value) => {
 							if (
@@ -243,7 +248,7 @@ export class SettingsTab extends PluginSettingTab {
 							) {
 								this.showInputError(
 									text.inputEl,
-									'Invalid class names',
+									messages.settings.validation.invalidClassNames,
 								);
 								return;
 							}
@@ -263,7 +268,7 @@ export class SettingsTab extends PluginSettingTab {
 				.addExtraButton((button) =>
 					button
 						.setIcon('trash')
-						.setTooltip('Delete rule')
+						.setTooltip(messages.settings.buttons.deleteRule)
 						.onClick(async () => {
 							this.plugin.settings.pathRules =
 								this.plugin.settings.pathRules.filter(
@@ -281,17 +286,18 @@ export class SettingsTab extends PluginSettingTab {
 	// ------------------------------------------------------------------
 
 	private renderResourceGroup(containerEl: HTMLElement): void {
-		const group = createSettingsGroup(containerEl, 'Local image variable');
+		const messages = t();
+		const group = createSettingsGroup(containerEl, messages.settings.groups.localImageVariable);
 		group.addSetting((setting) => {
 			setting.setClass('sc-resource-toggle');
-			setting.setName('Publish local image variables');
+			setting.setName(messages.settings.labels.publishLocalImageVariables);
 			// Rich description: explain why this module exists + show the
 			// CSS contract. descEl is rebuilt (not setDesc) so we can embed
 			// a <pre><code> block the way Obsidian's own settings do.
 			const descEl = setting.descEl;
 			descEl.empty();
 			descEl.appendText(
-				'Obsidian regenerates resource URLs on every reload, so a raw path cannot be used directly inside url(). This module maps a vault image to a stable CSS variable for background-image and similar use cases.',
+				messages.settings.descriptions.publishLocalImageVariables,
 			);
 			const pre = descEl.createEl('pre');
 			pre.createEl('code', {
@@ -315,7 +321,7 @@ export class SettingsTab extends PluginSettingTab {
 		group.addSetting((setting) => {
 			setting.addButton((button) =>
 				button
-					.setButtonText('Add image variable')
+					.setButtonText(messages.settings.buttons.addImageVariable)
 					.setCta()
 					.onClick(async () => {
 						this.plugin.settings.resourceRules.push({
@@ -353,11 +359,12 @@ export class SettingsTab extends PluginSettingTab {
 		group: ReturnType<typeof createSettingsGroup>,
 		rule: ResourceRule,
 	): void {
+		const messages = t();
 		group.addSetting((setting) => {
 			setting.setClass('sc-resource-rule-row');
 			setting
 				.addText((text) => {
-					text.setPlaceholder('Vault file path')
+					text.setPlaceholder(messages.settings.placeholders.vaultFilePath)
 						.setValue(rule.filePath)
 						.onChange(async (value) => {
 							rule.filePath = value;
@@ -367,7 +374,7 @@ export class SettingsTab extends PluginSettingTab {
 					new FileSuggest(this.app, text.inputEl);
 				})
 			.addText((text) => {
-				text.setPlaceholder('--my-var')
+				text.setPlaceholder(messages.settings.placeholders.cssVariable)
 					.setValue(rule.variableName)
 					.onChange(async (value) => {
 						if (
@@ -376,7 +383,7 @@ export class SettingsTab extends PluginSettingTab {
 						) {
 							this.showInputError(
 								text.inputEl,
-								'Invalid CSS variable name (must start with --)',
+								messages.settings.validation.invalidCssVariableName,
 							);
 							return;
 						}
@@ -388,7 +395,7 @@ export class SettingsTab extends PluginSettingTab {
 						if (dupCount > 0) {
 							this.showInputWarning(
 								text.inputEl,
-								`Used by ${dupCount} other rule(s); later rules override earlier ones`,
+								messages.settings.validation.duplicateVariableName(dupCount),
 							);
 						} else {
 							this.clearInputWarning(text.inputEl);
@@ -410,7 +417,7 @@ export class SettingsTab extends PluginSettingTab {
 				.addExtraButton((button) =>
 					button
 						.setIcon('trash')
-						.setTooltip('Delete rule')
+						.setTooltip(messages.settings.buttons.deleteRule)
 						.onClick(async () => {
 							this.plugin.settings.resourceRules =
 								this.plugin.settings.resourceRules.filter(
@@ -439,6 +446,7 @@ export class SettingsTab extends PluginSettingTab {
 	 * the rule resolves to a usable image file with a valid var name).
 	 */
 	private refreshRuleTile(rule: ResourceRule): void {
+		const messages = t();
 		const tile = this.rulePreviewTiles.get(rule.id);
 		if (!tile) return;
 
@@ -453,29 +461,29 @@ export class SettingsTab extends PluginSettingTab {
 		// Walk through each requirement; the first unmet one produces a
 		// specific placeholder tooltip so the user knows exactly what to fix.
 		if (!rule.enabled) {
-			placeholder('Rule disabled');
+			placeholder(messages.settings.tooltips.ruleDisabled);
 			return;
 		}
 		const varName = rule.variableName;
 		if (varName.trim().length === 0) {
-			placeholder('Set a CSS variable name');
+			placeholder(messages.settings.tooltips.setCssVariableName);
 			return;
 		}
 		if (!isValidCssVarName(varName)) {
-			placeholder('Variable name is invalid');
+			placeholder(messages.settings.tooltips.variableNameInvalid);
 			return;
 		}
 		if (rule.filePath.trim().length === 0) {
-			placeholder('Set a vault image path');
+			placeholder(messages.settings.tooltips.setVaultImagePath);
 			return;
 		}
 		const file = this.resolveResourceFile(rule.filePath);
 		if (!file) {
-			placeholder('Image file not found');
+			placeholder(messages.settings.tooltips.imageFileNotFound);
 			return;
 		}
 		if (!isImageFile(file)) {
-			placeholder('Not an image file');
+			placeholder(messages.settings.tooltips.notAnImageFile);
 			return;
 		}
 		// Final guard: confirm the variable is actually published on :root.
@@ -483,7 +491,7 @@ export class SettingsTab extends PluginSettingTab {
 		// override the checkerboard via inline style — leaving the tile blank.
 		const published = activeDocument.documentElement.style.getPropertyValue(varName);
 		if (!published) {
-			placeholder('Variable not published (check module toggle)');
+			placeholder(messages.settings.tooltips.variableNotPublished);
 			return;
 		}
 
@@ -491,13 +499,13 @@ export class SettingsTab extends PluginSettingTab {
 		// image and wire up the copy-on-click handler.
 		tile.addClass('is-valid');
 		tile.style.setProperty('background-image', `var(${varName})`);
-		setTooltip(tile, `Click to copy: var(${varName})`, {
+		setTooltip(tile, messages.settings.tooltips.clickToCopy(`var(${varName})`), {
 			placement: 'top',
 		});
 		tile.onclick = async () => {
 			const text = `var(${varName})`;
 			await navigator.clipboard.writeText(text);
-			new Notice(`Copied: ${text}`);
+			new Notice(messages.notices.copied(text));
 		};
 	}
 
@@ -509,28 +517,38 @@ export class SettingsTab extends PluginSettingTab {
 		return null;
 	}
 
+	private resourceResolutionText(error?: string): string {
+		const messages = t().settings.diagnostics;
+		if (error === 'File path is empty') return messages.filePathEmpty;
+		if (error?.startsWith('File not found: ')) {
+			return messages.fileNotFound(error.slice('File not found: '.length));
+		}
+		return messages.unresolved;
+	}
+
 	// ------------------------------------------------------------------
 	// Diagnostics panel (SC-04)
 	// ------------------------------------------------------------------
 
 	private renderDiagnosticsSection(containerEl: HTMLElement): void {
-		const group = createSettingsGroup(containerEl, 'Diagnostics');
+		const messages = t();
+		const group = createSettingsGroup(containerEl, messages.settings.groups.diagnostics);
 		group.addSetting((setting) => {
 			setting
-				.setName('Live status')
+				.setName(messages.settings.labels.liveStatus)
 				.setDesc(
-					'Shows the current theme class, path-class map, and resource resolution.',
+					messages.settings.descriptions.liveStatus,
 				)
 				.addExtraButton((button) =>
 					button
 						.setIcon('refresh-cw')
-						.setTooltip('Refresh')
+						.setTooltip(messages.settings.buttons.refresh)
 						.onClick(() => this.refreshDiagnostics()),
 				)
 				.addExtraButton((button) =>
 					button
 						.setIcon('copy')
-						.setTooltip('Copy snapshot')
+						.setTooltip(messages.settings.buttons.copySnapshot)
 						.onClick(async () => {
 							const snapshot = ContextInspector.collect(
 								this.plugin,
@@ -538,7 +556,7 @@ export class SettingsTab extends PluginSettingTab {
 							await navigator.clipboard.writeText(
 								JSON.stringify(snapshot, null, 2),
 							);
-							new Notice('Style context copied');
+							new Notice(messages.notices.styleContextCopied);
 						}),
 				);
 		});
@@ -549,6 +567,8 @@ export class SettingsTab extends PluginSettingTab {
 	}
 
 	private refreshDiagnostics(): void {
+		const messages = t();
+		const diagnostics = messages.settings.diagnostics;
 		const panel = this.diagnosticsEl;
 		if (!panel) return;
 		panel.empty();
@@ -557,7 +577,7 @@ export class SettingsTab extends PluginSettingTab {
 
 		const title = panel.createDiv({
 			cls: 'sc-diagnostics-title',
-			text: 'Current style context',
+			text: diagnostics.currentStyleContext,
 		});
 		void title;
 
@@ -565,20 +585,20 @@ export class SettingsTab extends PluginSettingTab {
 		const resSection = panel.createDiv('sc-diagnostics-section');
 		resSection.createDiv({
 			cls: 'sc-diagnostics-label',
-			text: 'Local image variables',
+			text: diagnostics.localImageVariables,
 		});
 		if (snapshot.resources.length === 0) {
 			resSection.createDiv({
 				cls: 'sc-diagnostics-mono',
-				text: 'No enabled resource rules',
+				text: diagnostics.noEnabledResourceRules,
 			});
 		} else {
 			this.renderTable(
 				resSection,
-				['Variable', 'Status'],
+				[diagnostics.headers.variable, diagnostics.headers.status],
 				snapshot.resources.map((row) => [
 					row.variableName,
-					row.resolved ? 'resolved' : row.error ?? 'unresolved',
+					row.resolved ? diagnostics.resolved : this.resourceResolutionText(row.error),
 				]),
 			);
 		}
@@ -587,33 +607,33 @@ export class SettingsTab extends PluginSettingTab {
 		const themeSection = panel.createDiv('sc-diagnostics-section');
 		themeSection.createDiv({
 			cls: 'sc-diagnostics-label',
-			text: 'Theme',
+			text: diagnostics.theme,
 		});
 		const themeRow = themeSection.createDiv({ cls: 'sc-diagnostics-mono' });
 		themeRow.createEl('code', {
 			text: `${snapshot.theme.appliedClass}`,
 		});
 		themeRow.appendText(
-			` (raw: ${snapshot.theme.rawName || '(none)'}, slug: ${snapshot.theme.slug})`,
+			diagnostics.rawTheme(snapshot.theme.rawName, snapshot.theme.slug),
 		);
 
 		// Note path
 		const pathSection = panel.createDiv('sc-diagnostics-section');
 		pathSection.createDiv({
 			cls: 'sc-diagnostics-label',
-			text: 'Note path classes',
+			text: diagnostics.notePathClasses,
 		});
 		if (snapshot.notePath.length === 0) {
 			pathSection.createDiv({
 				cls: 'sc-diagnostics-mono',
-				text: 'No open Markdown views',
+				text: diagnostics.noOpenMarkdownViews,
 			});
 		} else {
 			this.renderTable(
 				pathSection,
-				['Leaf path', 'Applied class', 'Rule'],
+				[diagnostics.headers.leafPath, diagnostics.headers.appliedClass, diagnostics.headers.rule],
 				snapshot.notePath.map((row) => [
-					row.leafPath || '(unsaved)',
+					row.leafPath || diagnostics.unsaved,
 					row.appliedClass ?? '\u2014',
 					row.matchedRuleId ?? '\u2014',
 				]),
@@ -626,6 +646,7 @@ export class SettingsTab extends PluginSettingTab {
 		headers: string[],
 		rows: string[][],
 	): void {
+		const diagnostics = t().settings.diagnostics;
 		const table = container.createEl('table', {
 			cls: 'sc-diagnostics-table',
 		});
@@ -639,15 +660,15 @@ export class SettingsTab extends PluginSettingTab {
 			const tr = tbody.createEl('tr');
 			for (const cell of row) {
 				const td = tr.createEl('td');
-				if (cell === 'resolved') {
+				if (cell === diagnostics.resolved) {
 					td.createSpan({
 						cls: 'sc-diagnostics-ok',
 						text: cell,
 					});
 				} else if (
 					cell !== '\u2014' &&
-					(cell.startsWith('File not found') ||
-						cell === 'unresolved')
+					(cell.startsWith(diagnostics.fileNotFound('')) ||
+						cell === diagnostics.unresolved)
 				) {
 					td.createSpan({
 						cls: 'sc-diagnostics-error',

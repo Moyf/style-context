@@ -24,3 +24,7 @@ export function normalizePath(path: string): string {
 		.replace(/\/+/g, '/')
 		.replace(/^\/|\/$/g, '');
 }
+
+export function getLanguage(): string {
+	return 'en';
+}

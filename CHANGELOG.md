@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-07-26
+
+### 🚀 Added
+
+- **Localized interface**: Translate commands, notices, settings, validation, and diagnostics into English, Simplified Chinese, Traditional Chinese, and Japanese.
+
+### ⚡ Changed
+
+- **Minimum Obsidian version**: Require 1.8.7 to use Obsidian's supported language API.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **界面本地化**：为命令、通知、设置、校验提示和诊断提供英文、简体中文、繁体中文与日语翻译。
+
+### ⚡ 变更
+
+- **最低 Obsidian 版本**：升级至 1.8.7，以使用 Obsidian 支持的语言 API。
+
+</details>
+
+---
+
 ## [0.1.1] - 2026-07-25
 
 ### 🐛 Fixed

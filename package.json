@@ -1,6 +1,6 @@
 {
   "name": "style-context",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Publishes Obsidian runtime state (theme, note path rules, vault resources) as CSS classes and variables.",
   "main": "main.js",
   "private": true,
