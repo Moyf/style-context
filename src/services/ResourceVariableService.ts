@@ -1,6 +1,5 @@
 import type { Plugin } from 'obsidian';
 import { TFile, normalizePath } from 'obsidian';
-import { LEGACY_RESOURCE_VAR_PREFIX } from '../constants';
 import type { StyleContextSettings, ResourceRule } from '../types';
 
 export interface ResourceResolution {
@@ -99,23 +98,6 @@ export class ResourceVariableService {
 			root.style.removeProperty(prop);
 		}
 		this.setVars.clear();
-		// Back-compat sweep: remove legacy --sc-resource-* vars left by
-		// earlier 0.0.x builds that auto-prefixed the variable name.
-		this.sweepLegacyVars(root);
-	}
-
-	private sweepLegacyVars(root: HTMLElement): void {
-		const style = root.style;
-		const toRemove: string[] = [];
-		for (let i = 0; i < style.length; i++) {
-			const name = style.item(i);
-			if (name.startsWith(LEGACY_RESOURCE_VAR_PREFIX)) {
-				toRemove.push(name);
-			}
-		}
-		for (const name of toRemove) {
-			style.removeProperty(name);
-		}
 	}
 
 	/**

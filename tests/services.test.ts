@@ -84,11 +84,15 @@ describe('ResourceVariableService', () => {
 			],
 		});
 		const service = new ResourceVariableService(plugin as never, () => currentSettings);
+		document.documentElement.style.setProperty('--external-variable', 'keep-me');
 
 		service.enable();
 		expect(document.documentElement.style.getPropertyValue('--hero-image')).toContain(
 			'app://vault/assets/Hero.PNG',
 		);
+		expect(
+			document.documentElement.style.getPropertyValue('--external-variable'),
+		).toBe('keep-me');
 		expect(service.current()).toEqual([
 			expect.objectContaining({ variableName: '--hero-image', resolved: true }),
 			expect.objectContaining({
@@ -100,6 +104,9 @@ describe('ResourceVariableService', () => {
 
 		service.disable();
 		expect(document.documentElement.style.getPropertyValue('--hero-image')).toBe('');
+		expect(
+			document.documentElement.style.getPropertyValue('--external-variable'),
+		).toBe('keep-me');
 		service.enable();
 		expect(vault.on).toHaveBeenCalledTimes(2);
 	});
