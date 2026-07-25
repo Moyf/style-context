@@ -1,0 +1,9 @@
+{
+  "id": "style-context",
+  "name": "Style Context",
+  "version": "0.0.1",
+  "minAppVersion": "1.7.2",
+  "description": "Publishes Obsidian runtime state (theme, note path rules, vault resources) as CSS classes and variables.",
+  "author": "Moyf",
+  "isDesktopOnly": false
+}

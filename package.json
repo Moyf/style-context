@@ -1,0 +1,40 @@
+{
+  "name": "style-context",
+  "version": "0.0.1",
+  "description": "Publishes Obsidian runtime state (theme, note path rules, vault resources) as CSS classes and variables.",
+  "main": "main.js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "build:local": "npm run build && npm run copy-to-local",
+    "copy-to-local": "node scripts/copy-to-local.mjs",
+    "version": "node scripts/version-bump.mjs",
+    "changelog:u": "conventional-changelog -p angular -i CHANGELOG.md -s -u",
+    "release:pre": "npm run build && npm run version && npm run changelog:u",
+    "release:tag": "node scripts/release-tag.mjs",
+    "lint": "eslint --config eslint.obsidian.mjs \"src/**/*.ts\" \"main.ts\"",
+    "lint:fix": "eslint --config eslint.obsidian.mjs --fix \"src/**/*.ts\" \"main.ts\"",
+    "lint:obsidian": "eslint --config eslint.obsidian.mjs \"src/**/*.ts\" \"main.ts\""
+  },
+  "keywords": [
+    "obsidian-plugin"
+  ],
+  "author": "Moyf",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/json": "^2.0.1",
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "builtin-modules": "^4.0.0",
+    "esbuild": "0.20.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-obsidianmd": "^0.1.0",
+    "obsidian": "latest",
+    "tslib": "2.6.0",
+    "typescript": "5.4.5",
+    "typescript-eslint": "^8.65.0"
+  }
+}
