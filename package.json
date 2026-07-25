@@ -24,7 +24,7 @@
   "author": "Moyf",
   "license": "MIT",
   "devDependencies": {
-    "@eslint/json": "^2.0.1",
+    "@eslint/json": "^0.14.0",
     "@types/node": "^20.11.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
