@@ -5,3 +5,5 @@ main.js.map
 *.log
 .DS_Store
 .env
+/.omo
+/.agents

@@ -37,8 +37,8 @@ export class SettingsTab extends PluginSettingTab {
 		containerEl.empty();
 		this.rulePreviewTiles.clear();
 
-		this.renderResourceGroup(containerEl);
 		this.renderGeneralGroup(containerEl);
+		this.renderResourceGroup(containerEl);
 		this.renderThemeGroup(containerEl);
 		this.renderNotePathGroup(containerEl);
 		this.renderDiagnosticsSection(containerEl);

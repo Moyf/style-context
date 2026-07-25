@@ -25,7 +25,7 @@
   "keywords": [
     "obsidian-plugin"
   ],
-  "author": "Moyf",
+  "author": "Moy",
   "license": "MIT",
   "devDependencies": {
     "@eslint/json": "^0.14.0",
