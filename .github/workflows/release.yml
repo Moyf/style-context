@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and create release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the tagged source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify the tag matches the plugin version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+
+          const tag = process.env.RELEASE_TAG;
+          const packageVersion = JSON.parse(readFileSync('package.json', 'utf8')).version;
+          const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
+          const versions = JSON.parse(readFileSync('versions.json', 'utf8'));
+          const manifestVersion = manifest.version;
+          const numericSemVer = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+
+          if (!numericSemVer.test(tag)) {
+            throw new Error(`Tag "${tag}" must be a numeric SemVer version without a v prefix.`);
+          }
+
+          if (tag !== packageVersion || tag !== manifestVersion) {
+            throw new Error(
+              `Tag ${tag} must match package.json (${packageVersion}) and manifest.json (${manifestVersion}).`,
+            );
+          }
+
+          if (versions[tag] !== manifest.minAppVersion) {
+            throw new Error(
+              `versions.json must map ${tag} to minAppVersion ${manifest.minAppVersion}.`,
+            );
+          }
+          NODE
+
+      - name: Run release checks and build assets
+        run: npm run check
+
+      - name: Extract release notes from CHANGELOG
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/extract-release-notes.mjs "$RELEASE_TAG" > release-notes.md
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/main.js
+            dist/manifest.json
+            dist/styles.css
+
+      - name: Create draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --draft \
+            --notes-file release-notes.md \
+            dist/main.js dist/manifest.json dist/styles.css
