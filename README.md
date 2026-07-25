@@ -6,6 +6,8 @@ English | [中文文档](#样式上下文)
 
 An Obsidian plugin that publishes runtime context as CSS classes and variables. It turns things like your current theme and vault image paths into predictable hooks for your own custom CSS snippets.
 
+![demo](assets/demo.webp)  
+
 > This plugin does **not** generate or inject actual CSS styles. It only publishes context/state.  
 > You stay in full control of styling. You'll need [css snippets](https://obsidian.md/help/snippets) to actually style things.
 
@@ -15,14 +17,14 @@ Two practical use cases:
 
 1. Map vault images to stable CSS variables, so you can use local images in `background-image` and related properties.
 
-> [!note]
-> Why this matters:
+> [!note]  
+> **Why this matters**:  
 > in Obsidian, vault resource URLs are regenerated and can change across reloads, which makes direct `url()` usage unreliable. This plugin gives you stable variable references instead.
 
 2. Add CSS that only applies to a specific theme, so you can patch/tune theme details without editing the theme's original CSS.
 
-> [!note]
-> Why this matters:
+> [!note]  
+> **Why this matters**:  
 > many themes look great overall, but still have details you may want to tweak. If the theme does not expose Style Settings options, targeted CSS overrides are often the safest approach. Editing theme files directly is fragile because updates can overwrite your changes.
 
 ## How it works
@@ -40,6 +42,8 @@ Click the preview image on the left to quickly copy the variable reference:
 
 > ![ehe](assets/sticker-moy-ehe.webp)
 > No more uploading images to the web or pasting long base64 strings just to style a background.
+
+💡 [here](snippets/Moy-Image-Background.css) is a sample snippet that uses the image variable to set image background and top logo for file explorer.
 
 ### Theme context
 
@@ -117,13 +121,13 @@ If you like my plugin design, you can check my other plugins here:
 1. 将仓库内的图像映射为稳定的 CSS 变量，便于在 `background-image` 等属性中引用。
 
 > [!note]
-> **为什么有这种需求？**
+> **为什么有这种需求？**  
 > obsidian 的 CSS 中如果想使用图片素材，只能用 `url()` 来引用网络链接，因为仓库内的图像 URL 每次都会变化。有了这个插件，你就可以直接用仓库内的图片设置背景图了。
 
 2. 针对某个特定主题添加样式，用来修正/调整那些主题本身没提供的样式，同时不用修改主题本身的 CSS 文件。
 
 > [!note]
-> **为什么有这种需求？**
+> **为什么有这种需求？**  
 > 很多主题可能本身很好看，但又有一些你想自己调节的地方。如果主题没提供 StyleSettings 设置，就只能自己写 CSS 覆盖，这时候，「只在特定主题生效的 CSS」就很关键。
 > 为什么不直接改主题？因为主题本身一旦更新，你做的改动就会丢失，所以补丁式的 CSS 才是最稳妥的做法。
 
@@ -143,6 +147,8 @@ Obsidian 每次重载仓库时都会重新生成资源 URL，因此原始路径�
 
 > ![ehe](assets/sticker-moy-ehe.webp)  
 > 再也不用想着先把图片传到往上，或者插入冗长的 base64 编码了  
+
+💡 [点我查看](snippets/Moy-Image-Background.css) 示例 CSS 样式代码片段，用于给文件资源管理器设置背景图和顶部 LOGO。
 
 ### 主题上下文
 

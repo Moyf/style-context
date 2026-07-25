@@ -1,0 +1,25 @@
+.nav-files-container {
+    /* 👇🏻 Change this to your desired background image variable */
+    background-image: var(--image-1);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-position-x: 50%;
+}
+
+div[data-type="file-explorer"] > div.nav-files-container::before {
+    content: "";
+    /* 👇🏻 Change this to your desired logo image variable */
+    background-image: var(--outer-wilds-logo);
+    background-position: center center;
+    background-attachment: scroll;
+    background-repeat: no-repeat;
+    background-size: auto 120px;
+    position: relative;
+    display: block;
+    max-height: 180px;
+    height: 100%;
+    width: 100%;
+    -webkit-mask-image: linear-gradient(to top, transparent 5%, black 20%, black 75%, transparent 95%);
+    mask-image: linear-gradient(to top, transparent 5%, black 20%, black 75%, transparent 95%);
+}
