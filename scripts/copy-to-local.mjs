@@ -1,43 +1,94 @@
-import { copyFileSync, mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, isAbsolute, join, parse, resolve } from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const scriptDirectory = dirname(fileURLToPath(import.meta.url));
+const repositoryDirectory = resolve(scriptDirectory, "..");
+const manifestPath = join(repositoryDirectory, "dist", "manifest.json");
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+const discoveredEnvironment = findEnvironmentValue("VAULT_PATH", repositoryDirectory);
+const configuredVaultPath = process.env.VAULT_PATH?.trim() || discoveredEnvironment?.value;
 
-// Read plugin id from dist/manifest.json
-const manifestPath = join(__dirname, '..', 'dist', 'manifest.json');
-const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-const pluginId = manifest.id;
-
-// Local Obsidian vault plugin path
-const localPluginPath = join('H:', 'Docs', 'Obsinote', '.obsidian', 'plugins', pluginId);
-
-// Ensure target directory exists
-if (!existsSync(localPluginPath)) {
-    mkdirSync(localPluginPath, { recursive: true });
+if (!configuredVaultPath) {
+  throw new Error(
+    "VAULT_PATH is not set. Add it to the environment or to a .env file in this repository or a parent directory.",
+  );
 }
 
-// Copy artifacts (from dist/)
-const filesToCopy = ['main.js', 'manifest.json', 'styles.css'];
+const vaultPath = isAbsolute(configuredVaultPath)
+  ? configuredVaultPath
+  : resolve(discoveredEnvironment?.directory ?? repositoryDirectory, configuredVaultPath);
+const configDirectory = join(vaultPath, ".obsidian");
 
-for (const file of filesToCopy) {
-    const src = join(__dirname, '..', 'dist', file);
-    const dest = join(localPluginPath, file);
+if (!existsSync(vaultPath)) {
+  throw new Error(`Vault directory does not exist: ${vaultPath}`);
+}
+if (!existsSync(configDirectory)) {
+  throw new Error(`Vault directory does not contain .obsidian: ${vaultPath}`);
+}
 
-    if (existsSync(src)) {
-        copyFileSync(src, dest);
-        console.log(`\u2713 Copied ${file} to local plugins`);
-    } else if (file !== 'styles.css') {
-        console.warn(`\u26a0 Warning: ${file} not found in dist/`);
+const pluginDirectory = join(configDirectory, "plugins", manifest.id);
+mkdirSync(pluginDirectory, { recursive: true });
+
+for (const filename of ["main.js", "manifest.json", "styles.css"]) {
+  const source = join(repositoryDirectory, "dist", filename);
+  if (!existsSync(source)) {
+    if (filename !== "styles.css") {
+      throw new Error(`Build output is missing: ${source}`);
     }
+    continue;
+  }
+  copyFileSync(source, join(pluginDirectory, filename));
 }
 
-// Create .hotreload file if missing (triggers Hot Reload plugin)
-const hotreloadPath = join(localPluginPath, '.hotreload');
-if (!existsSync(hotreloadPath)) {
-    writeFileSync(hotreloadPath, '');
-    console.log(`\u2713 Created .hotreload file`);
+const hotReloadMarker = join(pluginDirectory, ".hotreload");
+if (!existsSync(hotReloadMarker)) {
+  writeFileSync(hotReloadMarker, "");
 }
 
-console.log(`\n\u2705 Build and copy completed for plugin: ${pluginId}`);
-console.log(`\ud83d\udcc1 Target: ${localPluginPath}`);
+console.log(`Copied ${manifest.id} to ${pluginDirectory}`);
+
+function findEnvironmentValue(key, startDirectory) {
+  let directory = resolve(startDirectory);
+  const root = parse(directory).root;
+
+  while (true) {
+    const environmentPath = join(directory, ".env");
+    if (existsSync(environmentPath)) {
+      const value = parseEnvironmentValue(readFileSync(environmentPath, "utf8"), key);
+      if (value !== undefined) {
+        return { directory, value };
+      }
+    }
+    if (directory === root) {
+      return null;
+    }
+    directory = dirname(directory);
+  }
+}
+
+function parseEnvironmentValue(contents, key) {
+  for (const line of contents.split(/\r?\n/u)) {
+    const match = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/u);
+    if (!match || match[1] !== key) {
+      continue;
+    }
+
+    const rawValue = match[2].trim();
+    if (
+      (rawValue.startsWith('"') && rawValue.endsWith('"')) ||
+      (rawValue.startsWith("'") && rawValue.endsWith("'"))
+    ) {
+      return rawValue.slice(1, -1);
+    }
+    return rawValue.replace(/\s+#.*$/u, "").trim();
+  }
+  return undefined;
+}

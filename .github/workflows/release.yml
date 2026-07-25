@@ -79,12 +79,11 @@ jobs:
             dist/manifest.json
             dist/styles.css
 
-      - name: Create draft GitHub release
+      - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
             --title "$GITHUB_REF_NAME" \
-            --draft \
             --notes-file release-notes.md \
             dist/main.js dist/manifest.json dist/styles.css

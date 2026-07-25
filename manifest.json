@@ -1,7 +1,7 @@
 {
   "id": "style-context",
   "name": "Style Context",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "minAppVersion": "1.7.2",
   "description": "An Obsidian plugin that publishes runtime context as CSS classes and variables. It turns things like your current theme and vault image paths into predictable hooks for your own custom CSS snippets.",
   "author": "Moy",

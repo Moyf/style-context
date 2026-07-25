@@ -90,7 +90,7 @@ Because I use this plugin heavily every day, I am also the first person affected
 Small convenience trick: if you place a `.env` file in the plugin folder (or its parent) with:
 
 ```env
-VAULT_PATH=your/vault/path
+VAULT_PATH=C:/path/to/your/ObsidianVault
 ```
 
 you can run `npm run build:local` to build and auto-copy into your vault.
@@ -196,7 +196,7 @@ Obsidian 每次重载仓库时都会重新生成资源 URL，因此原始路径�
 ## 构建
 我的插件有一个小技巧：只要你在插件文件夹（或者上层文件夹）放一个 `.env` 文件，里面写上：
 ```
-VAULT_PATH=your/vault/path
+VAULT_PATH=C:/path/to/your/ObsidianVault
 ```
 
 那么你就可以直接使用 `npm run build:local` 来构建并自动拷贝到你的仓库内 `;)`
