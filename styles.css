@@ -119,11 +119,11 @@
 }
 
 /* Match-mode dropdown on path rule rows — fixed width so switching
-   between Folder/Keyword doesn't cause layout shift. Use !important to
-   beat Obsidian's global `.dropdown { width: 100% }` rule. */
-.sc-path-rule-row .dropdown {
-	flex: 0 0 100px !important;
-	width: 100px !important;
+   between Folder/Keyword doesn't cause layout shift. The extra
+   .setting-item selector overrides Obsidian's global .dropdown width. */
+.setting-item.sc-path-rule-row .dropdown {
+	flex: 0 0 100px;
+	width: 100px;
 	max-width: 100px;
 }
 

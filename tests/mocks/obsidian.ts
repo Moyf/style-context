@@ -12,7 +12,7 @@ export class MarkdownView {
 	file: TFile | null;
 	containerEl: HTMLElement;
 
-	constructor(file: TFile | null, containerEl = document.createElement('div')) {
+	constructor(file: TFile | null, containerEl = document.body.cloneNode(false) as HTMLElement) {
 		this.file = file;
 		this.containerEl = containerEl;
 	}

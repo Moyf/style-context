@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.1] - 2026-07-25
+
+### 🐛 Fixed
+
+- **Release validation**: Check manifest metadata, package dependencies, and stylesheet declarations before a release.
+- **Build dependencies**: Use Node's built-in module list instead of the redundant `builtin-modules` package.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **发布校验**：在发布前检查 manifest 元数据、package 依赖和样式表声明。
+- **构建依赖**：改用 Node 内置模块列表，移除冗余的 `builtin-modules` 包。
+
+</details>
+
+---
+
 ## [0.1.0] - 2026-07-25
 
 ### 🚀 Added

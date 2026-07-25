@@ -1,6 +1,6 @@
 {
   "name": "style-context",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Publishes Obsidian runtime state (theme, note path rules, vault resources) as CSS classes and variables.",
   "main": "main.js",
   "private": true,
@@ -17,10 +17,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:types": "tsc --noEmit -p tsconfig.test.json",
-    "check": "npm run test:types && npm run lint:obsidian && npm test && npm run build",
-    "lint": "eslint --config eslint.obsidian.mjs \"src/**/*.ts\" \"main.ts\"",
-    "lint:fix": "eslint --config eslint.obsidian.mjs --fix \"src/**/*.ts\" \"main.ts\"",
-    "lint:obsidian": "eslint --config eslint.obsidian.mjs \"src/**/*.ts\" \"main.ts\""
+    "check": "npm run test:types && npm run lint && npm test && npm run build",
+    "lint": "npm run lint:obsidian && npm run lint:css",
+    "lint:fix": "eslint --config eslint.obsidian.mjs --fix \"src/**/*.ts\" \"main.ts\" \"esbuild.config.mjs\" \"manifest.json\" \"package.json\" && stylelint --fix \"styles.css\"",
+    "lint:obsidian": "eslint --config eslint.obsidian.mjs \"src/**/*.ts\" \"main.ts\" \"esbuild.config.mjs\" \"manifest.json\" \"package.json\"",
+    "lint:css": "stylelint \"styles.css\""
   },
   "keywords": [
     "obsidian-plugin"
@@ -32,12 +33,12 @@
     "@types/node": "^20.11.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
-    "builtin-modules": "^4.0.0",
     "esbuild": "0.20.0",
     "eslint": "^9.0.0",
     "eslint-plugin-obsidianmd": "^0.1.0",
     "jsdom": "^29.1.1",
     "obsidian": "latest",
+    "stylelint": "^17.14.1",
     "tslib": "2.6.0",
     "typescript": "5.4.5",
     "typescript-eslint": "^8.65.0",
