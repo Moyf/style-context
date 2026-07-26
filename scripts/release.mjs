@@ -2,7 +2,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import {
 	assertNextVersion,
@@ -22,7 +22,13 @@ const REQUIRED_ASSETS = ['main.js', 'manifest.json', 'styles.css'];
 const POLL_INTERVAL_MS = 3000;
 const RUN_DISCOVERY_ATTEMPTS = 40;
 const RELEASE_DISCOVERY_ATTEMPTS = 20;
-const NPM_COMMAND = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const NPM_CLI = resolve(
+	dirname(process.execPath),
+	'node_modules',
+	'npm',
+	'bin',
+	'npm-cli.js',
+);
 
 function fail(message) {
 	throw new Error(`Release failed: ${message}`);
@@ -57,7 +63,7 @@ function gh(args, options) {
 }
 
 function npm(args, options) {
-	return run(NPM_COMMAND, args, options);
+	return run(process.execPath, [NPM_CLI, ...args], options);
 }
 
 function sleep(milliseconds) {
