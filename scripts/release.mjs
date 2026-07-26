@@ -157,7 +157,7 @@ function assertReleasedMetadata(version, sources, changelog, location) {
 		fail(`Release metadata at ${location} is not synchronized for ${version}.`);
 	}
 
-	const heading = new RegExp(`^## \\[${version.replaceAll('.', '\\\\.')}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm');
+	const heading = new RegExp(`^## \\[${version.replaceAll('.', '\\.')}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm');
 	if (!heading.test(changelog)) {
 		fail(`CHANGELOG.md at ${location} has no dated ${version} entry.`);
 	}
