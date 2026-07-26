@@ -99,6 +99,12 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 
 you can run `npm run build:local` to build and auto-copy into your vault.
 
+## Release
+
+After writing complete notes under `## [Unreleased]`, run `npm run release -- 0.3.0`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- 0.3.0` to validate without changing anything.
+
+If a version was already committed and annotated locally, but has not reached GitHub, use `npm run release:resume -- 0.3.0`. It validates the local tag's immutable metadata and changelog, runs the full check, fast-forwards the default branch and tag atomically, then performs the same CI and asset verification. Use `npm run release:resume:dry-run -- 0.3.0` to check this recovery path without changes. This is recovery only; ordinary releases must use `release`.
+
 ## Support
 
 Nah, this is a small utility. No sponsorship needed, enjoy it <3
@@ -206,6 +212,12 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 ```
 
 那么你就可以直接使用 `npm run build:local` 来构建并自动拷贝到你的仓库内 `;)`
+
+## 发布
+
+在 `## [Unreleased]` 下写完完整更新说明后，运行 `npm run release -- 0.3.0`。该命令要求默认分支干净且已和远端同步；它会同步所有版本元数据、将 Changelog 条目提升为正式版本、执行检查、提交、创建并原子推送 tag，最后等待 GitHub Actions 验证正式 Release 与三个插件资产。使用 `npm run release:dry-run -- 0.3.0` 可只做校验，不修改任何内容。
+
+若版本已在本地提交并创建注释 tag，但尚未到达 GitHub，使用 `npm run release:resume -- 0.3.0`。它会校验本地 tag 中不可变的版本元数据与更新日志、执行完整检查，再原子插入默认分支并推送 tag，之后执行同样的 CI 和资产验证。可用 `npm run release:resume:dry-run -- 0.3.0` 不改动任何内容地校验此恢复路径。这只用于恢复中断的发布；正常发应始终使用 `release`。
 
 ## 赞助
 Nah，我不觉得这种小工具有什么值得赞助的，用得愉快！ <3
