@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] - 2026-07-26
+
+### 🐛 Fixed
+
+- **Startup image variables**: Re-resolve vault image rules after the workspace layout is ready, so CSS variables remain available after restarting Obsidian.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **启动时的图片变量**：在工作区布局就绪后重新解析库内图片规则，确保重启 Obsidian 后 CSS 变量仍会生效。
+
+</details>
+
+---
+
 ## [0.2.0] - 2026-07-26
 
 ### 🚀 Added

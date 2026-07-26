@@ -110,6 +110,47 @@ describe('ResourceVariableService', () => {
 		service.enable();
 		expect(vault.on).toHaveBeenCalledTimes(2);
 	});
+
+	it('re-resolves resources after the initial workspace layout is ready', () => {
+		const files = new Map<string, TFile>();
+		let onLayoutReady: (() => void) | undefined;
+		const workspace = {
+			onLayoutReady: vi.fn((callback: () => void) => {
+				onLayoutReady = callback;
+			}),
+		};
+		const vault = {
+			on: createEventSource(new Map()),
+			getAbstractFileByPath: vi.fn((path: string) => files.get(path) ?? null),
+			getResourcePath: vi.fn((file: TFile) => `app://vault/${file.path}`),
+		};
+		const plugin = { app: { vault, workspace }, registerEvent: vi.fn() };
+		const service = new ResourceVariableService(
+			plugin as never,
+			() =>
+				settings({
+					resourceRules: [
+						{
+							id: 'hero',
+							filePath: 'assets/Hero.PNG',
+							variableName: '--hero-image',
+							enabled: true,
+						},
+					],
+				}),
+		);
+
+		service.enable();
+		expect(document.documentElement.style.getPropertyValue('--hero-image')).toBe('');
+
+		files.set('assets/Hero.PNG', new TFile('assets/Hero.PNG'));
+		onLayoutReady?.();
+
+		expect(document.documentElement.style.getPropertyValue('--hero-image')).toContain(
+			'app://vault/assets/Hero.PNG',
+		);
+		expect(workspace.onLayoutReady).toHaveBeenCalledTimes(1);
+	});
 });
 
 describe('NotePathContextService', () => {

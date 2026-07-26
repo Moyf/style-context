@@ -38,13 +38,14 @@ export class ResourceVariableService {
 
 		if (!this.listenersRegistered) {
 			this.listenersRegistered = true;
-			const { vault } = this.plugin.app;
+			const { vault, workspace } = this.plugin.app;
 			this.plugin.registerEvent(
 				vault.on('rename', () => this.apply()),
 			);
 			this.plugin.registerEvent(
 				vault.on('delete', () => this.apply()),
 			);
+			workspace?.onLayoutReady(() => this.apply());
 		}
 
 		this.apply();
