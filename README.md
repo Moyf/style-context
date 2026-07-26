@@ -99,6 +99,10 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 
 you can run `npm run build:local` to build and auto-copy into your vault.
 
+## Release
+
+After writing complete notes under `## [Unreleased]`, run `npm run release -- 0.3.0`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- 0.3.0` to validate without changing anything.
+
 ## Support
 
 Nah, this is a small utility. No sponsorship needed, enjoy it <3
@@ -206,6 +210,10 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 ```
 
 那么你就可以直接使用 `npm run build:local` 来构建并自动拷贝到你的仓库内 `;)`
+
+## 发布
+
+在 `## [Unreleased]` 下写完完整更新说明后，运行 `npm run release -- 0.3.0`。该命令要求默认分支干净且已和远端同步；它会同步所有版本元数据、将 Changelog 条目提升为正式版本、执行检查、提交、创建并原子推送 tag，最后等待 GitHub Actions 验证正式 Release 与三个插件资产。使用 `npm run release:dry-run -- 0.3.0` 可只做校验，不修改任何内容。
 
 ## 赞助
 Nah，我不觉得这种小工具有什么值得赞助的，用得愉快！ <3
