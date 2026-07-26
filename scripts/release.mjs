@@ -22,6 +22,7 @@ const REQUIRED_ASSETS = ['main.js', 'manifest.json', 'styles.css'];
 const POLL_INTERVAL_MS = 3000;
 const RUN_DISCOVERY_ATTEMPTS = 40;
 const RELEASE_DISCOVERY_ATTEMPTS = 20;
+const NPM_COMMAND = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 function fail(message) {
 	throw new Error(`Release failed: ${message}`);
@@ -53,6 +54,10 @@ function git(args, options) {
 
 function gh(args, options) {
 	return run('gh', args, options);
+}
+
+function npm(args, options) {
+	return run(NPM_COMMAND, args, options);
 }
 
 function sleep(milliseconds) {
@@ -342,7 +347,7 @@ async function main() {
 		return;
 	}
 	if (resume) {
-		run('npm', ['run', 'check']);
+		npm(['run', 'check']);
 		git([
 			'push',
 			'--atomic',
@@ -358,7 +363,7 @@ async function main() {
 	}
 
 	applyReleaseMetadata(preflight.metadata, preflight.changelog);
-	run('npm', ['run', 'check']);
+	npm(['run', 'check']);
 	git(['add', ...METADATA_FILES]);
 	git(['commit', '-m', `build: ${version}`]);
 	git(['tag', '-a', version, '-m', `Release ${version}`]);
