@@ -4,12 +4,11 @@ English | [中文文档](#样式上下文)
 
 ![Obsidian Download](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=Downloads&query=%24%5B%22style-context%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)  ![Total Downloads](https://img.shields.io/github/downloads/Moyf/style-context/total?style=flat&label=Total%20Downloads) ![GitHub Issues](https://img.shields.io/github/issues/Moyf/style-context?style=flat&label=Issues) ![GitHub Last Commit](https://img.shields.io/github/last-commit/Moyf/style-context?style=flat&label=Last%20Commit)
 
-An Obsidian plugin that publishes runtime context as CSS classes and variables. It turns things like your current theme and vault image paths into predictable hooks for your own custom CSS snippets.
+An Obsidian plugin that publishes runtime context as CSS classes and variables. It turns things like your current theme and vault image paths into predictable hooks for your own custom CSS snippets, and can optionally apply a vault image variable as a canvas background.
 
 ![demo](assets/demo.webp)  
 
-> This plugin does **not** generate or inject actual CSS styles. It only publishes context/state.  
-> You stay in full control of styling. You'll need [css snippets](https://obsidian.md/help/snippets) to actually style things.
+> The theme and note-path modules only publish context/state. The optional background image module is a built-in convenience layer; all of its visual options remain configurable in the plugin settings.
 
 ## What problems does it solve?
 
@@ -44,6 +43,12 @@ Click the preview image on the left to quickly copy the variable reference:
 > No more uploading images to the web or pasting long base64 strings just to style a background.
 
 💡 [here](snippets/Moy-Image-Background.css) is a sample snippet that uses the image variable to set image background and top logo for file explorer.
+
+### Built-in background image
+
+The **Background image** settings group can use any enabled local image variable as a fixed canvas background. Enter a variable such as `--image-1`, or click the shuffle button to choose one of your enabled image variables at random.
+
+The image layer has its own opacity and blend mode, so it does not make notes or controls translucent. Size, position, repeat, and attachment are also available as common background options. Disable the toggle to remove the injected layer and restore the theme's original canvas styles.
 
 ### Theme context
 
@@ -117,10 +122,9 @@ If you like my plugin design, you can check my other plugins here:
 
 # 样式上下文
 
-一个面向 Obsidian 的 CSS 变量辅助插件。它会把 Obsidian 的特定上下文（当前主题、 库内图片路径）转换为 CSS 类名与变量，供你的用户自定义 CSS 片段使用。
+一个面向 Obsidian 的 CSS 变量辅助插件。它会把 Obsidian 的特定上下文（当前主题、库内图片路径）转换为 CSS 类名与变量，也可以把图片变量直接应用为画布背景。
 
-> 本插件**不会**生成或注入 CSS 具体样式。它只负责发布状态；样式本身仍由你自己的 CSS 片段控制。
-> 你需要借助 [CSS 样式代码片段](https://obsidian.md/zh/help/snippets) 来做添加实际的样式。
+> 主题和笔记路径模块只负责发布状态；可选的背景图片模块提供了内置的便捷样式层，所有视觉选项都可以在插件设置中调整。
 
 ## 它解决什么问题？
 举个例子，两大最实用的功能：
@@ -155,6 +159,12 @@ Obsidian 每次重载仓库时都会重新生成资源 URL，因此原始路径�
 > 再也不用想着先把图片传到往上，或者插入冗长的 base64 编码了  
 
 💡 [点我查看](snippets/Moy-Image-Background.css) 示例 CSS 样式代码片段，用于给文件资源管理器设置背景图和顶部 LOGO。
+
+### 内置背景图片
+
+设置中的「背景图片」可以直接使用任意已启用的本地图片变量作为固定画布背景。填写 `--image-1` 这样的变量名，或点击输入框旁的随机按钮，从已启用的图片变量中随机选择。
+
+背景图层拥有独立的不透明度和混合模式，不会让笔记或控件一起变透明；同时提供尺寸、位置、重复方式和附着方式等常用选项。关闭开关即可移除内置图层，恢复主题原本的画布样式。
 
 ### 主题上下文
 

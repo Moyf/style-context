@@ -7,6 +7,7 @@ export interface Messages {
 	notices: {
 		styleContextCopied: string;
 		resourceVariablesReparsed: string;
+		noImageVariables: string;
 		copied: (value: string) => string;
 	};
 	settings: {
@@ -16,6 +17,7 @@ export interface Messages {
 			themeContext: string;
 			notePathRules: string;
 			localImageVariable: string;
+			backgroundImage: string;
 			diagnostics: string;
 		};
 		labels: {
@@ -26,6 +28,14 @@ export interface Messages {
 			liveStatus: string;
 			folder: string;
 			keyword: string;
+			publishBackgroundImage: string;
+			backgroundVariable: string;
+			backgroundOpacity: string;
+			backgroundBlendMode: string;
+			backgroundSize: string;
+			backgroundPosition: string;
+			backgroundRepeat: string;
+			backgroundAttachment: string;
 		};
 		descriptions: {
 			publishThemeClass: string;
@@ -35,6 +45,14 @@ export interface Messages {
 			themePrefixBefore: string;
 			themePrefixExample: string;
 			currentThemeClass: string;
+			publishBackgroundImage: string;
+			backgroundVariable: string;
+			backgroundOpacity: string;
+			backgroundBlendMode: string;
+			backgroundSize: string;
+			backgroundPosition: string;
+			backgroundRepeat: string;
+			backgroundAttachment: string;
 		};
 		placeholders: {
 			themeClassPrefix: string;
@@ -43,6 +61,7 @@ export interface Messages {
 			classNames: string;
 			vaultFilePath: string;
 			cssVariable: string;
+			backgroundVariable: string;
 		};
 		buttons: {
 			addPathRule: string;
@@ -50,6 +69,7 @@ export interface Messages {
 			deleteRule: string;
 			refresh: string;
 			copySnapshot: string;
+			randomBackgroundVariable: string;
 		};
 		tooltips: {
 			clickToCopy: (value: string) => string;

@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS, type StyleContextSettings } from '../src/types';
 import { ThemeContextService } from '../src/services/ThemeContextService';
 import { ResourceVariableService } from '../src/services/ResourceVariableService';
 import { NotePathContextService } from '../src/services/NotePathContextService';
+import { BackgroundImageService } from '../src/services/BackgroundImageService';
 
 type ListenerMap = Map<string, () => void>;
 
@@ -22,9 +23,90 @@ function settings(
 
 beforeEach(() => {
 	document.documentElement.removeAttribute('style');
+	document.getElementById('style-context-background-image')?.remove();
+	document.body.classList.remove('sc-style-context-background-image');
 	Object.defineProperty(globalThis, 'activeDocument', {
 		configurable: true,
 		value: document,
+	});
+});
+
+describe('BackgroundImageService', () => {
+	it('renders the selected variable in an isolated, configurable layer', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				enabled: true,
+				variableName: '--image-1',
+				opacity: 0.6,
+				blendMode: 'multiply',
+				size: 'contain',
+				position: 'top right',
+				repeat: 'repeat',
+				attachment: 'scroll',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		const style = document.getElementById('style-context-background-image');
+		expect(style?.textContent).toContain('background-image: var(--image-1)');
+		expect(style?.textContent).toContain('opacity: 0.6');
+		expect(style?.textContent).toContain('mix-blend-mode: multiply');
+		expect(style?.textContent).toContain('background-size: contain');
+		expect(style?.textContent).toContain('background-position: top right');
+		expect(style?.textContent).toContain('background-repeat: repeat');
+		expect(style?.textContent).toContain('background-attachment: scroll');
+		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(true);
+		expect(service.currentVariable()).toBe('--image-1');
+
+		service.disable();
+		expect(document.getElementById('style-context-background-image')).toBeNull();
+		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(false);
+		expect(service.currentVariable()).toBe('');
+	});
+
+	it('does not inject a layer for an empty or invalid variable', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				variableName: 'image-1',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(document.getElementById('style-context-background-image')).toBeNull();
+		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(false);
+	});
+
+	it('sanitizes persisted advanced options before writing CSS', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				variableName: '--image-1',
+				opacity: 4,
+				blendMode: 'not-a-mode' as never,
+				size: 'bad-size' as never,
+				position: 'bad-position' as never,
+				repeat: 'bad-repeat' as never,
+				attachment: 'bad-attachment' as never,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		const css = document.getElementById('style-context-background-image')?.textContent;
+		expect(css).toContain('opacity: 1');
+		expect(css).toContain('mix-blend-mode: normal');
+		expect(css).toContain('background-size: cover');
+		expect(css).toContain('background-position: center');
+		expect(css).toContain('background-repeat: no-repeat');
+		expect(css).toContain('background-attachment: fixed');
 	});
 });
 

@@ -1,6 +1,22 @@
-import { App, Notice, PluginSettingTab, Setting, TFile, normalizePath, setTooltip } from 'obsidian';
+import {
+	App,
+	Notice,
+	PluginSettingTab,
+	Setting,
+	TFile,
+	TextComponent,
+	normalizePath,
+	setTooltip,
+} from 'obsidian';
 import type StyleContextPlugin from '../../main';
-import { DEFAULT_THEME_SLUG } from '../constants';
+import {
+	BACKGROUND_ATTACHMENT_OPTIONS,
+	BACKGROUND_BLEND_MODES,
+	BACKGROUND_POSITION_OPTIONS,
+	BACKGROUND_REPEAT_OPTIONS,
+	BACKGROUND_SIZE_OPTIONS,
+	DEFAULT_THEME_SLUG,
+} from '../constants';
 import { ContextInspector } from '../services/ContextInspector';
 import { FolderSuggest } from '../ui/FolderSuggest';
 import { FileSuggest } from '../ui/FileSuggest';
@@ -14,8 +30,17 @@ import { isImageFile } from '../utils/media';
 import { readThemeName } from '../utils/internals';
 import { themeSlug } from '../utils/slug';
 import { createSettingsGroup } from '../utils/settingsGroup';
+import { pickRandomImageVariable } from '../utils/background';
 import { t } from '../i18n/i18n';
-import type { PathRule, ResourceRule } from '../types';
+import type {
+	BackgroundAttachment,
+	BackgroundBlendMode,
+	BackgroundPosition,
+	BackgroundRepeat,
+	BackgroundSize,
+	PathRule,
+	ResourceRule,
+} from '../types';
 
 const DIAG_REFRESH_MS = 2000;
 
@@ -40,6 +65,7 @@ export class SettingsTab extends PluginSettingTab {
 
 		this.renderGeneralGroup(containerEl);
 		this.renderResourceGroup(containerEl);
+		this.renderBackgroundGroup(containerEl);
 		this.renderThemeGroup(containerEl);
 		this.renderNotePathGroup(containerEl);
 		this.renderDiagnosticsSection(containerEl);
@@ -284,6 +310,175 @@ export class SettingsTab extends PluginSettingTab {
 	// ------------------------------------------------------------------
 	// Resource variables group
 	// ------------------------------------------------------------------
+
+	private renderBackgroundGroup(containerEl: HTMLElement): void {
+		const messages = t();
+		const background = this.plugin.settings.backgroundImage;
+		const group = createSettingsGroup(
+			containerEl,
+			messages.settings.groups.backgroundImage,
+		);
+
+		group.addSetting((setting) => {
+			setting
+				.setName(messages.settings.labels.publishBackgroundImage)
+				.setDesc(messages.settings.descriptions.publishBackgroundImage)
+				.addToggle((toggle) =>
+					toggle
+						.setValue(background.enabled)
+						.onChange(async (value) => {
+							background.enabled = value;
+							await this.persistAndApply();
+						}),
+				);
+		});
+
+		group.addSetting((setting) => {
+			let variableText: TextComponent | null = null;
+			setting
+				.setName(messages.settings.labels.backgroundVariable)
+				.setDesc(messages.settings.descriptions.backgroundVariable)
+				.addText((text) => {
+					variableText = text;
+					text
+						.setPlaceholder(messages.settings.placeholders.backgroundVariable)
+						.setValue(background.variableName)
+						.onChange(async (value) => {
+							const normalized = value.trim();
+							if (
+								normalized.length > 0 &&
+								!isValidCssVarName(normalized)
+							) {
+								this.showInputError(
+									text.inputEl,
+									messages.settings.validation.invalidCssVariableName,
+								);
+								return;
+							}
+							this.clearInputError(text.inputEl);
+							background.variableName = normalized;
+							await this.persistAndApply();
+						});
+				});
+
+			setting.addExtraButton((button) =>
+				button
+					.setIcon('shuffle')
+					.setTooltip(messages.settings.buttons.randomBackgroundVariable)
+					.onClick(async () => {
+						const value = this.pickRandomBackgroundVariable();
+						if (!value) {
+							new Notice(messages.notices.noImageVariables);
+							return;
+						}
+						background.variableName = value;
+						variableText?.setValue(value);
+						if (variableText) {
+							this.clearInputError(variableText.inputEl);
+						}
+						await this.persistAndApply();
+					}),
+			);
+		});
+
+		group.addSetting((setting) => {
+			setting
+				.setName(messages.settings.labels.backgroundOpacity)
+				.setDesc(messages.settings.descriptions.backgroundOpacity)
+				.addSlider((slider) =>
+					slider
+						.setLimits(0, 1, 0.05)
+						.setValue(background.opacity)
+						.setDynamicTooltip()
+						.onChange(async (value) => {
+							background.opacity = value;
+							await this.persistAndApply();
+						}),
+				);
+		});
+
+		this.renderBackgroundDropdown(
+			group,
+			messages.settings.labels.backgroundBlendMode,
+			messages.settings.descriptions.backgroundBlendMode,
+			BACKGROUND_BLEND_MODES,
+			background.blendMode,
+			(value) => {
+				background.blendMode = value as BackgroundBlendMode;
+			},
+		);
+		this.renderBackgroundDropdown(
+			group,
+			messages.settings.labels.backgroundSize,
+			messages.settings.descriptions.backgroundSize,
+			BACKGROUND_SIZE_OPTIONS,
+			background.size,
+			(value) => {
+				background.size = value as BackgroundSize;
+			},
+		);
+		this.renderBackgroundDropdown(
+			group,
+			messages.settings.labels.backgroundPosition,
+			messages.settings.descriptions.backgroundPosition,
+			BACKGROUND_POSITION_OPTIONS,
+			background.position,
+			(value) => {
+				background.position = value as BackgroundPosition;
+			},
+		);
+		this.renderBackgroundDropdown(
+			group,
+			messages.settings.labels.backgroundRepeat,
+			messages.settings.descriptions.backgroundRepeat,
+			BACKGROUND_REPEAT_OPTIONS,
+			background.repeat,
+			(value) => {
+				background.repeat = value as BackgroundRepeat;
+			},
+		);
+		this.renderBackgroundDropdown(
+			group,
+			messages.settings.labels.backgroundAttachment,
+			messages.settings.descriptions.backgroundAttachment,
+			BACKGROUND_ATTACHMENT_OPTIONS,
+			background.attachment,
+			(value) => {
+				background.attachment = value as BackgroundAttachment;
+			},
+		);
+	}
+
+	private renderBackgroundDropdown(
+		group: ReturnType<typeof createSettingsGroup>,
+		name: string,
+		description: string,
+		options: readonly string[],
+		value: string,
+		assign: (value: string) => void,
+	): void {
+		group.addSetting((setting) => {
+			setting
+				.setName(name)
+				.setDesc(description)
+				.addDropdown((dropdown) => {
+					for (const option of options) {
+						dropdown.addOption(option, option);
+					}
+					dropdown.setValue(value).onChange(async (nextValue) => {
+						assign(nextValue);
+						await this.persistAndApply();
+					});
+				});
+		});
+	}
+
+	private pickRandomBackgroundVariable(): string | null {
+		return pickRandomImageVariable(
+			this.plugin.settings.resourceRules,
+			this.plugin.settings.backgroundImage.variableName,
+		);
+	}
 
 	private renderResourceGroup(containerEl: HTMLElement): void {
 		const messages = t();

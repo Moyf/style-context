@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🚀 Added
+
+- **Built-in background image**: Apply an enabled local image variable to the Obsidian canvas with random selection, opacity, blend mode, size, position, repeat, and attachment controls.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **内置背景图片**：将已启用的本地图片变量直接应用到 Obsidian 画布，支持随机选择、不透明度、混合模式、尺寸、位置、重复方式和附着方式设置。
+
+</details>
+
 ## [0.2.1] - 2026-07-26
 
 ### 🐛 Fixed
