@@ -97,6 +97,24 @@ describe('BackgroundImageService', () => {
 		expect(css).toContain('inset: 0');
 	});
 
+	it('paints the canvas with the theme color so zero opacity falls back to it', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				variableName: '--image-1',
+				opacity: 0,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		const css = document.getElementById('style-context-background-image')?.textContent;
+		expect(css).toContain('opacity: 0');
+		expect(css).toContain('background-color: var(--background-primary) !important');
+	});
+
 	it('does not inject a layer for an empty or invalid variable', () => {
 		const currentSettings = settings({
 			backgroundImage: {

@@ -86,7 +86,10 @@ function buildFilterCss(filter: BackgroundFilterSettings): string {
  * do not also reduce the opacity of notes and controls. The layer carries the
  * theme canvas color and uses background-blend-mode: mix-blend-mode would
  * blend against the (fully transparent) backdrop below this rearmost layer,
- * which is a no-op for every mode.
+ * which is a no-op for every mode. The body itself is repainted with the same
+ * canvas color, so a faded layer cross-fades toward the theme color — at zero
+ * opacity the canvas falls back to the theme's canvas color instead of the
+ * bare app backdrop.
  */
 export class BackgroundImageService {
 	private getSettings: () => StyleContextSettings;
@@ -148,7 +151,7 @@ export class BackgroundImageService {
 		style.textContent = `
 /* Style Context background image layer */
 body.${BACKGROUND_IMAGE_BODY_CLASS} {
-	background-color: transparent !important;
+	background-color: var(--background-primary) !important;
 	background-image: none !important;
 }
 
