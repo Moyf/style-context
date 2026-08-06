@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Declarative settings on Obsidian 1.13**: The settings tab now uses the declarative settings API introduced in Obsidian 1.13.0, raising the minimum required Obsidian version to 1.13.0. Background display options (opacity, blend mode, size, position, repeat, attachment) and filters are grouped together in an Appearance sub-page under Background image.
 
+### 🐛 Fixed
+
+- **Resource variable publishing**: Publish vault resource variables in a dedicated stylesheet so they remain available to computed-style consumers without modifying the `html` element's inline style.
+- **Resource variable preview**: Read computed styles when validating image variables, keeping the settings preview working with stylesheet-published variables.
+
 <details>
 <summary>中文说明（点击展开）</summary>
 
@@ -29,6 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚡ 变更
 
 - **基于 Obsidian 1.13 的声明式设置**：设置页改用 Obsidian 1.13.0 引入的声明式设置 API，最低所需 Obsidian 版本提升至 1.13.0。背景显示选项（不透明度、混合模式、尺寸、位置、重复方式、附着方式）与滤镜一同归入「背景图片」下的「外观」子页面。
+
+### 🐛 修复
+
+- **资源变量发布**：将库内资源变量发布到专用样式表中，使其可被计算样式读取，同时避免修改 `html` 元素的内联样式。
+- **资源变量预览**：校验图片变量时读取计算样式，确保变量改用样式表发布后设置页预览仍能正常工作。
 
 </details>
 
