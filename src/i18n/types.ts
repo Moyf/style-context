@@ -7,6 +7,7 @@ export interface Messages {
 	notices: {
 		styleContextCopied: string;
 		resourceVariablesReparsed: string;
+		noImageVariables: string;
 		copied: (value: string) => string;
 	};
 	settings: {
@@ -16,7 +17,14 @@ export interface Messages {
 			themeContext: string;
 			notePathRules: string;
 			localImageVariable: string;
+			backgroundImage: string;
+			backgroundDisplay: string;
+			backgroundFilter: string;
 			diagnostics: string;
+		};
+		pages: {
+			backgroundAppearance: string;
+			backgroundAppearanceDesc: string;
 		};
 		labels: {
 			publishThemeClass: string;
@@ -26,6 +34,22 @@ export interface Messages {
 			liveStatus: string;
 			folder: string;
 			keyword: string;
+			publishBackgroundImage: string;
+			backgroundVariable: string;
+			backgroundOpacity: string;
+			backgroundBlendMode: string;
+			backgroundSize: string;
+			backgroundPosition: string;
+			backgroundRepeat: string;
+			backgroundAttachment: string;
+			filterBrightness: string;
+			filterContrast: string;
+			filterSaturate: string;
+			filterGrayscale: string;
+			filterSepia: string;
+			filterInvert: string;
+			filterHueRotate: string;
+			filterBlur: string;
 		};
 		descriptions: {
 			publishThemeClass: string;
@@ -35,6 +59,14 @@ export interface Messages {
 			themePrefixBefore: string;
 			themePrefixExample: string;
 			currentThemeClass: string;
+			publishBackgroundImage: string;
+			backgroundVariable: string;
+			backgroundOpacity: string;
+			backgroundBlendMode: string;
+			backgroundSize: string;
+			backgroundPosition: string;
+			backgroundRepeat: string;
+			backgroundAttachment: string;
 		};
 		placeholders: {
 			themeClassPrefix: string;
@@ -43,6 +75,7 @@ export interface Messages {
 			classNames: string;
 			vaultFilePath: string;
 			cssVariable: string;
+			backgroundVariable: string;
 		};
 		buttons: {
 			addPathRule: string;
@@ -50,6 +83,7 @@ export interface Messages {
 			deleteRule: string;
 			refresh: string;
 			copySnapshot: string;
+			randomBackgroundVariable: string;
 		};
 		tooltips: {
 			clickToCopy: (value: string) => string;

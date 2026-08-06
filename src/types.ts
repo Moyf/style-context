@@ -1,4 +1,18 @@
+import type {
+	BACKGROUND_ATTACHMENT_OPTIONS,
+	BACKGROUND_BLEND_MODES,
+	BACKGROUND_POSITION_OPTIONS,
+	BACKGROUND_REPEAT_OPTIONS,
+	BACKGROUND_SIZE_OPTIONS,
+} from './constants';
+
 export type PathMatchMode = 'folder' | 'keyword';
+
+export type BackgroundBlendMode = (typeof BACKGROUND_BLEND_MODES)[number];
+export type BackgroundSize = (typeof BACKGROUND_SIZE_OPTIONS)[number];
+export type BackgroundPosition = (typeof BACKGROUND_POSITION_OPTIONS)[number];
+export type BackgroundRepeat = (typeof BACKGROUND_REPEAT_OPTIONS)[number];
+export type BackgroundAttachment = (typeof BACKGROUND_ATTACHMENT_OPTIONS)[number];
 
 export interface PathRule {
 	id: string;
@@ -21,6 +35,43 @@ export interface ResourceRule {
 	enabled: boolean;
 }
 
+/**
+ * CSS filter adjustments for the background image layer. Every value sits at
+ * its neutral default when unused, and neutral values are omitted from the
+ * generated `filter` declaration.
+ */
+export interface BackgroundFilterSettings {
+	/** Multiplier, 1 = unchanged. */
+	brightness: number;
+	/** Multiplier, 1 = unchanged. */
+	contrast: number;
+	/** Multiplier, 1 = unchanged. */
+	saturate: number;
+	/** 0–1, 0 = unchanged. */
+	grayscale: number;
+	/** 0–1, 0 = unchanged. */
+	sepia: number;
+	/** 0–1, 0 = unchanged. */
+	invert: number;
+	/** Degrees, 0 = unchanged. */
+	hueRotate: number;
+	/** Pixels, 0 = unchanged. */
+	blur: number;
+}
+
+export interface BackgroundImageSettings {
+	enabled: boolean;
+	/** A CSS custom property containing a published image value. */
+	variableName: string;
+	opacity: number;
+	blendMode: BackgroundBlendMode;
+	size: BackgroundSize;
+	position: BackgroundPosition;
+	repeat: BackgroundRepeat;
+	attachment: BackgroundAttachment;
+	filter: BackgroundFilterSettings;
+}
+
 export interface StyleContextSettings {
 	version: number;
 	themeClassPrefix: string;
@@ -29,6 +80,7 @@ export interface StyleContextSettings {
 	resourceVariablesEnabled: boolean;
 	pathRules: PathRule[];
 	resourceRules: ResourceRule[];
+	backgroundImage: BackgroundImageSettings;
 }
 
 export const DEFAULT_SETTINGS: StyleContextSettings = {
@@ -39,4 +91,24 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 	resourceVariablesEnabled: true,
 	pathRules: [],
 	resourceRules: [],
+	backgroundImage: {
+		enabled: false,
+		variableName: '',
+		opacity: 0.35,
+		blendMode: 'normal',
+		size: 'cover',
+		position: 'center',
+		repeat: 'no-repeat',
+		attachment: 'fixed',
+		filter: {
+			brightness: 1,
+			contrast: 1,
+			saturate: 1,
+			grayscale: 0,
+			sepia: 0,
+			invert: 0,
+			hueRotate: 0,
+			blur: 0,
+		},
+	},
 };

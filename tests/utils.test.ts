@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isImageFile } from '../src/utils/media';
+import { pickRandomImageVariable } from '../src/utils/background';
 import { themeSlug } from '../src/utils/slug';
 import {
 	areValidClassNames,
@@ -47,5 +48,26 @@ describe('isImageFile', () => {
 	it('matches supported extensions case-insensitively', () => {
 		expect(isImageFile({ extension: 'PNG' } as never)).toBe(true);
 		expect(isImageFile({ extension: 'pdf' } as never)).toBe(false);
+	});
+});
+
+describe('pickRandomImageVariable', () => {
+	const rules = [
+		{ id: 'one', filePath: 'one.png', variableName: '--one', enabled: true },
+		{ id: 'two', filePath: 'two.png', variableName: '--two', enabled: true },
+		{ id: 'disabled', filePath: 'off.png', variableName: '--off', enabled: false },
+		{ id: 'invalid', filePath: 'bad.png', variableName: 'bad', enabled: true },
+	];
+
+	it('chooses from enabled valid variables and avoids the current value', () => {
+		expect(pickRandomImageVariable(rules, '--one', () => 0)).toBe('--two');
+	});
+
+	it('returns null when no usable image variables exist', () => {
+		expect(
+			pickRandomImageVariable([
+				{ id: 'off', filePath: 'off.png', variableName: '--off', enabled: false },
+			]),
+		).toBeNull();
 	});
 });

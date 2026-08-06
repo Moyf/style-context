@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS, type StyleContextSettings } from './src/types';
 import { ThemeContextService } from './src/services/ThemeContextService';
 import { NotePathContextService } from './src/services/NotePathContextService';
 import { ResourceVariableService } from './src/services/ResourceVariableService';
+import { BackgroundImageService } from './src/services/BackgroundImageService';
 import { SettingsTab } from './src/settings/SettingsTab';
 import { registerCommands } from './src/commands';
 
@@ -11,6 +12,7 @@ export default class StyleContextPlugin extends Plugin {
 	themeCtx!: ThemeContextService;
 	notePathCtx!: NotePathContextService;
 	resourceVarCtx!: ResourceVariableService;
+	backgroundImageCtx!: BackgroundImageService;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -21,6 +23,7 @@ export default class StyleContextPlugin extends Plugin {
 			this,
 			() => this.settings,
 		);
+		this.backgroundImageCtx = new BackgroundImageService(() => this.settings);
 
 		this.addSettingTab(new SettingsTab(this.app, this));
 		registerCommands(this);
@@ -29,9 +32,19 @@ export default class StyleContextPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
+		const stored =
+			((await this.loadData()) as Partial<StyleContextSettings> | null) ?? {};
 		this.settings = {
 			...DEFAULT_SETTINGS,
-			...((await this.loadData()) as Partial<StyleContextSettings>),
+			...stored,
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				...(stored.backgroundImage ?? {}),
+				filter: {
+					...DEFAULT_SETTINGS.backgroundImage.filter,
+					...(stored.backgroundImage?.filter ?? {}),
+				},
+			},
 		};
 	}
 
@@ -63,6 +76,13 @@ export default class StyleContextPlugin extends Plugin {
 		} else {
 			this.resourceVarCtx.disable();
 		}
+
+		if (this.settings.backgroundImage.enabled) {
+			this.backgroundImageCtx.enable();
+			this.backgroundImageCtx.apply();
+		} else {
+			this.backgroundImageCtx.disable();
+		}
 	}
 
 	/**
@@ -78,5 +98,6 @@ export default class StyleContextPlugin extends Plugin {
 		this.themeCtx.disable();
 		this.notePathCtx.disable();
 		this.resourceVarCtx.disable();
+		this.backgroundImageCtx.disable();
 	}
 }
