@@ -21,10 +21,11 @@ function settings(
 	return { ...DEFAULT_SETTINGS, ...overrides };
 }
 
-beforeEach(() => {
-	document.documentElement.removeAttribute('style');
-	document.getElementById('style-context-background-image')?.remove();
-	document.body.classList.remove('sc-style-context-background-image');
+	beforeEach(() => {
+		document.documentElement.removeAttribute('style');
+		document.getElementById('style-context-background-image')?.remove();
+		document.body.classList.remove('sc-style-context-background-image');
+	document.getElementById('style-context-resources')?.remove();
 	Object.defineProperty(globalThis, 'activeDocument', {
 		configurable: true,
 		value: document,
@@ -234,7 +235,7 @@ describe('ResourceVariableService', () => {
 		document.documentElement.style.setProperty('--external-variable', 'keep-me');
 
 		service.enable();
-		expect(document.documentElement.style.getPropertyValue('--hero-image')).toContain(
+		expect(document.getElementById('style-context-resources')?.textContent).toContain(
 			'app://vault/assets/Hero.PNG',
 		);
 		expect(
@@ -250,7 +251,7 @@ describe('ResourceVariableService', () => {
 		]);
 
 		service.disable();
-		expect(document.documentElement.style.getPropertyValue('--hero-image')).toBe('');
+		expect(document.getElementById('style-context-resources')).toBeNull();
 		expect(
 			document.documentElement.style.getPropertyValue('--external-variable'),
 		).toBe('keep-me');
@@ -288,12 +289,12 @@ describe('ResourceVariableService', () => {
 		);
 
 		service.enable();
-		expect(document.documentElement.style.getPropertyValue('--hero-image')).toBe('');
+		expect(document.getElementById('style-context-resources')).toBeNull();
 
 		files.set('assets/Hero.PNG', new TFile('assets/Hero.PNG'));
 		onLayoutReady?.();
 
-		expect(document.documentElement.style.getPropertyValue('--hero-image')).toContain(
+		expect(document.getElementById('style-context-resources')?.textContent).toContain(
 			'app://vault/assets/Hero.PNG',
 		);
 		expect(workspace.onLayoutReady).toHaveBeenCalledTimes(1);

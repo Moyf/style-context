@@ -9,9 +9,11 @@ export interface ResourceResolution {
 	error?: string;
 }
 
+const RESOURCE_STYLE_ID = 'style-context-resources';
+
 /**
  * SC-03: Resolves vault files into `url("...")` values and publishes them
- * as user-defined CSS variables on :root. Missing files produce
+ * as user-defined CSS variables in a dedicated :root stylesheet. Missing files produce
  * a clear error and never write a stale value.
  */
 export class ResourceVariableService {
@@ -20,7 +22,7 @@ export class ResourceVariableService {
 	private enabled = false;
 	private listenersRegistered = false;
 
-	/** Full property names this service currently has set on :root. */
+	/** Full property names this service currently publishes. */
 	private setVars = new Set<string>();
 
 	constructor(plugin: Plugin, getSettings: () => StyleContextSettings) {
@@ -62,13 +64,14 @@ export class ResourceVariableService {
 	/**
 	 * Re-resolves every enabled resource rule. Always clears prior values
 	 * first so stale URLs never linger. The variable name is published
-	 * verbatim — no prefix is added.
+	 * verbatim — no prefix is added. A dedicated style element keeps these
+	 * dynamic declarations out of the html element's inline style attribute.
 	 */
 	apply(): void {
 		this.clearAll();
 		if (!this.enabled) return;
 
-		const root = activeDocument.documentElement;
+		const declarations: string[] = [];
 		const rules = this.getSettings().resourceRules;
 		for (const rule of rules) {
 			if (!rule.enabled) continue;
@@ -79,8 +82,15 @@ export class ResourceVariableService {
 				continue;
 			}
 			const url = this.plugin.app.vault.getResourcePath(file);
-			root.style.setProperty(prop, `url("${url}")`);
+			declarations.push(`\t${prop}: url(${JSON.stringify(url)});`);
 			this.setVars.add(prop);
+		}
+
+		if (declarations.length > 0) {
+			const style = activeDocument.createElement('style');
+			style.id = RESOURCE_STYLE_ID;
+			style.textContent = `:root {\n${declarations.join('\n')}\n}`;
+			activeDocument.head.appendChild(style);
 		}
 	}
 
@@ -93,11 +103,7 @@ export class ResourceVariableService {
 	}
 
 	private clearAll(): void {
-		const root = activeDocument.documentElement;
-		// Precisely remove every var tracked by this service.
-		for (const prop of this.setVars) {
-			root.style.removeProperty(prop);
-		}
+		activeDocument.getElementById(RESOURCE_STYLE_ID)?.remove();
 		this.setVars.clear();
 	}
 
