@@ -8,3 +8,4 @@ main.js.map
 !.env.example
 /.omo
 /.agents
+/.worktrees
