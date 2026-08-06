@@ -5,7 +5,11 @@ import {
 	BACKGROUND_REPEAT_OPTIONS,
 	BACKGROUND_SIZE_OPTIONS,
 } from '../constants';
-import type { StyleContextSettings } from '../types';
+import {
+	DEFAULT_SETTINGS,
+	type BackgroundFilterSettings,
+	type StyleContextSettings,
+} from '../types';
 import { isValidCssVarName } from '../utils/validation';
 
 export const BACKGROUND_IMAGE_STYLE_ID = 'style-context-background-image';
@@ -27,6 +31,53 @@ function safeOpacity(value: unknown): number {
 	const number = typeof value === 'number' ? value : Number(value);
 	if (!Number.isFinite(number)) return 0.35;
 	return Math.min(1, Math.max(0, number));
+}
+
+function clampFinite(
+	value: unknown,
+	min: number,
+	max: number,
+	fallback: number,
+): number {
+	const number = typeof value === 'number' ? value : Number(value);
+	if (!Number.isFinite(number)) return fallback;
+	return Math.min(max, Math.max(min, number));
+}
+
+/**
+ * Sanitizes persisted filter values. Stored data may predate the filter
+ * settings (or contain hand-edited values), so anything unusable falls back
+ * to the neutral default instead of producing invalid CSS.
+ */
+function resolveFilter(
+	filter: BackgroundFilterSettings | undefined,
+): BackgroundFilterSettings {
+	const defaults = DEFAULT_SETTINGS.backgroundImage.filter;
+	const source = filter ?? defaults;
+	return {
+		brightness: clampFinite(source.brightness, 0, 2, defaults.brightness),
+		contrast: clampFinite(source.contrast, 0, 2, defaults.contrast),
+		saturate: clampFinite(source.saturate, 0, 2, defaults.saturate),
+		grayscale: clampFinite(source.grayscale, 0, 1, defaults.grayscale),
+		sepia: clampFinite(source.sepia, 0, 1, defaults.sepia),
+		invert: clampFinite(source.invert, 0, 1, defaults.invert),
+		hueRotate: clampFinite(source.hueRotate, 0, 360, defaults.hueRotate),
+		blur: clampFinite(source.blur, 0, 20, defaults.blur),
+	};
+}
+
+/** Neutral values are omitted so the layer carries no `filter` at all by default. */
+function buildFilterCss(filter: BackgroundFilterSettings): string {
+	const parts: string[] = [];
+	if (filter.brightness !== 1) parts.push(`brightness(${filter.brightness})`);
+	if (filter.contrast !== 1) parts.push(`contrast(${filter.contrast})`);
+	if (filter.saturate !== 1) parts.push(`saturate(${filter.saturate})`);
+	if (filter.grayscale !== 0) parts.push(`grayscale(${filter.grayscale})`);
+	if (filter.sepia !== 0) parts.push(`sepia(${filter.sepia})`);
+	if (filter.invert !== 0) parts.push(`invert(${filter.invert})`);
+	if (filter.hueRotate !== 0) parts.push(`hue-rotate(${filter.hueRotate}deg)`);
+	if (filter.blur !== 0) parts.push(`blur(${filter.blur}px)`);
+	return parts.join(' ');
 }
 
 /**
@@ -84,6 +135,13 @@ export class BackgroundImageService {
 			BACKGROUND_ATTACHMENT_OPTIONS,
 			'fixed',
 		);
+		const filter = resolveFilter(settings.filter);
+		const filterCss = buildFilterCss(filter);
+		// A blurred layer frays at the viewport edges (the blur kernel samples
+		// transparent pixels outside the box). Growing the layer by the blur
+		// radius keeps the softened edge outside the visible canvas.
+		const inset = filter.blur > 0 ? `-${Math.ceil(filter.blur)}px` : '0';
+		const filterRule = filterCss ? `\n\tfilter: ${filterCss};` : '';
 
 		const style = activeDocument.createElement('style');
 		style.id = BACKGROUND_IMAGE_STYLE_ID;
@@ -97,7 +155,7 @@ body.${BACKGROUND_IMAGE_BODY_CLASS} {
 body.${BACKGROUND_IMAGE_BODY_CLASS}::before {
 	content: "";
 	position: fixed;
-	inset: 0;
+	inset: ${inset};
 	pointer-events: none;
 	z-index: -1;
 	background-image: var(${settings.variableName});
@@ -107,7 +165,7 @@ body.${BACKGROUND_IMAGE_BODY_CLASS}::before {
 	background-position: ${position};
 	background-repeat: ${repeat};
 	background-attachment: ${attachment};
-	opacity: ${safeOpacity(settings.opacity)};
+	opacity: ${safeOpacity(settings.opacity)};${filterRule}
 }
 
 /* Let the fixed layer flow through Obsidian's standard canvas containers. */

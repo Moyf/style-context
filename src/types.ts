@@ -35,6 +35,30 @@ export interface ResourceRule {
 	enabled: boolean;
 }
 
+/**
+ * CSS filter adjustments for the background image layer. Every value sits at
+ * its neutral default when unused, and neutral values are omitted from the
+ * generated `filter` declaration.
+ */
+export interface BackgroundFilterSettings {
+	/** Multiplier, 1 = unchanged. */
+	brightness: number;
+	/** Multiplier, 1 = unchanged. */
+	contrast: number;
+	/** Multiplier, 1 = unchanged. */
+	saturate: number;
+	/** 0–1, 0 = unchanged. */
+	grayscale: number;
+	/** 0–1, 0 = unchanged. */
+	sepia: number;
+	/** 0–1, 0 = unchanged. */
+	invert: number;
+	/** Degrees, 0 = unchanged. */
+	hueRotate: number;
+	/** Pixels, 0 = unchanged. */
+	blur: number;
+}
+
 export interface BackgroundImageSettings {
 	enabled: boolean;
 	/** A CSS custom property containing a published image value. */
@@ -45,6 +69,7 @@ export interface BackgroundImageSettings {
 	position: BackgroundPosition;
 	repeat: BackgroundRepeat;
 	attachment: BackgroundAttachment;
+	filter: BackgroundFilterSettings;
 }
 
 export interface StyleContextSettings {
@@ -75,5 +100,15 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 		position: 'center',
 		repeat: 'no-repeat',
 		attachment: 'fixed',
+		filter: {
+			brightness: 1,
+			contrast: 1,
+			saturate: 1,
+			grayscale: 0,
+			sepia: 0,
+			invert: 0,
+			hueRotate: 0,
+			blur: 0,
+		},
 	},
 };

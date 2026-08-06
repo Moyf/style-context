@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 Added
 
 - **Built-in background image**: Apply an enabled local image variable to the Obsidian canvas with random selection, opacity, blend mode, size, position, repeat, and attachment controls.
+- **Background filters**: Adjust the background image layer with CSS filters — brightness, contrast, saturation, grayscale, sepia, invert, hue rotate, and blur — from the new Filter sub-page.
+
+### ⚡ Changed
+
+- **Declarative settings on Obsidian 1.13**: The settings tab now uses the declarative settings API introduced in Obsidian 1.13.0, raising the minimum required Obsidian version to 1.13.0. Background display options (opacity, blend mode, size, position, repeat, attachment) moved into a Display sub-page under Background image.
 
 <details>
 <summary>中文说明（点击展开）</summary>
@@ -19,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 新增
 
 - **内置背景图片**：将已启用的本地图片变量直接应用到 Obsidian 画布，支持随机选择、不透明度、混合模式、尺寸、位置、重复方式和附着方式设置。
+- **背景滤镜**：在新的「滤镜」子页面中使用 CSS 滤镜调整背景图片图层——亮度、对比度、饱和度、灰度、褐色、反色、色相旋转和模糊。
+
+### ⚡ 变更
+
+- **基于 Obsidian 1.13 的声明式设置**：设置页改用 Obsidian 1.13.0 引入的声明式设置 API，最低所需 Obsidian 版本提升至 1.13.0。背景显示选项（不透明度、混合模式、尺寸、位置、重复方式、附着方式）移至「背景图片」下的「显示」子页面。
 
 </details>
 

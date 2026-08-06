@@ -40,6 +40,10 @@ export default class StyleContextPlugin extends Plugin {
 			backgroundImage: {
 				...DEFAULT_SETTINGS.backgroundImage,
 				...(stored.backgroundImage ?? {}),
+				filter: {
+					...DEFAULT_SETTINGS.backgroundImage.filter,
+					...(stored.backgroundImage?.filter ?? {}),
+				},
 			},
 		};
 	}

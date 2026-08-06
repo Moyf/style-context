@@ -43,6 +43,16 @@ describe('BackgroundImageService', () => {
 				position: 'top right',
 				repeat: 'repeat',
 				attachment: 'scroll',
+				filter: {
+					brightness: 1.2,
+					contrast: 1,
+					saturate: 1,
+					grayscale: 0,
+					sepia: 0,
+					invert: 0,
+					hueRotate: 0,
+					blur: 4,
+				},
 			},
 		});
 		const service = new BackgroundImageService(() => currentSettings);
@@ -57,6 +67,9 @@ describe('BackgroundImageService', () => {
 		expect(style?.textContent).toContain('background-position: top right');
 		expect(style?.textContent).toContain('background-repeat: repeat');
 		expect(style?.textContent).toContain('background-attachment: scroll');
+		expect(style?.textContent).toContain('filter: brightness(1.2) blur(4px)');
+		// The layer grows by the blur radius so softened edges stay off-canvas.
+		expect(style?.textContent).toContain('inset: -4px');
 		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(true);
 		expect(service.currentVariable()).toBe('--image-1');
 
@@ -64,6 +77,24 @@ describe('BackgroundImageService', () => {
 		expect(document.getElementById('style-context-background-image')).toBeNull();
 		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(false);
 		expect(service.currentVariable()).toBe('');
+	});
+
+	it('omits the filter rule while every filter sits at its neutral default', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				variableName: '--image-1',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		const css = document.getElementById('style-context-background-image')?.textContent;
+		expect(css).toContain('background-image: var(--image-1)');
+		expect(css).not.toContain('filter:');
+		expect(css).toContain('inset: 0');
 	});
 
 	it('does not inject a layer for an empty or invalid variable', () => {
@@ -94,6 +125,16 @@ describe('BackgroundImageService', () => {
 				position: 'bad-position' as never,
 				repeat: 'bad-repeat' as never,
 				attachment: 'bad-attachment' as never,
+				filter: {
+					brightness: 99,
+					contrast: Number.NaN,
+					saturate: 'loud' as never,
+					grayscale: -1,
+					sepia: 2,
+					invert: 0.5,
+					hueRotate: 720,
+					blur: -4,
+				},
 			},
 		});
 		const service = new BackgroundImageService(() => currentSettings);
@@ -107,6 +148,12 @@ describe('BackgroundImageService', () => {
 		expect(css).toContain('background-position: center');
 		expect(css).toContain('background-repeat: no-repeat');
 		expect(css).toContain('background-attachment: fixed');
+		// Out-of-range filters clamp into range; unparseable ones fall back
+		// to neutral defaults and drop out of the filter list entirely.
+		expect(css).toContain(
+			'filter: brightness(2) sepia(1) invert(0.5) hue-rotate(360deg)',
+		);
+		expect(css).toContain('inset: 0');
 	});
 });
 

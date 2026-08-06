@@ -48,7 +48,7 @@ Click the preview image on the left to quickly copy the variable reference:
 
 The **Background image** settings group can use any enabled local image variable as a fixed canvas background. Enter a variable such as `--image-1`, or click the shuffle button to choose one of your enabled image variables at random.
 
-The image layer has its own opacity and blend mode, so it does not make notes or controls translucent. Size, position, repeat, and attachment are also available as common background options. Disable the toggle to remove the injected layer and restore the theme's original canvas styles.
+The image layer has its own opacity and blend mode, so it does not make notes or controls translucent. Size, position, repeat, and attachment are also available as common background options in the Display sub-page, and a companion Filter sub-page adjusts the layer with CSS filters (brightness, blur, and more). Disable the toggle to remove the injected layer and restore the theme's original canvas styles.
 
 ### Theme context
 
@@ -164,7 +164,7 @@ Obsidian 每次重载仓库时都会重新生成资源 URL，因此原始路径�
 
 设置中的「背景图片」可以直接使用任意已启用的本地图片变量作为固定画布背景。填写 `--image-1` 这样的变量名，或点击输入框旁的随机按钮，从已启用的图片变量中随机选择。
 
-背景图层拥有独立的不透明度和混合模式，不会让笔记或控件一起变透明；同时提供尺寸、位置、重复方式和附着方式等常用选项。关闭开关即可移除内置图层，恢复主题原本的画布样式。
+背景图层拥有独立的不透明度和混合模式，不会让笔记或控件一起变透明；「显示」子页面提供尺寸、位置、重复方式和附着方式等常用选项，配套的「滤镜」子页面还能用 CSS 滤镜（亮度、模糊等）进一步调整图层。关闭开关即可移除内置图层，恢复主题原本的画布样式。
 
 ### 主题上下文
 

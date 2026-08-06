@@ -20,6 +20,12 @@ export interface Messages {
 			backgroundImage: string;
 			diagnostics: string;
 		};
+		pages: {
+			backgroundDisplay: string;
+			backgroundDisplayDesc: string;
+			backgroundFilter: string;
+			backgroundFilterDesc: string;
+		};
 		labels: {
 			publishThemeClass: string;
 			themeClassPrefix: string;
@@ -36,6 +42,14 @@ export interface Messages {
 			backgroundPosition: string;
 			backgroundRepeat: string;
 			backgroundAttachment: string;
+			filterBrightness: string;
+			filterContrast: string;
+			filterSaturate: string;
+			filterGrayscale: string;
+			filterSepia: string;
+			filterInvert: string;
+			filterHueRotate: string;
+			filterBlur: string;
 		};
 		descriptions: {
 			publishThemeClass: string;
