@@ -39,7 +39,7 @@ Pick an image in settings, assign a CSS variable name, and then use `var(--name)
 Click the preview image on the left to quickly copy the variable reference:  
 ![Copy image variable](assets/setting-copy-image-var.webp)
 
-> ![ehe](assets/sticker-moy-ehe.webp)
+> ![ehe](assets/sticker-moy-ehe.webp)  
 > No more uploading images to the web or pasting long base64 strings just to style a background.
 
 💡 [here](snippets/Moy-Image-Background.css) is a sample snippet that uses the image variable to set image background and top logo for file explorer.
@@ -47,6 +47,8 @@ Click the preview image on the left to quickly copy the variable reference:
 ### Built-in background image
 
 The **Background image** settings group can use any enabled local image variable as a fixed canvas background. Enter a variable such as `--image-1`, or click the shuffle button to choose one of your enabled image variables at random.
+
+<img width="870" height="412" alt="Snipaste_2026-08-06_16-03-08" src="https://github.com/user-attachments/assets/b01ed2d6-0e22-4aed-a342-c854c4235821" />
 
 The image layer has its own opacity and blend mode, so it does not make notes or controls translucent. Size, position, repeat, and attachment are also available in the Appearance sub-page, grouped with CSS filter adjustments (brightness, blur, and more) so related tweaks sit side by side. Disable the toggle to remove the injected layer and restore the theme's original canvas styles.
 
