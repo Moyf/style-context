@@ -18,13 +18,13 @@ export interface Messages {
 			notePathRules: string;
 			localImageVariable: string;
 			backgroundImage: string;
+			backgroundDisplay: string;
+			backgroundFilter: string;
 			diagnostics: string;
 		};
 		pages: {
-			backgroundDisplay: string;
-			backgroundDisplayDesc: string;
-			backgroundFilter: string;
-			backgroundFilterDesc: string;
+			backgroundAppearance: string;
+			backgroundAppearanceDesc: string;
 		};
 		labels: {
 			publishThemeClass: string;

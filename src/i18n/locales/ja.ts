@@ -15,8 +15,8 @@ const ja: Messages = {
 	settings: {
 		intro: 'このプラグインは、現在のテーマ、ノートパスのルール、保管庫内の画像パスを CSS クラスと変数として公開します。CSS スニペットは JavaScript なしで実行時の状態に応答できます。',
 		documentation: { link: 'Obsidian の公式 CSS スニペットドキュメント' },
-		groups: { themeContext: 'テーマコンテキスト', notePathRules: 'ノートパスのルール', localImageVariable: 'ローカル画像変数', backgroundImage: '背景画像', diagnostics: '診断' },
-		pages: { backgroundDisplay: '表示', backgroundDisplayDesc: '背景画像レイヤーの不透明度、ブレンド、サイズ、配置。', backgroundFilter: 'フィルター', backgroundFilterDesc: '背景画像レイヤーに適用する CSS フィルター。デフォルト値の項目は適用されません。' },
+		groups: { themeContext: 'テーマコンテキスト', notePathRules: 'ノートパスのルール', localImageVariable: 'ローカル画像変数', backgroundImage: '背景画像', backgroundDisplay: '表示', backgroundFilter: 'フィルター', diagnostics: '診断' },
+		pages: { backgroundAppearance: '外観', backgroundAppearanceDesc: '背景画像レイヤーの不透明度、ブレンド、サイズ、配置、CSS フィルター。デフォルト値のフィルターは適用されません。' },
 		labels: { publishThemeClass: 'テーマクラスを公開', themeClassPrefix: 'テーマクラスの接頭辞', publishPathClasses: 'パスクラスを公開', publishLocalImageVariables: 'ローカル画像変数を公開', liveStatus: 'ライブステータス', folder: 'フォルダ', keyword: 'キーワード', publishBackgroundImage: '背景画像を有効化', backgroundVariable: '画像変数', backgroundOpacity: '画像の不透明度', backgroundBlendMode: 'ブレンドモード', backgroundSize: '背景サイズ', backgroundPosition: '背景位置', backgroundRepeat: '繰り返し', backgroundAttachment: 'スクロール方式', filterBrightness: '明るさ', filterContrast: 'コントラスト', filterSaturate: '彩度', filterGrayscale: 'グレースケール', filterSepia: 'セピア', filterInvert: '反転', filterHueRotate: '色相回転', filterBlur: 'ぼかし' },
 		descriptions: {
 			publishThemeClass: '現在のテーマに固有のテーマクラスを body に追加します。テーマ自身のファイルを変更せず、CSS スニペットで特定テーマを調整できます。',
