@@ -52,7 +52,7 @@ describe('BackgroundImageService', () => {
 		const style = document.getElementById('style-context-background-image');
 		expect(style?.textContent).toContain('background-image: var(--image-1)');
 		expect(style?.textContent).toContain('opacity: 0.6');
-		expect(style?.textContent).toContain('mix-blend-mode: multiply');
+		expect(style?.textContent).toContain('background-blend-mode: multiply');
 		expect(style?.textContent).toContain('background-size: contain');
 		expect(style?.textContent).toContain('background-position: top right');
 		expect(style?.textContent).toContain('background-repeat: repeat');
@@ -102,7 +102,7 @@ describe('BackgroundImageService', () => {
 
 		const css = document.getElementById('style-context-background-image')?.textContent;
 		expect(css).toContain('opacity: 1');
-		expect(css).toContain('mix-blend-mode: normal');
+		expect(css).toContain('background-blend-mode: normal');
 		expect(css).toContain('background-size: cover');
 		expect(css).toContain('background-position: center');
 		expect(css).toContain('background-repeat: no-repeat');

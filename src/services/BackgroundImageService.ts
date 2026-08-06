@@ -32,7 +32,10 @@ function safeOpacity(value: unknown): number {
 /**
  * Applies a published image variable to the Obsidian canvas. The image is
  * rendered in a fixed, pointer-free pseudo-element so opacity and blend mode
- * do not also reduce the opacity of notes and controls.
+ * do not also reduce the opacity of notes and controls. The layer carries the
+ * theme canvas color and uses background-blend-mode: mix-blend-mode would
+ * blend against the (fully transparent) backdrop below this rearmost layer,
+ * which is a no-op for every mode.
  */
 export class BackgroundImageService {
 	private getSettings: () => StyleContextSettings;
@@ -98,12 +101,13 @@ body.${BACKGROUND_IMAGE_BODY_CLASS}::before {
 	pointer-events: none;
 	z-index: -1;
 	background-image: var(${settings.variableName});
+	background-color: var(--background-primary);
+	background-blend-mode: ${blendMode};
 	background-size: ${size};
 	background-position: ${position};
 	background-repeat: ${repeat};
 	background-attachment: ${attachment};
 	opacity: ${safeOpacity(settings.opacity)};
-	mix-blend-mode: ${blendMode};
 }
 
 /* Let the fixed layer flow through Obsidian's standard canvas containers. */
