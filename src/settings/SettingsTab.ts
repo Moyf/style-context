@@ -841,8 +841,9 @@ export class SettingsTab extends PluginSettingTab {
 		// Final guard: confirm the variable is actually published on :root.
 		// Without this, an unset var() would resolve to nothing but still
 		// override the checkerboard via inline style — leaving the tile blank.
-		const published =
-			activeDocument.documentElement.style.getPropertyValue(varName);
+		const published = activeDocument.defaultView
+			?.getComputedStyle(activeDocument.documentElement)
+			.getPropertyValue(varName);
 		if (!published) {
 			placeholder(messages.settings.tooltips.variableNotPublished);
 			return;
