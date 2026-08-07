@@ -16,8 +16,8 @@ const zhTW: Messages = {
 		intro: '此插件會將目前主題、筆記路徑規則與庫內圖片路徑發布為 CSS 類別和變數，讓 CSS 片段無需 JavaScript 即可回應執行階段狀態。',
 		documentation: { link: 'Obsidian 官方 CSS 程式碼片段文件' },
 		groups: { themeContext: '主題內容', notePathRules: '筆記路徑規則', localImageVariable: '本機圖片變數', backgroundImage: '背景圖片', backgroundDisplay: '顯示', backgroundFilter: '濾鏡', backgroundLayout: '版面配置', diagnostics: '診斷' },
-		pages: { backgroundAppearance: '外觀', backgroundAppearanceDesc: '背景圖片圖層的不透明度、混合、尺寸、位置與 CSS 濾鏡。濾鏡保持預設值即不生效。' },
-		labels: { publishThemeClass: '發布主題類別', themeClassPrefix: '主題類別前綴', publishPathClasses: '發布路徑類別', publishLocalImageVariables: '發布本機圖片變數', liveStatus: '即時狀態', folder: '資料夾', keyword: '關鍵字', publishBackgroundImage: '啟用背景圖片', backgroundImageValue: '圖片值', backgroundOpacity: '圖片不透明度', backgroundBlendMode: '混合模式', backgroundSize: '背景尺寸', backgroundPosition: '背景位置', backgroundRepeat: '重複方式', backgroundAttachment: '附著方式', filterBrightness: '亮度', filterContrast: '對比度', filterSaturate: '飽和度', filterGrayscale: '灰階', filterSepia: '褐色', filterInvert: '反色', filterHueRotate: '色相旋轉', filterBlur: '模糊' },
+		pages: { backgroundAppearance: '外觀', backgroundAppearanceDesc: '背景圖片圖層的不透明度、混合、尺寸、位置與 CSS 濾鏡。濾鏡保持預設值即不生效。', interfaceTransparency: '介面透明度', interfaceTransparencyDesc: '將介面融入背景圖層的透明度控制。' },
+		labels: { publishThemeClass: '發布主題類別', themeClassPrefix: '主題類別前綴', publishPathClasses: '發布路徑類別', publishLocalImageVariables: '發布本機圖片變數', liveStatus: '即時狀態', folder: '資料夾', keyword: '關鍵字', publishBackgroundImage: '啟用背景圖片', backgroundImageValue: '圖片值', backgroundOpacity: '圖片不透明度', backgroundBlendMode: '混合模式', backgroundSize: '背景尺寸', backgroundPosition: '背景位置', backgroundRepeat: '重複方式', backgroundAttachment: '附著方式', filterBrightness: '亮度', filterContrast: '對比度', filterSaturate: '飽和度', filterGrayscale: '灰階', filterSepia: '褐色', filterInvert: '反色', filterHueRotate: '色相旋轉', filterBlur: '模糊', mobileToolbarTransparent: '行動端工具列透明' },
 		descriptions: {
 			publishThemeClass: '為目前主題在 body 上新增唯一的主題類別。如此可透過 CSS 片段調整特定主題，而無需修改主題本身的檔案。',
 			publishPathClasses: '為路徑符合規則的筆記新增一個或多個 CSS 類別（以半形逗號分隔）。無需在每篇筆記設定 cssclasses，也能共用樣式。',
@@ -34,6 +34,7 @@ const zhTW: Messages = {
 			backgroundPosition: '圖片的錨點位置。',
 			backgroundRepeat: '是否平鋪圖片。',
 			backgroundAttachment: '圖片是否隨文件捲動。',
+			mobileToolbarTransparent: '將行動端工具列背景設為透明，使畫布背景透出。',
 		},
 		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '資料夾前綴', keywordInPath: '路徑中的關鍵字', classNames: '類別1, 類別2', vaultFilePath: '庫內檔案路徑', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)' },
 		buttons: { addPathRule: '新增路徑規則', addImageVariable: '新增圖片變數', deleteRule: '刪除規則', refresh: '重新整理', copySnapshot: '複製快照', randomBackgroundImageValue: '隨機選擇圖片變數', reset: '還原預設值' },

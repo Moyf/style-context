@@ -12,4 +12,26 @@ describe('i18n', () => {
 	])('selects the expected locale for %s', (language, commandName) => {
 		expect(getMessages(language).commands.copyCurrentContext).toBe(commandName);
 	});
+
+	describe('pages.interfaceTransparency', () => {
+		it.each([
+			['en', 'Interface transparency'],
+			['zh', '界面透明度'],
+			['zh-TW', '介面透明度'],
+			['ja', 'インターフェースの透明度'],
+		])('has the correct title for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.pages.interfaceTransparency).toBe(expected);
+		});
+	});
+
+	describe('labels.mobileToolbarTransparent', () => {
+		it.each([
+			['en', 'Transparent mobile toolbar'],
+			['zh', '移动端工具栏透明'],
+			['zh-TW', '行動端工具列透明'],
+			['ja', 'モバイルツールバーを透明化'],
+		])('has the correct label for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.labels.mobileToolbarTransparent).toBe(expected);
+		});
+	});
 });

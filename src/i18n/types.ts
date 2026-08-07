@@ -26,6 +26,8 @@ export interface Messages {
 		pages: {
 			backgroundAppearance: string;
 			backgroundAppearanceDesc: string;
+			interfaceTransparency: string;
+			interfaceTransparencyDesc: string;
 		};
 		labels: {
 			publishThemeClass: string;
@@ -51,6 +53,7 @@ export interface Messages {
 			filterInvert: string;
 			filterHueRotate: string;
 			filterBlur: string;
+			mobileToolbarTransparent: string;
 		};
 		descriptions: {
 			publishThemeClass: string;
@@ -68,6 +71,7 @@ export interface Messages {
 			backgroundPosition: string;
 			backgroundRepeat: string;
 			backgroundAttachment: string;
+			mobileToolbarTransparent: string;
 		};
 		placeholders: {
 			themeClassPrefix: string;
