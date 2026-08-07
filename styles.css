@@ -29,6 +29,7 @@ body.sc-style-context-background-image .workspace,
 body.sc-style-context-background-image.theme-dark .workspace,
 body.sc-style-context-background-image .workspace-split,
 body.sc-style-context-background-image.theme-dark .workspace-split.mod-root,
+body.sc-style-context-background-image.is-mobile .workspace > .mod-root,
 body.sc-style-context-background-image .workspace-tab-container,
 body.sc-style-context-background-image .workspace-leaf,
 body.sc-style-context-background-image .workspace-tabs .workspace-leaf,
@@ -52,6 +53,18 @@ body.sc-style-context-background-image .nav-files-container,
 body.sc-style-context-background-image:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile {
 	background-color: transparent;
 	background-image: none;
+}
+
+/* Style Context - mobile toolbar transparency (opt-in) */
+
+body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent .mobile-toolbar-spacer {
+	background-color: transparent;
+	background-image: none;
+}
+
+body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent.is-floating-nav .mobile-toolbar,
+body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent .is-floating-nav .mobile-toolbar {
+	box-shadow: none;
 }
 
 /* Style Context - settings diagnostics panel */
