@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+### 🐛 Fixed
+
+- **Appearance slider values**: Read the current setting value when rendering each slider so mobile Settings pages show the latest Dark appearance value after navigating away and back.
+- **Frameless title bar background**: Make the top-right title bar button container transparent in non-fullscreen frameless windows.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **外观滑块数值**：每次渲染滑块时读取当前设置值，修复移动端离开并重新进入 Dark 外观页面后仍显示旧值的问题。
+- **无框窗口标题栏背景**：让非全屏无框窗口右上角的标题栏按钮容器保持透明。
+
+</details>
+
+---
+
 ## [0.3.4] - 2026-08-07
 ### 🚀 Added
 

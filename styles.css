@@ -69,6 +69,10 @@ body.sc-style-context-background-image.sc-style-context-titlebar-transparent .ti
 	background-image: none;
 }
 
+.is-hidden-frameless:not(.is-fullscreen) .titlebar-button-container {
+	background-color: transparent;
+}
+
 /* Style Context - mobile toolbar transparency (opt-in) */
 
 body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent .mobile-toolbar-spacer {
