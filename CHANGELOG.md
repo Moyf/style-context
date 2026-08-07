@@ -7,8 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
+## [0.3.2] - 2026-08-07
 ### 🚀 Added
 
 - **Background image previews**: Show a compact source preview beside the Image value controls and a full Appearance preview that reflects the configured opacity, blend mode, sizing, positioning, repeat, and filters.
