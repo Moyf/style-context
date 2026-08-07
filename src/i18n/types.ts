@@ -3,11 +3,13 @@ export interface Messages {
 		copyCurrentContext: string;
 		reparseResourceVariables: string;
 		copyThemeSelector: string;
+		randomBackgroundImage: string;
 	};
 	notices: {
 		styleContextCopied: string;
 		resourceVariablesReparsed: string;
 		noImageVariables: string;
+		backgroundImageRandomized: string;
 		copied: (value: string) => string;
 	};
 	settings: {
@@ -26,6 +28,8 @@ export interface Messages {
 		pages: {
 			backgroundAppearance: string;
 			backgroundAppearanceDesc: string;
+			backgroundRandomization: string;
+			backgroundRandomizationDesc: string;
 		};
 		labels: {
 			publishThemeClass: string;
@@ -36,6 +40,8 @@ export interface Messages {
 			folder: string;
 			keyword: string;
 			publishBackgroundImage: string;
+			randomBackgroundOnStartup: string;
+			addRandomBackgroundRibbon: string;
 			backgroundImageValue: string;
 			backgroundOpacity: string;
 			backgroundBlendMode: string;
@@ -61,6 +67,8 @@ export interface Messages {
 			themePrefixExample: string;
 			currentThemeClass: string;
 			publishBackgroundImage: string;
+			randomBackgroundOnStartup: string;
+			addRandomBackgroundRibbon: string;
 			backgroundImageValue: string;
 			backgroundOpacity: string;
 			backgroundBlendMode: string;
@@ -90,6 +98,8 @@ export interface Messages {
 		tooltips: {
 			clickToCopy: (value: string) => string;
 			ruleDisabled: string;
+			useForBackgroundImage: string;
+			backgroundImageExcluded: string;
 			setCssVariableName: string;
 			variableNameInvalid: string;
 			setVaultImagePath: string;

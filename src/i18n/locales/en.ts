@@ -4,20 +4,22 @@ const en: Messages = {
 	commands: {
 		copyCurrentContext: 'Copy current context',
 		reparseResourceVariables: 'Reparse resource variables',
-		copyThemeSelector: 'Copy theme selector',
+			copyThemeSelector: 'Copy theme selector',
+			randomBackgroundImage: 'Choose a random background image',
 	},
 	notices: {
 		styleContextCopied: 'Style context copied',
 		resourceVariablesReparsed: 'Resource variables reparsed',
-		noImageVariables: 'No enabled image variables are available',
+			noImageVariables: 'No enabled image variables are available',
+			backgroundImageRandomized: 'Random background image selected',
 		copied: (value) => `Copied: ${value}`,
 	},
 	settings: {
 		intro: 'This plugin exposes the current theme, note path rules, and vault image paths as CSS classes and variables, so your CSS snippets can react to runtime state without JavaScript.',
 		documentation: { link: 'Obsidian CSS snippets documentation' },
 		groups: { themeContext: 'Theme context', notePathRules: 'Note path rules', localImageVariable: 'Local image variable', backgroundImage: 'Background image', backgroundDisplay: 'Display', backgroundFilter: 'Filter', backgroundLayout: 'Layout', diagnostics: 'Diagnostics' },
-		pages: { backgroundAppearance: 'Appearance', backgroundAppearanceDesc: 'Opacity, blending, sizing, placement, and CSS filters for the image layer. Filters left at their defaults are not applied.' },
-		labels: { publishThemeClass: 'Publish theme class', themeClassPrefix: 'Theme class prefix', publishPathClasses: 'Publish path classes', publishLocalImageVariables: 'Publish local image variables', liveStatus: 'Live status', folder: 'Folder', keyword: 'Keyword', publishBackgroundImage: 'Enable background image', backgroundImageValue: 'Image value', backgroundOpacity: 'Image opacity', backgroundBlendMode: 'Blend mode', backgroundSize: 'Background size', backgroundPosition: 'Background position', backgroundRepeat: 'Repeat', backgroundAttachment: 'Attachment', filterBrightness: 'Brightness', filterContrast: 'Contrast', filterSaturate: 'Saturation', filterGrayscale: 'Grayscale', filterSepia: 'Sepia', filterInvert: 'Invert', filterHueRotate: 'Hue rotate', filterBlur: 'Blur' },
+			pages: { backgroundAppearance: 'Appearance', backgroundAppearanceDesc: 'Opacity, blending, sizing, placement, and CSS filters for the image layer. Filters left at their defaults are not applied.', backgroundRandomization: 'Randomize image background', backgroundRandomizationDesc: 'Choose when and where to randomize the background image.' },
+			labels: { publishThemeClass: 'Publish theme class', themeClassPrefix: 'Theme class prefix', publishPathClasses: 'Publish path classes', publishLocalImageVariables: 'Publish local image variables', liveStatus: 'Live status', folder: 'Folder', keyword: 'Keyword', publishBackgroundImage: 'Enable background image', randomBackgroundOnStartup: 'Choose a random background image on startup', addRandomBackgroundRibbon: 'Add ribbon icon', backgroundImageValue: 'Image value', backgroundOpacity: 'Image opacity', backgroundBlendMode: 'Blend mode', backgroundSize: 'Background size', backgroundPosition: 'Background position', backgroundRepeat: 'Repeat', backgroundAttachment: 'Attachment', filterBrightness: 'Brightness', filterContrast: 'Contrast', filterSaturate: 'Saturation', filterGrayscale: 'Grayscale', filterSepia: 'Sepia', filterInvert: 'Invert', filterHueRotate: 'Hue rotate', filterBlur: 'Blur' },
 		descriptions: {
 			publishThemeClass: "Add a unique theme class to the body for the current theme. This lets you adjust a specific theme via CSS snippets without modifying the theme's own files.",
 			publishPathClasses: 'Add one or more CSS classes (comma-separated) to notes whose path matches a rule. This lets notes share styling without configuring cssclasses on each note.',
@@ -26,7 +28,9 @@ const en: Messages = {
 			themePrefixBefore: 'Adds a body class derived from the current theme name, for per-theme styling. The class lowercases the name and replaces non-alphanumeric characters with a hyphen.',
 			themePrefixExample: 'For example, "brutal gum" becomes',
 			currentThemeClass: "Current theme's mod CSS class: ",
-			publishBackgroundImage: 'Render a CSS image value as a fixed canvas background. The layer is pointer-free, so it does not block notes or controls.',
+				publishBackgroundImage: 'Render a CSS image value as a fixed canvas background. The layer is pointer-free, so it does not block notes or controls.',
+				randomBackgroundOnStartup: 'Choose one eligible image variable each time Obsidian starts.',
+				addRandomBackgroundRibbon: 'Show the random background image command in the ribbon.',
 			backgroundImageValue: 'Enter a full CSS image value, such as var(--image-1) or url("https://example.com/image.jpg"). Remote URLs contact the image host. The shuffle button chooses a local image variable.',
 			backgroundOpacity: 'Controls only the image layer opacity.',
 			backgroundBlendMode: 'Controls how the image blends with the current theme.',
@@ -40,7 +44,7 @@ const en: Messages = {
 		buttons: { addPathRule: 'Add path rule', addImageVariable: 'Add image variable', deleteRule: 'Delete rule', refresh: 'Refresh', copySnapshot: 'Copy snapshot', randomBackgroundImageValue: 'Choose a random image variable', reset: 'Reset to default' },
 		tooltips: {
 			clickToCopy: (value) => `Click to copy: ${value}`,
-			ruleDisabled: 'Rule disabled', setCssVariableName: 'Set a CSS variable name', variableNameInvalid: 'Variable name is invalid', setVaultImagePath: 'Set a vault image path', imageFileNotFound: 'Image file not found', notAnImageFile: 'Not an image file', variableNotPublished: 'Variable not published (check module toggle)',
+				ruleDisabled: 'Rule disabled', useForBackgroundImage: 'Whether to use this image for random background selection', backgroundImageExcluded: 'Excluded from random background selection', setCssVariableName: 'Set a CSS variable name', variableNameInvalid: 'Variable name is invalid', setVaultImagePath: 'Set a vault image path', imageFileNotFound: 'Image file not found', notAnImageFile: 'Not an image file', variableNotPublished: 'Variable not published (check module toggle)',
 		},
 		validation: { invalidPrefix: 'Invalid prefix', invalidClassNames: 'Invalid class names', invalidCssVariableName: 'Invalid CSS variable name (must start with --)', invalidBackgroundImageValue: 'Invalid CSS background-image value', backgroundImageVariableRequiresVar: 'Wrap the CSS variable in var(), for example var(--image). You can click an image variable preview above to copy it.', duplicateVariableName: (count) => `Used by ${count} other rule(s); later rules override earlier ones` },
 		diagnostics: {

@@ -4,20 +4,22 @@ const zhTW: Messages = {
 	commands: {
 		copyCurrentContext: '複製目前內容',
 		reparseResourceVariables: '重新解析資源變數',
-		copyThemeSelector: '複製主題選擇器',
+			copyThemeSelector: '複製主題選擇器',
+			randomBackgroundImage: '隨機選擇背景圖片',
 	},
 	notices: {
 		styleContextCopied: '已複製樣式內容',
 		resourceVariablesReparsed: '已重新解析資源變數',
-		noImageVariables: '沒有可用的已啟用圖片變數',
+			noImageVariables: '沒有可用的已啟用圖片變數',
+			backgroundImageRandomized: '已隨機選擇背景圖片',
 		copied: (value) => `已複製：${value}`,
 	},
 	settings: {
 		intro: '此插件會將目前主題、筆記路徑規則與庫內圖片路徑發布為 CSS 類別和變數，讓 CSS 片段無需 JavaScript 即可回應執行階段狀態。',
 		documentation: { link: 'Obsidian 官方 CSS 程式碼片段文件' },
 		groups: { themeContext: '主題內容', notePathRules: '筆記路徑規則', localImageVariable: '本機圖片變數', backgroundImage: '背景圖片', backgroundDisplay: '顯示', backgroundFilter: '濾鏡', backgroundLayout: '版面配置', diagnostics: '診斷' },
-		pages: { backgroundAppearance: '外觀', backgroundAppearanceDesc: '背景圖片圖層的不透明度、混合、尺寸、位置與 CSS 濾鏡。濾鏡保持預設值即不生效。' },
-		labels: { publishThemeClass: '發布主題類別', themeClassPrefix: '主題類別前綴', publishPathClasses: '發布路徑類別', publishLocalImageVariables: '發布本機圖片變數', liveStatus: '即時狀態', folder: '資料夾', keyword: '關鍵字', publishBackgroundImage: '啟用背景圖片', backgroundImageValue: '圖片值', backgroundOpacity: '圖片不透明度', backgroundBlendMode: '混合模式', backgroundSize: '背景尺寸', backgroundPosition: '背景位置', backgroundRepeat: '重複方式', backgroundAttachment: '附著方式', filterBrightness: '亮度', filterContrast: '對比度', filterSaturate: '飽和度', filterGrayscale: '灰階', filterSepia: '褐色', filterInvert: '反色', filterHueRotate: '色相旋轉', filterBlur: '模糊' },
+			pages: { backgroundAppearance: '外觀', backgroundAppearanceDesc: '背景圖片圖層的不透明度、混合、尺寸、位置與 CSS 濾鏡。濾鏡保持預設值即不生效。', backgroundRandomization: '隨機化圖像背景', backgroundRandomizationDesc: '設定隨機背景圖片的執行時機與入口。' },
+			labels: { publishThemeClass: '發布主題類別', themeClassPrefix: '主題類別前綴', publishPathClasses: '發布路徑類別', publishLocalImageVariables: '發布本機圖片變數', liveStatus: '即時狀態', folder: '資料夾', keyword: '關鍵字', publishBackgroundImage: '啟用背景圖片', randomBackgroundOnStartup: '每次啟動時自動隨機背景', addRandomBackgroundRibbon: '新增 Ribbon 圖示', backgroundImageValue: '圖片值', backgroundOpacity: '圖片不透明度', backgroundBlendMode: '混合模式', backgroundSize: '背景尺寸', backgroundPosition: '背景位置', backgroundRepeat: '重複方式', backgroundAttachment: '附著方式', filterBrightness: '亮度', filterContrast: '對比度', filterSaturate: '飽和度', filterGrayscale: '灰階', filterSepia: '褐色', filterInvert: '反色', filterHueRotate: '色相旋轉', filterBlur: '模糊' },
 		descriptions: {
 			publishThemeClass: '為目前主題在 body 上新增唯一的主題類別。如此可透過 CSS 片段調整特定主題，而無需修改主題本身的檔案。',
 			publishPathClasses: '為路徑符合規則的筆記新增一個或多個 CSS 類別（以半形逗號分隔）。無需在每篇筆記設定 cssclasses，也能共用樣式。',
@@ -26,7 +28,9 @@ const zhTW: Messages = {
 			themePrefixBefore: '根據目前主題名稱新增 body 類別，用於依主題設定樣式。類別名稱會轉為小寫，並將非英數字元替換為連字號。',
 			themePrefixExample: '例如，「Brutal Gum」會變為',
 			currentThemeClass: '目前主題的 mod CSS 類別：',
-			publishBackgroundImage: '將 CSS 圖片值渲染為固定畫布背景。背景層不會攔截滑鼠，因此不會影響筆記和控制項。',
+				publishBackgroundImage: '將 CSS 圖片值渲染為固定畫布背景。背景層不會攔截滑鼠，因此不會影響筆記和控制項。',
+				randomBackgroundOnStartup: '每次開啟 Obsidian 時，從符合條件的圖片變數中隨機選擇一張背景圖片。',
+				addRandomBackgroundRibbon: '啟用後，將隨機選擇背景圖片命令加入 Ribbon。',
 			backgroundImageValue: '填寫完整的 CSS 圖片值，例如 var(--image-1) 或 url("https://example.com/image.jpg")。遠端 URL 會連線至圖片網站；隨機按鈕會選擇本機圖片變數。',
 			backgroundOpacity: '只調整背景圖片圖層的不透明度。',
 			backgroundBlendMode: '控制圖片與目前主題的混合方式。',
@@ -39,7 +43,7 @@ const zhTW: Messages = {
 		buttons: { addPathRule: '新增路徑規則', addImageVariable: '新增圖片變數', deleteRule: '刪除規則', refresh: '重新整理', copySnapshot: '複製快照', randomBackgroundImageValue: '隨機選擇圖片變數', reset: '還原預設值' },
 		tooltips: {
 			clickToCopy: (value) => `按一下即可複製：${value}`,
-			ruleDisabled: '規則已停用', setCssVariableName: '請設定 CSS 變數名稱', variableNameInvalid: '變數名稱無效', setVaultImagePath: '請設定庫內圖片路徑', imageFileNotFound: '找不到圖片檔案', notAnImageFile: '不是圖片檔案', variableNotPublished: '變數尚未發布（請檢查模組開關）',
+				ruleDisabled: '規則已停用', useForBackgroundImage: '是否用於背景圖片：啟用後可被隨機背景圖片選中', backgroundImageExcluded: '未納入隨機背景圖片選擇', setCssVariableName: '請設定 CSS 變數名稱', variableNameInvalid: '變數名稱無效', setVaultImagePath: '請設定庫內圖片路徑', imageFileNotFound: '找不到圖片檔案', notAnImageFile: '不是圖片檔案', variableNotPublished: '變數尚未發布（請檢查模組開關）',
 		},
 		validation: { invalidPrefix: '前綴無效', invalidClassNames: '類別名稱無效', invalidCssVariableName: 'CSS 變數名稱無效（必須以 -- 開頭）', invalidBackgroundImageValue: 'CSS background-image 值無效', backgroundImageVariableRequiresVar: '請用 var() 包住 CSS 變數，例如 var(--image)。也可以點擊上方圖片變數的預覽圖快速複製。', duplicateVariableName: (count) => `另有 ${count} 條規則使用此變數名稱；後面的規則會覆寫前面的規則` },
 		diagnostics: {

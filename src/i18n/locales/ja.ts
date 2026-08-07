@@ -4,20 +4,22 @@ const ja: Messages = {
 	commands: {
 		copyCurrentContext: '現在のコンテキストをコピー',
 		reparseResourceVariables: 'リソース変数を再解析',
-		copyThemeSelector: 'テーマセレクターをコピー',
+			copyThemeSelector: 'テーマセレクターをコピー',
+			randomBackgroundImage: '背景画像をランダムに選択',
 	},
 	notices: {
 		styleContextCopied: 'スタイルコンテキストをコピーしました',
 		resourceVariablesReparsed: 'リソース変数を再解析しました',
-		noImageVariables: '利用できる有効な画像変数がありません',
+			noImageVariables: '利用できる有効な画像変数がありません',
+			backgroundImageRandomized: 'ランダムな背景画像を選択しました',
 		copied: (value) => `コピーしました: ${value}`,
 	},
 	settings: {
 		intro: 'このプラグインは、現在のテーマ、ノートパスのルール、保管庫内の画像パスを CSS クラスと変数として公開します。CSS スニペットは JavaScript なしで実行時の状態に応答できます。',
 		documentation: { link: 'Obsidian の公式 CSS スニペットドキュメント' },
 		groups: { themeContext: 'テーマコンテキスト', notePathRules: 'ノートパスのルール', localImageVariable: 'ローカル画像変数', backgroundImage: '背景画像', backgroundDisplay: '表示', backgroundFilter: 'フィルター', backgroundLayout: 'レイアウト', diagnostics: '診断' },
-		pages: { backgroundAppearance: '外観', backgroundAppearanceDesc: '背景画像レイヤーの不透明度、ブレンド、サイズ、配置、CSS フィルター。デフォルト値のフィルターは適用されません。' },
-		labels: { publishThemeClass: 'テーマクラスを公開', themeClassPrefix: 'テーマクラスの接頭辞', publishPathClasses: 'パスクラスを公開', publishLocalImageVariables: 'ローカル画像変数を公開', liveStatus: 'ライブステータス', folder: 'フォルダ', keyword: 'キーワード', publishBackgroundImage: '背景画像を有効化', backgroundImageValue: '画像の値', backgroundOpacity: '画像の不透明度', backgroundBlendMode: 'ブレンドモード', backgroundSize: '背景サイズ', backgroundPosition: '背景位置', backgroundRepeat: '繰り返し', backgroundAttachment: 'スクロール方式', filterBrightness: '明るさ', filterContrast: 'コントラスト', filterSaturate: '彩度', filterGrayscale: 'グレースケール', filterSepia: 'セピア', filterInvert: '反転', filterHueRotate: '色相回転', filterBlur: 'ぼかし' },
+			pages: { backgroundAppearance: '外観', backgroundAppearanceDesc: '背景画像レイヤーの不透明度、ブレンド、サイズ、配置、CSS フィルター。デフォルト値のフィルターは適用されません。', backgroundRandomization: '画像背景をランダム化', backgroundRandomizationDesc: '背景画像をランダム化するタイミングと入口を設定します。' },
+			labels: { publishThemeClass: 'テーマクラスを公開', themeClassPrefix: 'テーマクラスの接頭辞', publishPathClasses: 'パスクラスを公開', publishLocalImageVariables: 'ローカル画像変数を公開', liveStatus: 'ライブステータス', folder: 'フォルダ', keyword: 'キーワード', publishBackgroundImage: '背景画像を有効化', randomBackgroundOnStartup: '起動時に背景をランダムに選択', addRandomBackgroundRibbon: 'Ribbon アイコンを追加', backgroundImageValue: '画像の値', backgroundOpacity: '画像の不透明度', backgroundBlendMode: 'ブレンドモード', backgroundSize: '背景サイズ', backgroundPosition: '背景位置', backgroundRepeat: '繰り返し', backgroundAttachment: 'スクロール方式', filterBrightness: '明るさ', filterContrast: 'コントラスト', filterSaturate: '彩度', filterGrayscale: 'グレースケール', filterSepia: 'セピア', filterInvert: '反転', filterHueRotate: '色相回転', filterBlur: 'ぼかし' },
 		descriptions: {
 			publishThemeClass: '現在のテーマに固有のテーマクラスを body に追加します。テーマ自身のファイルを変更せず、CSS スニペットで特定テーマを調整できます。',
 			publishPathClasses: 'パスがルールに一致するノートに CSS クラスを 1 つ以上追加します（カンマ区切り）。各ノートで cssclasses を設定しなくてもスタイルを共有できます。',
@@ -26,7 +28,9 @@ const ja: Messages = {
 			themePrefixBefore: '現在のテーマ名から body クラスを追加し、テーマごとのスタイルに使用します。クラス名は小文字になり、英数字以外の文字はハイフンに置き換えられます。',
 			themePrefixExample: '例: 「Brutal Gum」は次になります',
 			currentThemeClass: '現在のテーマの mod CSS クラス: ',
-			publishBackgroundImage: 'CSS 画像値を固定キャンバス背景として表示します。背景レイヤーはクリックを遮らないため、ノートやコントロールに影響しません。',
+				publishBackgroundImage: 'CSS 画像値を固定キャンバス背景として表示します。背景レイヤーはクリックを遮らないため、ノートやコントロールに影響しません。',
+				randomBackgroundOnStartup: 'Obsidian の起動ごとに、対象の画像変数から背景画像を 1 つ選択します。',
+				addRandomBackgroundRibbon: '有効にすると、背景画像のランダム選択コマンドを Ribbon に追加します。',
 			backgroundImageValue: 'var(--image-1) や url("https://example.com/image.jpg") など、完全な CSS 画像値を入力します。リモート URL は画像ホストへ接続します。シャッフルボタンではローカル画像変数を選択します。',
 			backgroundOpacity: '背景画像レイヤーだけの不透明度を調整します。',
 			backgroundBlendMode: '画像と現在のテーマの合成方法を設定します。',
@@ -39,7 +43,7 @@ const ja: Messages = {
 		buttons: { addPathRule: 'パスのルールを追加', addImageVariable: '画像変数を追加', deleteRule: 'ルールを削除', refresh: '更新', copySnapshot: 'スナップショットをコピー', randomBackgroundImageValue: '画像変数をランダムに選択', reset: 'デフォルトに戻す' },
 		tooltips: {
 			clickToCopy: (value) => `クリックしてコピー: ${value}`,
-			ruleDisabled: 'ルールは無効です', setCssVariableName: 'CSS 変数名を設定してください', variableNameInvalid: '変数名が無効です', setVaultImagePath: '保管庫内の画像パスを設定してください', imageFileNotFound: '画像ファイルが見つかりません', notAnImageFile: '画像ファイルではありません', variableNotPublished: '変数が公開されていません（モジュールの切り替えを確認してください）',
+				ruleDisabled: 'ルールは無効です', useForBackgroundImage: '背景画像に使用するかどうか。オンにするとランダム選択の対象になります', backgroundImageExcluded: 'ランダムな背景画像の選択対象外です', setCssVariableName: 'CSS 変数名を設定してください', variableNameInvalid: '変数名が無効です', setVaultImagePath: '保管庫内の画像パスを設定してください', imageFileNotFound: '画像ファイルが見つかりません', notAnImageFile: '画像ファイルではありません', variableNotPublished: '変数が公開されていません（モジュールの切り替えを確認してください）',
 		},
 		validation: { invalidPrefix: '接頭辞が無効です', invalidClassNames: 'クラス名が無効です', invalidCssVariableName: 'CSS 変数名が無効です（-- で始める必要があります）', invalidBackgroundImageValue: 'CSS background-image の値が無効です', backgroundImageVariableRequiresVar: 'CSS 変数を var() で囲んでください（例: var(--image)）。上の画像変数プレビューをクリックしてコピーすることもできます。', duplicateVariableName: (count) => `${count} 件の他のルールがこの変数名を使用しています。後のルールが前のルールを上書きします` },
 		diagnostics: {
