@@ -7,8 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
+## [0.3.1] - 2026-08-07
 ### 🚀 Added
 
 - **Flexible background image values**: Accept complete CSS `background-image` expressions such as `var(--image)`, remote `url(...)` values, and gradients, with syntax validation and a privacy notice for remote image hosts.
