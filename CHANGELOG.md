@@ -7,8 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
+## [0.3.3] - 2026-08-07
 ### 🚀 Added
 
 - **Slider reset controls**: Add localized reset buttons to image opacity and every background filter slider, restoring each control to its canonical default value.
