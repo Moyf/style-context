@@ -25,6 +25,7 @@ beforeEach(() => {
 	document.documentElement.removeAttribute('style');
 	document.body.removeAttribute('style');
 	document.body.classList.remove('sc-style-context-background-image');
+	document.body.classList.remove('sc-style-context-mobile-toolbar-transparent');
 	Object.defineProperty(globalThis, 'activeDocument', {
 		configurable: true,
 		value: document,
@@ -86,6 +87,7 @@ describe('BackgroundImageService', () => {
 				position: 'top right',
 				repeat: 'repeat',
 				attachment: 'scroll',
+				mobileToolbarTransparent: true,
 				filter: {
 					brightness: 1.2,
 					contrast: 1,
@@ -316,6 +318,174 @@ describe('BackgroundImageService', () => {
 				'--sc-style-context-background-image-inset',
 			),
 		).toBe('0');
+	});
+
+	it('publishes the mobile toolbar transparency class by default', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+	});
+
+	it('omits the mobile toolbar transparency class when opted out', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				mobileToolbarTransparent: false,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-background-image'),
+		).toBe(true);
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+	});
+
+	it('treats legacy data without the toolbar key as opted in', () => {
+		const { mobileToolbarTransparent: _omitted, ...legacyBackground } =
+			DEFAULT_SETTINGS.backgroundImage;
+		const currentSettings = settings({
+			backgroundImage: {
+				...legacyBackground,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			} as never,
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+	});
+
+	it('removes the stale toolbar class when the setting is turned off live', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				mobileToolbarTransparent: true,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+
+		currentSettings.backgroundImage.mobileToolbarTransparent = false;
+		service.apply();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+		expect(
+			document.body.classList.contains('sc-style-context-background-image'),
+		).toBe(true);
+	});
+
+	it('withholds the toolbar class while the background is disabled or invalid', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'image-1',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+
+		currentSettings.backgroundImage.imageValue = 'var(--image-1)';
+		service.apply();
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+
+		currentSettings.backgroundImage.enabled = false;
+		service.apply();
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+	});
+
+	it('clears the toolbar class from every touched document on disable', () => {
+		const settingsDocument = document.implementation.createHTMLDocument('Settings');
+		Object.defineProperty(globalThis, 'activeDocument', {
+			configurable: true,
+			value: settingsDocument,
+		});
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		for (const targetDocument of [document, settingsDocument]) {
+			expect(
+				targetDocument.body.classList.contains(
+					'sc-style-context-mobile-toolbar-transparent',
+				),
+			).toBe(true);
+		}
+
+		service.disable();
+
+		for (const targetDocument of [document, settingsDocument]) {
+			expect(
+				targetDocument.body.classList.contains(
+					'sc-style-context-background-image',
+				),
+			).toBe(false);
+			expect(
+				targetDocument.body.classList.contains(
+					'sc-style-context-mobile-toolbar-transparent',
+				),
+			).toBe(false);
+		}
 	});
 });
 

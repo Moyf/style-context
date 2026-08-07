@@ -19,6 +19,8 @@ import {
 import { getAppDocuments } from '../utils/documents';
 
 const BACKGROUND_IMAGE_BODY_CLASS = 'sc-style-context-background-image';
+const MOBILE_TOOLBAR_TRANSPARENT_BODY_CLASS =
+	'sc-style-context-mobile-toolbar-transparent';
 const BACKGROUND_IMAGE_PROPERTIES = {
 	value: '--sc-style-context-background-image-value',
 	inset: '--sc-style-context-background-image-inset',
@@ -212,8 +214,12 @@ export class BackgroundImageService {
 			return;
 		}
 
+		// Legacy data predates this key, so anything but an explicit `false`
+		// keeps the default-on behaviour.
+		const mobileToolbarTransparent = settings.mobileToolbarTransparent !== false;
+
 		for (const targetDocument of getAppDocuments(this.app)) {
-			this.applyToDocument(targetDocument, resolved);
+			this.applyToDocument(targetDocument, resolved, mobileToolbarTransparent);
 		}
 	}
 
@@ -222,7 +228,10 @@ export class BackgroundImageService {
 			...this.touchedDocuments,
 			...getAppDocuments(this.app),
 		])) {
-			targetDocument.body.classList.remove(BACKGROUND_IMAGE_BODY_CLASS);
+			targetDocument.body.classList.remove(
+				BACKGROUND_IMAGE_BODY_CLASS,
+				MOBILE_TOOLBAR_TRANSPARENT_BODY_CLASS,
+			);
 			for (const property of Object.values(BACKGROUND_IMAGE_PROPERTIES)) {
 				targetDocument.body.style.removeProperty(property);
 			}
@@ -233,6 +242,7 @@ export class BackgroundImageService {
 	private applyToDocument(
 		targetDocument: Document,
 		resolved: ResolvedBackgroundImageStyle,
+		mobileToolbarTransparent: boolean,
 	): void {
 		const style = targetDocument.body.style;
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.value, resolved.imageValue);
@@ -245,6 +255,10 @@ export class BackgroundImageService {
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, resolved.opacity);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.filter, resolved.filter);
 		targetDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
+		targetDocument.body.classList.toggle(
+			MOBILE_TOOLBAR_TRANSPARENT_BODY_CLASS,
+			mobileToolbarTransparent,
+		);
 		this.touchedDocuments.add(targetDocument);
 	}
 

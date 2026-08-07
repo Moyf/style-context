@@ -69,6 +69,7 @@ export interface BackgroundImageSettings {
 	position: BackgroundPosition;
 	repeat: BackgroundRepeat;
 	attachment: BackgroundAttachment;
+	mobileToolbarTransparent: boolean;
 	filter: BackgroundFilterSettings;
 }
 
@@ -100,6 +101,7 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 		position: 'center',
 		repeat: 'no-repeat',
 		attachment: 'fixed',
+		mobileToolbarTransparent: true,
 		filter: {
 			brightness: 1,
 			contrast: 1,
