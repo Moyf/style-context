@@ -3,7 +3,7 @@
   "name": "Style Context",
   "version": "0.3.0",
   "minAppVersion": "1.13.0",
-  "description": "A CSS snippet helper. Publish runtime context as CSS classes and variables, turns things like your current theme and vault image paths into predictable hooks for your own custom CSS snippets. It can also quickly set a vault image as the canvas background, with opacity, blend mode, and filter controls.",
+  "description": "A CSS snippet helper. Register local images as CSS variables, quickly set vault backgrounds, expose the current theme on body for theme-specific styling, and auto-add cssclasses per folder.",
   "author": "Moy",
   "isDesktopOnly": false
 }

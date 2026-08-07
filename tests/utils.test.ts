@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { isImageFile } from '../src/utils/media';
-import { pickRandomImageVariable } from '../src/utils/background';
+import {
+	isValidBackgroundImageValue,
+	normalizeBackgroundImageValue,
+	pickRandomBackgroundImageValue,
+} from '../src/utils/background';
 import { themeSlug } from '../src/utils/slug';
 import {
 	areValidClassNames,
@@ -51,7 +55,7 @@ describe('isImageFile', () => {
 	});
 });
 
-describe('pickRandomImageVariable', () => {
+describe('pickRandomBackgroundImageValue', () => {
 	const rules = [
 		{ id: 'one', filePath: 'one.png', variableName: '--one', enabled: true },
 		{ id: 'two', filePath: 'two.png', variableName: '--two', enabled: true },
@@ -60,14 +64,36 @@ describe('pickRandomImageVariable', () => {
 	];
 
 	it('chooses from enabled valid variables and avoids the current value', () => {
-		expect(pickRandomImageVariable(rules, '--one', () => 0)).toBe('--two');
+		expect(pickRandomBackgroundImageValue(rules, 'var(--one)', () => 0)).toBe(
+			'var(--two)',
+		);
 	});
 
 	it('returns null when no usable image variables exist', () => {
 		expect(
-			pickRandomImageVariable([
+			pickRandomBackgroundImageValue([
 				{ id: 'off', filePath: 'off.png', variableName: '--off', enabled: false },
 			]),
 		).toBeNull();
+	});
+});
+
+describe('background image values', () => {
+	it('trims complete expressions without changing their meaning', () => {
+		expect(normalizeBackgroundImageValue(' var(--hero-image) ')).toBe(
+			'var(--hero-image)',
+		);
+		expect(
+			normalizeBackgroundImageValue('url("https://example.com/hero.jpg")'),
+		).toBe('url("https://example.com/hero.jpg")');
+	});
+
+	it('accepts image expressions and rejects plain invalid tokens', () => {
+		expect(isValidBackgroundImageValue('var(--hero-image)')).toBe(true);
+		expect(
+			isValidBackgroundImageValue('url("https://example.com/hero.jpg")'),
+		).toBe(true);
+		expect(isValidBackgroundImageValue('--hero-image')).toBe(false);
+		expect(isValidBackgroundImageValue('hero-image')).toBe(false);
 	});
 });

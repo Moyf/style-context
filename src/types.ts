@@ -61,8 +61,8 @@ export interface BackgroundFilterSettings {
 
 export interface BackgroundImageSettings {
 	enabled: boolean;
-	/** A CSS custom property containing a published image value. */
-	variableName: string;
+	/** A complete CSS background-image value. */
+	imageValue: string;
 	opacity: number;
 	blendMode: BackgroundBlendMode;
 	size: BackgroundSize;
@@ -93,7 +93,7 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 	resourceRules: [],
 	backgroundImage: {
 		enabled: false,
-		variableName: '',
+		imageValue: '',
 		opacity: 0.35,
 		blendMode: 'normal',
 		size: 'cover',

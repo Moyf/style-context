@@ -46,7 +46,7 @@ Click the preview image on the left to quickly copy the variable reference:
 
 ### Built-in background image
 
-The **Background image** settings group can use any enabled local image variable as a fixed canvas background. Enter a variable such as `--image-1`, or click the shuffle button to choose one of your enabled image variables at random.
+The **Background image** settings group accepts a complete CSS image value. Paste a local variable reference such as `var(--image-1)`, use a web image such as `url("https://example.com/image.jpg")`, or click the shuffle button to choose one of your enabled local image variables at random. Remote URLs contact the image host and may disclose normal network request information.
 
 <img width="870" height="412" alt="Snipaste_2026-08-06_16-03-08" src="https://github.com/user-attachments/assets/b01ed2d6-0e22-4aed-a342-c854c4235821" />
 
@@ -164,7 +164,7 @@ Obsidian 每次重载仓库时都会重新生成资源 URL，因此原始路径�
 
 ### 内置背景图片
 
-设置中的「背景图片」可以直接使用任意已启用的本地图片变量作为固定画布背景。填写 `--image-1` 这样的变量名，或点击输入框旁的随机按钮，从已启用的图片变量中随机选择。
+设置中的「背景图片」接受完整的 CSS 图片值。可以直接粘贴 `var(--image-1)` 这样的本地变量引用，也可以填写 `url("https://example.com/image.jpg")` 使用网页图片，或点击输入框旁的随机按钮选择已启用的本地图片变量。远程 URL 会连接图片所在网站，并可能暴露常规网络请求信息。
 
 背景图层拥有独立的不透明度和混合模式，不会让笔记或控件一起变透明；「外观」子页面集中提供尺寸、位置、重复方式和附着方式等常用选项，以及 CSS 滤镜（亮度、模糊等）调整，方便联动调节。关闭开关即可移除内置图层，恢复主题原本的画布样式。
 

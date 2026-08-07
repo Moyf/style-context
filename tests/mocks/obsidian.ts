@@ -1,3 +1,34 @@
+interface DomElementOptions {
+	cls?: string | string[];
+}
+
+function installDomHelpers(): void {
+	Object.defineProperty(HTMLElement.prototype, 'createEl', {
+		configurable: true,
+		value(this: HTMLElement, tag: keyof HTMLElementTagNameMap) {
+			const element = this.ownerDocument.createElement(tag);
+			this.appendChild(element);
+			return element;
+		},
+		writable: true,
+	});
+	Object.defineProperty(HTMLElement.prototype, 'createDiv', {
+		configurable: true,
+		value(this: HTMLElement, options?: DomElementOptions) {
+			const element = this.ownerDocument.createElement('div');
+			if (options?.cls) {
+				const classes = Array.isArray(options.cls) ? options.cls : [options.cls];
+				element.classList.add(...classes);
+			}
+			this.appendChild(element);
+			return element;
+		},
+		writable: true,
+	});
+}
+
+installDomHelpers();
+
 export class TFile {
 	path: string;
 	extension: string;

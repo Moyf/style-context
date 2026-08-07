@@ -21,10 +21,11 @@ function settings(
 	return { ...DEFAULT_SETTINGS, ...overrides };
 }
 
-	beforeEach(() => {
-		document.documentElement.removeAttribute('style');
-		document.getElementById('style-context-background-image')?.remove();
-		document.body.classList.remove('sc-style-context-background-image');
+beforeEach(() => {
+	document.documentElement.removeAttribute('style');
+	document.body.removeAttribute('style');
+	document.getElementById('style-context-background-image')?.remove();
+	document.body.classList.remove('sc-style-context-background-image');
 	document.getElementById('style-context-resources')?.remove();
 	Object.defineProperty(globalThis, 'activeDocument', {
 		configurable: true,
@@ -37,7 +38,7 @@ describe('BackgroundImageService', () => {
 		const currentSettings = settings({
 			backgroundImage: {
 				enabled: true,
-				variableName: '--image-1',
+				imageValue: 'var(--image-1)',
 				opacity: 0.6,
 				blendMode: 'multiply',
 				size: 'contain',
@@ -61,7 +62,14 @@ describe('BackgroundImageService', () => {
 		service.enable();
 
 		const style = document.getElementById('style-context-background-image');
-		expect(style?.textContent).toContain('background-image: var(--image-1)');
+		expect(style?.textContent).toContain(
+			'background-image: var(--sc-style-context-background-image-value)',
+		);
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-value',
+			),
+		).toBe('var(--image-1)');
 		expect(style?.textContent).toContain('opacity: 0.6');
 		expect(style?.textContent).toContain('background-blend-mode: multiply');
 		expect(style?.textContent).toContain('background-size: contain');
@@ -72,12 +80,17 @@ describe('BackgroundImageService', () => {
 		// The layer grows by the blur radius so softened edges stay off-canvas.
 		expect(style?.textContent).toContain('inset: -4px');
 		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(true);
-		expect(service.currentVariable()).toBe('--image-1');
+		expect(service.currentImageValue()).toBe('var(--image-1)');
 
 		service.disable();
 		expect(document.getElementById('style-context-background-image')).toBeNull();
 		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(false);
-		expect(service.currentVariable()).toBe('');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-value',
+			),
+		).toBe('');
+		expect(service.currentImageValue()).toBe('');
 	});
 
 	it('omits the filter rule while every filter sits at its neutral default', () => {
@@ -85,7 +98,7 @@ describe('BackgroundImageService', () => {
 			backgroundImage: {
 				...DEFAULT_SETTINGS.backgroundImage,
 				enabled: true,
-				variableName: '--image-1',
+				imageValue: 'var(--image-1)',
 			},
 		});
 		const service = new BackgroundImageService(() => currentSettings);
@@ -93,9 +106,36 @@ describe('BackgroundImageService', () => {
 		service.enable();
 
 		const css = document.getElementById('style-context-background-image')?.textContent;
-		expect(css).toContain('background-image: var(--image-1)');
+		expect(css).toContain(
+			'background-image: var(--sc-style-context-background-image-value)',
+		);
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-value',
+			),
+		).toBe('var(--image-1)');
 		expect(css).not.toContain('filter:');
 		expect(css).toContain('inset: 0');
+	});
+
+	it('accepts a remote URL as a complete CSS image value', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'url("https://example.com/hero.jpg")',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-value',
+			),
+		).toBe('url("https://example.com/hero.jpg")');
+		expect(document.getElementById('style-context-background-image')).not.toBeNull();
 	});
 
 	it('paints the canvas with the theme color so zero opacity falls back to it', () => {
@@ -103,7 +143,7 @@ describe('BackgroundImageService', () => {
 			backgroundImage: {
 				...DEFAULT_SETTINGS.backgroundImage,
 				enabled: true,
-				variableName: '--image-1',
+				imageValue: 'var(--image-1)',
 				opacity: 0,
 			},
 		});
@@ -121,7 +161,7 @@ describe('BackgroundImageService', () => {
 			backgroundImage: {
 				...DEFAULT_SETTINGS.backgroundImage,
 				enabled: true,
-				variableName: 'image-1',
+				imageValue: 'image-1',
 			},
 		});
 		const service = new BackgroundImageService(() => currentSettings);
@@ -137,7 +177,7 @@ describe('BackgroundImageService', () => {
 			backgroundImage: {
 				...DEFAULT_SETTINGS.backgroundImage,
 				enabled: true,
-				variableName: '--image-1',
+				imageValue: 'var(--image-1)',
 				opacity: 4,
 				blendMode: 'not-a-mode' as never,
 				size: 'bad-size' as never,

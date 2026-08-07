@@ -87,10 +87,11 @@ export class ResourceVariableService {
 		}
 
 		if (declarations.length > 0) {
-			const style = activeDocument.createElement('style');
+			// Runtime-generated vault URLs cannot be represented in static styles.css.
+			// eslint-disable-next-line obsidianmd/no-forbidden-elements
+			const style = activeDocument.head.createEl('style');
 			style.id = RESOURCE_STYLE_ID;
 			style.textContent = `:root {\n${declarations.join('\n')}\n}`;
-			activeDocument.head.appendChild(style);
 		}
 	}
 

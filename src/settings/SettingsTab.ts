@@ -32,7 +32,11 @@ import {
 import { isImageFile } from '../utils/media';
 import { readThemeName } from '../utils/internals';
 import { themeSlug } from '../utils/slug';
-import { pickRandomImageVariable } from '../utils/background';
+import {
+	isValidBackgroundImageValue,
+	normalizeBackgroundImageValue,
+	pickRandomBackgroundImageValue,
+} from '../utils/background';
 import { t } from '../i18n/i18n';
 import type { Messages } from '../i18n/types';
 import type { PathRule, ResourceRule } from '../types';
@@ -401,7 +405,7 @@ export class SettingsTab extends PluginSettingTab {
 					desc: descriptions.publishBackgroundImage,
 					control: { type: 'toggle', key: 'backgroundImage.enabled' },
 				},
-				this.buildBackgroundVariableRow(messages),
+				this.buildBackgroundImageValueRow(messages),
 				{
 					type: 'page',
 					name: pages.backgroundAppearance,
@@ -525,33 +529,33 @@ export class SettingsTab extends PluginSettingTab {
 		};
 	}
 
-	private buildBackgroundVariableRow(
+	private buildBackgroundImageValueRow(
 		messages: Messages,
 	): SettingGroupItem<ControlKey> {
 		return {
-			name: messages.settings.labels.backgroundVariable,
-			desc: messages.settings.descriptions.backgroundVariable,
+			name: messages.settings.labels.backgroundImageValue,
+			desc: messages.settings.descriptions.backgroundImageValue,
 			render: (setting) => {
 				const background = this.plugin.settings.backgroundImage;
 				let variableText: TextComponent | null = null;
 				setting.addText((text) => {
 					variableText = text;
-					text.setPlaceholder(messages.settings.placeholders.backgroundVariable)
-						.setValue(background.variableName)
+					text.setPlaceholder(messages.settings.placeholders.backgroundImageValue)
+						.setValue(normalizeBackgroundImageValue(background.imageValue))
 						.onChange(async (value) => {
-							const normalized = value.trim();
+							const normalized = normalizeBackgroundImageValue(value);
 							if (
 								normalized.length > 0 &&
-								!isValidCssVarName(normalized)
+								!isValidBackgroundImageValue(normalized)
 							) {
 								this.showInputError(
 									text.inputEl,
-									messages.settings.validation.invalidCssVariableName,
+									messages.settings.validation.invalidBackgroundImageValue,
 								);
 								return;
 							}
 							this.clearInputError(text.inputEl);
-							background.variableName = normalized;
+							background.imageValue = normalized;
 							await this.persistAndApply();
 						});
 				});
@@ -559,14 +563,14 @@ export class SettingsTab extends PluginSettingTab {
 				setting.addExtraButton((button) =>
 					button
 						.setIcon('shuffle')
-						.setTooltip(messages.settings.buttons.randomBackgroundVariable)
+						.setTooltip(messages.settings.buttons.randomBackgroundImageValue)
 						.onClick(async () => {
-							const value = this.pickRandomBackgroundVariable();
+							const value = this.pickRandomBackgroundImageValue();
 							if (!value) {
 								new Notice(messages.notices.noImageVariables);
 								return;
 							}
-							background.variableName = value;
+							background.imageValue = value;
 							variableText?.setValue(value);
 							if (variableText) {
 								this.clearInputError(variableText.inputEl);
@@ -609,10 +613,10 @@ export class SettingsTab extends PluginSettingTab {
 		};
 	}
 
-	private pickRandomBackgroundVariable(): string | null {
-		return pickRandomImageVariable(
+	private pickRandomBackgroundImageValue(): string | null {
+		return pickRandomBackgroundImageValue(
 			this.plugin.settings.resourceRules,
-			this.plugin.settings.backgroundImage.variableName,
+			this.plugin.settings.backgroundImage.imageValue,
 		);
 	}
 
@@ -919,8 +923,9 @@ export class SettingsTab extends PluginSettingTab {
 
 						// The live panel is not a setting row; anchor it
 						// directly after this row inside the group list.
-						const panel = activeDocument.createElement('div');
-						panel.addClass('sc-settings-diagnostics');
+						const panel = setting.settingEl.createDiv({
+							cls: 'sc-settings-diagnostics',
+						});
 						setting.settingEl.insertAdjacentElement('afterend', panel);
 						this.diagnosticsEl = panel;
 						this.refreshDiagnostics();

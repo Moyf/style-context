@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🚀 Added
+
+- **Flexible background image values**: Accept complete CSS `background-image` expressions such as `var(--image)`, remote `url(...)` values, and gradients, with syntax validation and a privacy notice for remote image hosts.
+
+### ⚡ Changed
+
+- **Ready-to-use image references**: Store the built-in background as an `imageValue` and make random selection insert `var(--name)` so copied local image references can be pasted directly.
+- **Obsidian DOM helpers**: Create dynamic style and diagnostics elements with Obsidian's `createEl` and `createDiv` helpers for API compliance.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **灵活的背景图片值**：支持填写完整的 CSS `background-image` 表达式，例如 `var(--image)`、远程 `url(...)` 和渐变，并提供语法校验与远程图片隐私提示。
+
+### ⚡ 变更
+
+- **可直接使用的图片引用**：内置背景改为保存 `imageValue`，随机选择会直接填入 `var(--name)`，复制的本地图片引用可以直接粘贴使用。
+- **Obsidian DOM 辅助方法**：动态样式和诊断元素改用 Obsidian 的 `createEl` 与 `createDiv`，符合官方 API 规范。
+
+</details>
+
+---
+
 ## [0.3.0] - 2026-08-06
 ### 🚀 Added
 

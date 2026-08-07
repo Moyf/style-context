@@ -10,10 +10,14 @@ import {
 	type BackgroundFilterSettings,
 	type StyleContextSettings,
 } from '../types';
-import { isValidCssVarName } from '../utils/validation';
+import {
+	isValidBackgroundImageValue,
+	normalizeBackgroundImageValue,
+} from '../utils/background';
 
 export const BACKGROUND_IMAGE_STYLE_ID = 'style-context-background-image';
 const BACKGROUND_IMAGE_BODY_CLASS = 'sc-style-context-background-image';
+const BACKGROUND_IMAGE_VALUE_PROPERTY = '--sc-style-context-background-image-value';
 
 type StringOptions = readonly string[];
 
@@ -115,7 +119,8 @@ export class BackgroundImageService {
 		if (!this.enabled) return;
 
 		const settings = this.getSettings().backgroundImage;
-		if (!settings?.enabled || !isValidCssVarName(settings.variableName)) return;
+		const imageValue = normalizeBackgroundImageValue(settings?.imageValue);
+		if (!settings?.enabled || !isValidBackgroundImageValue(imageValue)) return;
 
 		const blendMode = optionOrDefault(
 			settings.blendMode,
@@ -145,8 +150,14 @@ export class BackgroundImageService {
 		// radius keeps the softened edge outside the visible canvas.
 		const inset = filter.blur > 0 ? `-${Math.ceil(filter.blur)}px` : '0';
 		const filterRule = filterCss ? `\n\tfilter: ${filterCss};` : '';
+		activeDocument.body.style.setProperty(
+			BACKGROUND_IMAGE_VALUE_PROPERTY,
+			imageValue,
+		);
 
-		const style = activeDocument.createElement('style');
+		// Runtime-generated user settings cannot be represented in static styles.css.
+		// eslint-disable-next-line obsidianmd/no-forbidden-elements
+		const style = activeDocument.head.createEl('style');
 		style.id = BACKGROUND_IMAGE_STYLE_ID;
 		style.textContent = `
 /* Style Context background image layer */
@@ -161,7 +172,7 @@ body.${BACKGROUND_IMAGE_BODY_CLASS}::before {
 	inset: ${inset};
 	pointer-events: none;
 	z-index: -1;
-	background-image: var(${settings.variableName});
+	background-image: var(${BACKGROUND_IMAGE_VALUE_PROPERTY});
 	background-color: var(--background-primary);
 	background-blend-mode: ${blendMode};
 	background-size: ${size};
@@ -193,18 +204,20 @@ body.${BACKGROUND_IMAGE_BODY_CLASS} .nav-files-container {
 }
 `;
 
-		activeDocument.head.appendChild(style);
 		activeDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
 	}
 
 	private clear(): void {
 		activeDocument.getElementById(BACKGROUND_IMAGE_STYLE_ID)?.remove();
 		activeDocument.body.classList.remove(BACKGROUND_IMAGE_BODY_CLASS);
+		activeDocument.body.style.removeProperty(BACKGROUND_IMAGE_VALUE_PROPERTY);
 	}
 
 	/** Exposes the selected variable for diagnostics and tests. */
-	currentVariable(): string {
+	currentImageValue(): string {
 		const settings = this.getSettings().backgroundImage;
-		return this.enabled && settings?.enabled ? settings.variableName : '';
+		return this.enabled && settings?.enabled
+			? normalizeBackgroundImageValue(settings.imageValue)
+			: '';
 	}
 }

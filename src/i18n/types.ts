@@ -35,7 +35,7 @@ export interface Messages {
 			folder: string;
 			keyword: string;
 			publishBackgroundImage: string;
-			backgroundVariable: string;
+			backgroundImageValue: string;
 			backgroundOpacity: string;
 			backgroundBlendMode: string;
 			backgroundSize: string;
@@ -60,7 +60,7 @@ export interface Messages {
 			themePrefixExample: string;
 			currentThemeClass: string;
 			publishBackgroundImage: string;
-			backgroundVariable: string;
+			backgroundImageValue: string;
 			backgroundOpacity: string;
 			backgroundBlendMode: string;
 			backgroundSize: string;
@@ -75,7 +75,7 @@ export interface Messages {
 			classNames: string;
 			vaultFilePath: string;
 			cssVariable: string;
-			backgroundVariable: string;
+			backgroundImageValue: string;
 		};
 		buttons: {
 			addPathRule: string;
@@ -83,7 +83,7 @@ export interface Messages {
 			deleteRule: string;
 			refresh: string;
 			copySnapshot: string;
-			randomBackgroundVariable: string;
+			randomBackgroundImageValue: string;
 		};
 		tooltips: {
 			clickToCopy: (value: string) => string;
@@ -99,6 +99,7 @@ export interface Messages {
 			invalidPrefix: string;
 			invalidClassNames: string;
 			invalidCssVariableName: string;
+			invalidBackgroundImageValue: string;
 			duplicateVariableName: (count: number) => string;
 		};
 		diagnostics: {
