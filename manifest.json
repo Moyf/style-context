@@ -1,7 +1,7 @@
 {
   "id": "style-context",
   "name": "Style Context",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "minAppVersion": "1.13.0",
   "description": "A CSS snippet helper. Register local images as CSS variables, quickly set vault backgrounds, expose the current theme on body for theme-specific styling, and auto-add cssclasses per folder.",
   "author": "Moy",

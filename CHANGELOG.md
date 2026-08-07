@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.3.4] - 2026-08-07
 ### 🚀 Added
 
 - **Light/dark background images**: Optionally configure separate image values and appearance settings for `theme-light` and `theme-dark` windows, while retaining the existing global configuration as the default.
