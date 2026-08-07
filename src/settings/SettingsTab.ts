@@ -334,6 +334,11 @@ export class SettingsTab extends PluginSettingTab {
 				name: '',
 				searchable: false,
 				render: (setting) => {
+					setting.settingEl.removeClass(
+						'sc-path-rule-row',
+						'sc-resource-rule-row',
+						'mod-toggle',
+					);
 					setting.addButton((button) =>
 						button
 							.setButtonText(messages.settings.buttons.addPathRule)
@@ -1031,6 +1036,11 @@ export class SettingsTab extends PluginSettingTab {
 				name: '',
 				searchable: false,
 				render: (setting) => {
+					setting.settingEl.removeClass(
+						'sc-path-rule-row',
+						'sc-resource-rule-row',
+						'mod-toggle',
+					);
 					setting.addButton((button) =>
 						button
 							.setButtonText(messages.settings.buttons.addImageVariable)
