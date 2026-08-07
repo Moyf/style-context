@@ -1,3 +1,4 @@
+import type { App } from 'obsidian';
 import {
 	BACKGROUND_ATTACHMENT_OPTIONS,
 	BACKGROUND_BLEND_MODES,
@@ -15,6 +16,7 @@ import {
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 } from '../utils/background';
+import { getAppDocuments } from '../utils/documents';
 
 const BACKGROUND_IMAGE_BODY_CLASS = 'sc-style-context-background-image';
 const BACKGROUND_IMAGE_PROPERTIES = {
@@ -173,10 +175,13 @@ export function resolveBackgroundImageStyle(
  */
 export class BackgroundImageService {
 	private getSettings: () => StyleContextSettings;
+	private app?: App;
 	private enabled = false;
+	private touchedDocuments = new Set<Document>();
 
-	constructor(getSettings: () => StyleContextSettings) {
+	constructor(getSettings: () => StyleContextSettings, app?: App) {
 		this.getSettings = getSettings;
+		this.app = app;
 	}
 
 	enable(): void {
@@ -207,47 +212,40 @@ export class BackgroundImageService {
 			return;
 		}
 
-		const style = activeDocument.body.style;
-		setStyleProperty(
-			style,
-			BACKGROUND_IMAGE_PROPERTIES.value,
-			resolved.imageValue,
-		);
-		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.inset, resolved.inset);
-		setStyleProperty(
-			style,
-			BACKGROUND_IMAGE_PROPERTIES.blendMode,
-			resolved.blendMode,
-		);
-		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.size, resolved.size);
-		setStyleProperty(
-			style,
-			BACKGROUND_IMAGE_PROPERTIES.position,
-			resolved.position,
-		);
-		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.repeat, resolved.repeat);
-		setStyleProperty(
-			style,
-			BACKGROUND_IMAGE_PROPERTIES.attachment,
-			resolved.attachment,
-		);
-		setStyleProperty(
-			style,
-			BACKGROUND_IMAGE_PROPERTIES.opacity,
-			resolved.opacity,
-		);
-		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.filter, resolved.filter);
-
-		if (!activeDocument.body.classList.contains(BACKGROUND_IMAGE_BODY_CLASS)) {
-			activeDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
+		for (const targetDocument of getAppDocuments(this.app)) {
+			this.applyToDocument(targetDocument, resolved);
 		}
 	}
 
 	private clear(): void {
-		activeDocument.body.classList.remove(BACKGROUND_IMAGE_BODY_CLASS);
-		for (const property of Object.values(BACKGROUND_IMAGE_PROPERTIES)) {
-			activeDocument.body.style.removeProperty(property);
+		for (const targetDocument of new Set([
+			...this.touchedDocuments,
+			...getAppDocuments(this.app),
+		])) {
+			targetDocument.body.classList.remove(BACKGROUND_IMAGE_BODY_CLASS);
+			for (const property of Object.values(BACKGROUND_IMAGE_PROPERTIES)) {
+				targetDocument.body.style.removeProperty(property);
+			}
 		}
+		this.touchedDocuments.clear();
+	}
+
+	private applyToDocument(
+		targetDocument: Document,
+		resolved: ResolvedBackgroundImageStyle,
+	): void {
+		const style = targetDocument.body.style;
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.value, resolved.imageValue);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.inset, resolved.inset);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.blendMode, resolved.blendMode);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.size, resolved.size);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.position, resolved.position);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.repeat, resolved.repeat);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.attachment, resolved.attachment);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, resolved.opacity);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.filter, resolved.filter);
+		targetDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
+		this.touchedDocuments.add(targetDocument);
 	}
 
 	/** Exposes the selected variable for diagnostics and tests. */

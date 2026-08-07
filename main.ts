@@ -23,10 +23,16 @@ export default class StyleContextPlugin extends Plugin {
 			this,
 			() => this.settings,
 		);
-		this.backgroundImageCtx = new BackgroundImageService(() => this.settings);
+		this.backgroundImageCtx = new BackgroundImageService(
+			() => this.settings,
+			this.app,
+		);
 
 		this.addSettingTab(new SettingsTab(this.app, this));
 		registerCommands(this);
+		this.registerEvent(
+			this.app.workspace.on('window-open', () => this.applyAll()),
+		);
 
 		this.applyAll();
 	}

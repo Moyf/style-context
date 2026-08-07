@@ -20,6 +20,7 @@ export interface Messages {
 			backgroundImage: string;
 			backgroundDisplay: string;
 			backgroundFilter: string;
+			backgroundLayout: string;
 			diagnostics: string;
 		};
 		pages: {
@@ -84,6 +85,7 @@ export interface Messages {
 			refresh: string;
 			copySnapshot: string;
 			randomBackgroundImageValue: string;
+			reset: string;
 		};
 		tooltips: {
 			clickToCopy: (value: string) => string;

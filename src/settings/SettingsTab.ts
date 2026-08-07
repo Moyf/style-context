@@ -6,6 +6,8 @@ import {
 	TextComponent,
 	normalizePath,
 	setTooltip,
+	type ExtraButtonComponent,
+	type SliderComponent,
 	type Setting,
 	type SettingDefinition,
 	type SettingDefinitionItem,
@@ -13,7 +15,6 @@ import {
 } from 'obsidian';
 import type StyleContextPlugin from '../../main';
 import {
-	BACKGROUND_ATTACHMENT_OPTIONS,
 	BACKGROUND_BLEND_MODES,
 	BACKGROUND_POSITION_OPTIONS,
 	BACKGROUND_REPEAT_OPTIONS,
@@ -41,7 +42,7 @@ import {
 } from '../utils/background';
 import { t } from '../i18n/i18n';
 import type { Messages } from '../i18n/types';
-import type { PathRule, ResourceRule } from '../types';
+import { DEFAULT_SETTINGS, type PathRule, type ResourceRule } from '../types';
 
 const DIAG_REFRESH_MS = 2000;
 
@@ -126,6 +127,10 @@ export class SettingsTab extends PluginSettingTab {
 	// ------------------------------------------------------------------
 
 	getSettingDefinitions(): SettingDefinitionItem<ControlKey>[] {
+		// A detached Settings window has its own Document. Republish before
+		// rendering so image variables and live previews are immediately
+		// available there without forcing the user to reselect an image.
+		this.plugin.applyAll();
 		const messages = t();
 		return [
 			this.buildIntroDefinition(messages),
@@ -433,24 +438,101 @@ export class SettingsTab extends PluginSettingTab {
 							type: 'group',
 							heading: groups.backgroundDisplay,
 							items: [
-								{
-									name: labels.backgroundOpacity,
-									desc: descriptions.backgroundOpacity,
-									control: {
-										type: 'slider',
-										key: 'backgroundImage.opacity',
-										min: 0,
-										max: 1,
-										step: 0.05,
-										displayFormat: formatPercent,
-									},
-								},
+								this.buildSlider(
+									labels.backgroundOpacity,
+									'backgroundImage.opacity',
+									0,
+									1,
+									0.05,
+									this.plugin.settings.backgroundImage.opacity,
+									formatPercent,
+									descriptions.backgroundOpacity,
+									DEFAULT_SETTINGS.backgroundImage.opacity,
+								),
 								this.buildBackgroundDropdown(
 									labels.backgroundBlendMode,
 									descriptions.backgroundBlendMode,
 									BACKGROUND_BLEND_MODES,
 									'backgroundImage.blendMode',
 								),
+							],
+						},
+						{
+							type: 'group',
+							heading: groups.backgroundFilter,
+							items: [
+								this.buildFilterSlider(
+									labels.filterBrightness,
+									'backgroundImage.filter.brightness',
+									0,
+									2,
+									formatPercent,
+									DEFAULT_SETTINGS.backgroundImage.filter.brightness,
+								),
+								this.buildFilterSlider(
+									labels.filterBlur,
+									'backgroundImage.filter.blur',
+									0,
+									20,
+									formatPixels,
+									DEFAULT_SETTINGS.backgroundImage.filter.blur,
+									0.5,
+								),
+								this.buildFilterSlider(
+									labels.filterContrast,
+									'backgroundImage.filter.contrast',
+									0,
+									2,
+									formatPercent,
+									DEFAULT_SETTINGS.backgroundImage.filter.contrast,
+								),
+								this.buildFilterSlider(
+									labels.filterSaturate,
+									'backgroundImage.filter.saturate',
+									0,
+									2,
+									formatPercent,
+									DEFAULT_SETTINGS.backgroundImage.filter.saturate,
+								),
+								this.buildFilterSlider(
+									labels.filterGrayscale,
+									'backgroundImage.filter.grayscale',
+									0,
+									1,
+									formatPercent,
+									DEFAULT_SETTINGS.backgroundImage.filter.grayscale,
+								),
+								this.buildFilterSlider(
+									labels.filterHueRotate,
+									'backgroundImage.filter.hueRotate',
+									0,
+									360,
+									formatDegrees,
+									DEFAULT_SETTINGS.backgroundImage.filter.hueRotate,
+									5,
+								),
+								this.buildFilterSlider(
+									labels.filterSepia,
+									'backgroundImage.filter.sepia',
+									0,
+									1,
+									formatPercent,
+									DEFAULT_SETTINGS.backgroundImage.filter.sepia,
+								),
+								this.buildFilterSlider(
+									labels.filterInvert,
+									'backgroundImage.filter.invert',
+									0,
+									1,
+									formatPercent,
+									DEFAULT_SETTINGS.backgroundImage.filter.invert,
+								),
+							],
+						},
+						{
+							type: 'group',
+							heading: groups.backgroundLayout,
+							items: [
 								this.buildBackgroundDropdown(
 									labels.backgroundSize,
 									descriptions.backgroundSize,
@@ -468,76 +550,6 @@ export class SettingsTab extends PluginSettingTab {
 									descriptions.backgroundRepeat,
 									BACKGROUND_REPEAT_OPTIONS,
 									'backgroundImage.repeat',
-								),
-								this.buildBackgroundDropdown(
-									labels.backgroundAttachment,
-									descriptions.backgroundAttachment,
-									BACKGROUND_ATTACHMENT_OPTIONS,
-									'backgroundImage.attachment',
-								),
-							],
-						},
-						{
-							type: 'group',
-							heading: groups.backgroundFilter,
-							items: [
-								this.buildFilterSlider(
-									labels.filterBrightness,
-									'backgroundImage.filter.brightness',
-									0,
-									2,
-									formatPercent,
-								),
-								this.buildFilterSlider(
-									labels.filterContrast,
-									'backgroundImage.filter.contrast',
-									0,
-									2,
-									formatPercent,
-								),
-								this.buildFilterSlider(
-									labels.filterSaturate,
-									'backgroundImage.filter.saturate',
-									0,
-									2,
-									formatPercent,
-								),
-								this.buildFilterSlider(
-									labels.filterGrayscale,
-									'backgroundImage.filter.grayscale',
-									0,
-									1,
-									formatPercent,
-								),
-								this.buildFilterSlider(
-									labels.filterSepia,
-									'backgroundImage.filter.sepia',
-									0,
-									1,
-									formatPercent,
-								),
-								this.buildFilterSlider(
-									labels.filterInvert,
-									'backgroundImage.filter.invert',
-									0,
-									1,
-									formatPercent,
-								),
-								this.buildFilterSlider(
-									labels.filterHueRotate,
-									'backgroundImage.filter.hueRotate',
-									0,
-									360,
-									formatDegrees,
-									5,
-								),
-								this.buildFilterSlider(
-									labels.filterBlur,
-									'backgroundImage.filter.blur',
-									0,
-									20,
-									formatPixels,
-									0.5,
 								),
 							],
 						},
@@ -762,11 +774,62 @@ export class SettingsTab extends PluginSettingTab {
 		min: number,
 		max: number,
 		displayFormat: (value: number) => string,
+		defaultValue: number,
 		step = 0.05,
+	): SettingDefinition<ControlKey> {
+		const value = getPath(this.plugin.settings, key);
+		return this.buildSlider(
+			name,
+			key,
+			min,
+			max,
+			step,
+			typeof value === 'number' ? value : defaultValue,
+			displayFormat,
+			undefined,
+			defaultValue,
+		);
+	}
+
+	private buildSlider(
+		name: string,
+		key: ControlKey,
+		min: number,
+		max: number,
+		step: number,
+		value: number,
+		displayFormat: (value: number) => string,
+		description: string | undefined,
+		defaultValue: number,
 	): SettingDefinition<ControlKey> {
 		return {
 			name,
-			control: { type: 'slider', key, min, max, step, displayFormat },
+			desc: description,
+			render: (setting) => {
+				let slider: SliderComponent;
+				let resetButton: ExtraButtonComponent;
+				setting.addSlider((component) => {
+					slider = component
+						.setLimits(min, max, step)
+						.setValue(value)
+						.setDisplayFormat(displayFormat)
+						.onChange(async (newValue) => {
+							resetButton.setDisabled(newValue === defaultValue);
+							await this.setControlValue(key, newValue);
+						});
+				});
+				setting.addExtraButton((button) => {
+					resetButton = button
+						.setIcon('rotate-ccw')
+						.setTooltip(t().settings.buttons.reset)
+						.setDisabled(value === defaultValue)
+						.onClick(async () => {
+							slider.setValue(defaultValue);
+							resetButton.setDisabled(true);
+							await this.setControlValue(key, defaultValue);
+						});
+				});
+			},
 		};
 	}
 
@@ -788,6 +851,11 @@ export class SettingsTab extends PluginSettingTab {
 			{
 				name: messages.settings.labels.publishLocalImageVariables,
 				render: (setting) => {
+					// On the first detached-Settings render, activeDocument can still
+					// point to the main window. The row's ownerDocument is definitive.
+					this.plugin.resourceVarCtx.applyToDocument(
+						setting.settingEl.ownerDocument,
+					);
 					setting.setClass('sc-resource-toggle');
 					// Rich description: explain why this module exists + show the
 					// CSS contract. descEl is rebuilt (not setDesc) so we can embed

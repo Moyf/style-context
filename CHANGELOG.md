@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🚀 Added
+
+- **Slider reset controls**: Add localized reset buttons to image opacity and every background filter slider, restoring each control to its canonical default value.
+
+### ⚡ Changed
+
+- **Appearance organization**: Keep opacity and blend mode under Display, reorder filters for faster adjustment, and move size, position, and repeat into a final Layout group while hiding the unused Attachment control.
+- **Status bar surface**: Preserve the theme's status bar background instead of forcing it transparent when the built-in canvas background is enabled.
+
+### 🐛 Fixed
+
+- **Detached Settings synchronization**: Publish theme classes, image variables, and background properties across the main window, independent Settings window, and workspace popouts so live changes affect every window.
+- **First-open image previews**: Publish image variables directly to the detached Settings document during its first render, eliminating the focus timing race that left previews empty until an image was selected again.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **滑块重置控件**：为图片不透明度和所有背景滤镜滑块添加本地化重置按钮，可将各项恢复为统一定义的默认值。
+
+### ⚡ 变更
+
+- **外观设置整理**：在「显示」中仅保留不透明度与混合模式，重新排列滤镜顺序，并将尺寸、位置和重复方式移至末尾的「布局」组，同时隐藏未使用的「附着方式」控件。
+- **状态栏表面**：启用内置画布背景时不再强制状态栏透明，保留当前主题定义的状态栏背景。
+
+### 🐛 修复
+
+- **独立设置窗口同步**：在主窗口、独立设置窗口和工作区弹出窗口之间同步发布主题类、图片变量与背景属性，确保实时调整作用于所有窗口。
+- **首次打开图片预览**：独立设置窗口首次渲染时直接向其文档发布图片变量，消除因窗口焦点切换时序导致的空白预览，无需重新选择图片。
+
+</details>
+
+---
+
 ## [0.3.2] - 2026-08-07
 ### 🚀 Added
 

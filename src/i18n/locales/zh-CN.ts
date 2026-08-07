@@ -15,7 +15,7 @@ const zhCN: Messages = {
 	settings: {
 		intro: '此插件将当前主题、笔记路径规则和库内图片路径发布为 CSS 类与变量，让 CSS 片段无需 JavaScript 即可响应运行时状态。',
 		documentation: { link: 'Obsidian 官方 CSS 代码片段文档' },
-		groups: { themeContext: '主题上下文', notePathRules: '笔记路径规则', localImageVariable: '本地图片变量', backgroundImage: '背景图片', backgroundDisplay: '显示', backgroundFilter: '滤镜', diagnostics: '诊断' },
+		groups: { themeContext: '主题上下文', notePathRules: '笔记路径规则', localImageVariable: '本地图片变量', backgroundImage: '背景图片', backgroundDisplay: '显示', backgroundFilter: '滤镜', backgroundLayout: '布局', diagnostics: '诊断' },
 		pages: { backgroundAppearance: '外观', backgroundAppearanceDesc: '背景图片图层的不透明度、混合、尺寸、位置与 CSS 滤镜。滤镜保持默认值即不生效。' },
 		labels: { publishThemeClass: '发布主题类', themeClassPrefix: '主题类前缀', publishPathClasses: '发布路径类', publishLocalImageVariables: '发布本地图片变量', liveStatus: '实时状态', folder: '文件夹', keyword: '关键词', publishBackgroundImage: '启用背景图片', backgroundImageValue: '图片值', backgroundOpacity: '图片不透明度', backgroundBlendMode: '混合模式', backgroundSize: '背景尺寸', backgroundPosition: '背景位置', backgroundRepeat: '重复方式', backgroundAttachment: '附着方式', filterBrightness: '亮度', filterContrast: '对比度', filterSaturate: '饱和度', filterGrayscale: '灰度', filterSepia: '褐色', filterInvert: '反色', filterHueRotate: '色相旋转', filterBlur: '模糊' },
 		descriptions: {
@@ -36,7 +36,7 @@ const zhCN: Messages = {
 			backgroundAttachment: '图片是否随文档滚动。',
 		},
 		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '文件夹前缀', keywordInPath: '路径中的关键词', classNames: '类名1, 类名2', vaultFilePath: '库内文件路径', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)' },
-		buttons: { addPathRule: '添加路径规则', addImageVariable: '添加图片变量', deleteRule: '删除规则', refresh: '刷新', copySnapshot: '复制快照', randomBackgroundImageValue: '随机选择图片变量' },
+		buttons: { addPathRule: '添加路径规则', addImageVariable: '添加图片变量', deleteRule: '删除规则', refresh: '刷新', copySnapshot: '复制快照', randomBackgroundImageValue: '随机选择图片变量', reset: '恢复默认值' },
 		tooltips: {
 			clickToCopy: (value) => `点击复制：${value}`,
 			ruleDisabled: '规则已禁用', setCssVariableName: '请设置 CSS 变量名', variableNameInvalid: '变量名无效', setVaultImagePath: '请设置库内图片路径', imageFileNotFound: '未找到图片文件', notAnImageFile: '不是图片文件', variableNotPublished: '变量尚未发布（请检查模块开关）',

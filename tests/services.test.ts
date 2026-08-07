@@ -32,6 +32,38 @@ beforeEach(() => {
 });
 
 describe('BackgroundImageService', () => {
+	it('synchronizes background styles across the main and detached Settings documents', () => {
+		const settingsDocument = document.implementation.createHTMLDocument('Settings');
+		Object.defineProperty(globalThis, 'activeDocument', {
+			configurable: true,
+			value: settingsDocument,
+		});
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				opacity: 0.6,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		for (const targetDocument of [document, settingsDocument]) {
+			expect(
+				targetDocument.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.6');
+			expect(
+				targetDocument.body.classList.contains(
+					'sc-style-context-background-image',
+				),
+			).toBe(true);
+		}
+	});
+
 	it('keeps background styles inactive when the setting is disabled', () => {
 		const service = new BackgroundImageService(() => settings());
 
@@ -317,6 +349,11 @@ describe('ThemeContextService', () => {
 
 describe('ResourceVariableService', () => {
 	it('publishes valid resources, reports missing files, and registers once', () => {
+		const settingsDocument = document.implementation.createHTMLDocument('Settings');
+		Object.defineProperty(globalThis, 'activeDocument', {
+			configurable: true,
+			value: settingsDocument,
+		});
 		const listeners: ListenerMap = new Map();
 		const file = new TFile('assets/Hero.PNG');
 		const files = new Map([[file.path, file]]);
@@ -350,6 +387,9 @@ describe('ResourceVariableService', () => {
 			document.documentElement.style.getPropertyValue('--hero-image'),
 		).toBe('url("app://vault/assets/Hero.PNG")');
 		expect(
+			settingsDocument.documentElement.style.getPropertyValue('--hero-image'),
+		).toBe('url("app://vault/assets/Hero.PNG")');
+		expect(
 			document.documentElement.style.getPropertyValue('--external-variable'),
 		).toBe('keep-me');
 		expect(service.current()).toEqual([
@@ -364,6 +404,9 @@ describe('ResourceVariableService', () => {
 		service.disable();
 		expect(
 			document.documentElement.style.getPropertyValue('--hero-image'),
+		).toBe('');
+		expect(
+			settingsDocument.documentElement.style.getPropertyValue('--hero-image'),
 		).toBe('');
 		expect(
 			document.documentElement.style.getPropertyValue('--external-variable'),
@@ -413,6 +456,38 @@ describe('ResourceVariableService', () => {
 			document.documentElement.style.getPropertyValue('--hero-image'),
 		).toBe('url("app://vault/assets/Hero.PNG")');
 		expect(workspace.onLayoutReady).toHaveBeenCalledTimes(1);
+	});
+
+	it('publishes into a newly rendered Settings document before it becomes active', () => {
+		const file = new TFile('assets/Hero.PNG');
+		const vault = {
+			on: createEventSource(new Map()),
+			getAbstractFileByPath: vi.fn(() => file),
+			getResourcePath: vi.fn(() => 'app://vault/assets/Hero.PNG'),
+		};
+		const plugin = { app: { vault }, registerEvent: vi.fn() };
+		const service = new ResourceVariableService(
+			plugin as never,
+			() =>
+				settings({
+					resourceRules: [
+						{
+							id: 'hero',
+							filePath: 'assets/Hero.PNG',
+							variableName: '--hero-image',
+							enabled: true,
+						},
+					],
+				}),
+		);
+		const settingsDocument = document.implementation.createHTMLDocument('Settings');
+
+		service.enable();
+		service.applyToDocument(settingsDocument);
+
+		expect(
+			settingsDocument.documentElement.style.getPropertyValue('--hero-image'),
+		).toBe('url("app://vault/assets/Hero.PNG")');
 	});
 });
 

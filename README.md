@@ -50,7 +50,7 @@ The **Background image** settings group accepts a complete CSS image value. Past
 
 <img width="870" height="412" alt="Snipaste_2026-08-06_16-03-08" src="https://github.com/user-attachments/assets/b01ed2d6-0e22-4aed-a342-c854c4235821" />
 
-The image layer has its own opacity and blend mode, so it does not make notes or controls translucent. Size, position, repeat, and attachment are also available in the Appearance sub-page, grouped with CSS filter adjustments (brightness, blur, and more) so related tweaks sit side by side. Disable the toggle to remove the injected layer and restore the theme's original canvas styles.
+The image layer has its own opacity and blend mode, so it does not make notes or controls translucent. The Appearance sub-page places CSS filters together and keeps size, position, and repeat in a final Layout group. Every slider includes a reset button. Disable the toggle to remove the injected layer and restore the theme's original canvas styles.
 
 ### Theme context
 
@@ -108,9 +108,9 @@ you can run `npm run build:local` to build and auto-copy into your vault.
 
 ## Release
 
-After writing complete notes under `## [Unreleased]`, run `npm run release -- 0.3.0`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- 0.3.0` to validate without changing anything.
+After writing complete notes under `## [Unreleased]`, run `npm run release -- <version>`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- <version>` to validate without changing anything.
 
-If a version was already committed and annotated locally, but has not reached GitHub, use `npm run release:resume -- 0.3.0`. It validates the local tag's immutable metadata and changelog, runs the full check, fast-forwards the default branch and tag atomically, then performs the same CI and asset verification. Use `npm run release:resume:dry-run -- 0.3.0` to check this recovery path without changes. This is recovery only; ordinary releases must use `release`.
+If a version was already committed and annotated locally, but has not reached GitHub, use `npm run release:resume -- <version>`. It validates the local tag's immutable metadata and changelog, runs the full check, fast-forwards the default branch and tag atomically, then performs the same CI and asset verification. Use `npm run release:resume:dry-run -- <version>` to check this recovery path without changes. This is recovery only; ordinary releases must use `release`.
 
 ## Support
 
@@ -166,7 +166,7 @@ Obsidian 每次重载仓库时都会重新生成资源 URL，因此原始路径�
 
 设置中的「背景图片」接受完整的 CSS 图片值。可以直接粘贴 `var(--image-1)` 这样的本地变量引用，也可以填写 `url("https://example.com/image.jpg")` 使用网页图片，或点击输入框旁的随机按钮选择已启用的本地图片变量。远程 URL 会连接图片所在网站，并可能暴露常规网络请求信息。
 
-背景图层拥有独立的不透明度和混合模式，不会让笔记或控件一起变透明；「外观」子页面集中提供尺寸、位置、重复方式和附着方式等常用选项，以及 CSS 滤镜（亮度、模糊等）调整，方便联动调节。关闭开关即可移除内置图层，恢复主题原本的画布样式。
+背景图层拥有独立的不透明度和混合模式，不会让笔记或控件一起变透明；「外观」子页面集中排列 CSS 滤镜，并将尺寸、位置和重复方式归入末尾的「布局」组。所有滑块均提供重置按钮。关闭开关即可移除内置图层，恢复主题原本的画布样式。
 
 ### 主题上下文
 

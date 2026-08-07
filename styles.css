@@ -49,8 +49,7 @@ body.sc-style-context-background-image .titlebar-inner,
 body.sc-style-context-background-image .titlebar-button-container,
 body.sc-style-context-background-image .sidebar-toggle-button,
 body.sc-style-context-background-image .nav-files-container,
-body.sc-style-context-background-image:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile,
-body.sc-style-context-background-image .status-bar {
+body.sc-style-context-background-image:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile {
 	background-color: transparent;
 	background-image: none;
 }

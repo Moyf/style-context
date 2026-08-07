@@ -3,6 +3,7 @@ import { LEGACY_THEME_CLASS_PREFIX, DEFAULT_THEME_SLUG } from '../constants';
 import type { StyleContextSettings } from '../types';
 import { themeSlug } from '../utils/slug';
 import { readThemeName } from '../utils/internals';
+import { getAppDocuments } from '../utils/documents';
 
 export interface ThemeContextSnapshot {
 	rawName: string;
@@ -23,8 +24,8 @@ export class ThemeContextService {
 	private enabled = false;
 	private listenersRegistered = false;
 
-	/** Tracks every theme class this service has added to the body. */
-	private appliedClasses = new Set<string>();
+	/** Tracks every theme class this service has added to each window body. */
+	private appliedClasses = new Map<Document, Set<string>>();
 
 	constructor(plugin: Plugin, getSettings: () => StyleContextSettings) {
 		this.plugin = plugin;
@@ -73,8 +74,10 @@ export class ThemeContextService {
 		this.sweepLegacyClasses();
 
 		const cls = prefix + slug;
-		activeDocument.body.classList.add(cls);
-		this.appliedClasses.add(cls);
+		for (const targetDocument of getAppDocuments(this.plugin.app)) {
+			targetDocument.body.classList.add(cls);
+			this.appliedClasses.set(targetDocument, new Set([cls]));
+		}
 	}
 
 	/**
@@ -95,8 +98,8 @@ export class ThemeContextService {
 	}
 
 	private removeAllTrackedClasses(): void {
-		for (const cls of this.appliedClasses) {
-			activeDocument.body.classList.remove(cls);
+		for (const [targetDocument, classes] of this.appliedClasses) {
+			targetDocument.body.classList.remove(...classes);
 		}
 		this.appliedClasses.clear();
 	}
@@ -107,11 +110,13 @@ export class ThemeContextService {
 	 * cheap; kept forever (harmless once old classes are gone).
 	 */
 	private sweepLegacyClasses(): void {
-		const legacy = Array.from(activeDocument.body.classList).filter((c) =>
-			c.startsWith(LEGACY_THEME_CLASS_PREFIX),
-		);
-		if (legacy.length > 0) {
-			activeDocument.body.classList.remove(...legacy);
+		for (const targetDocument of getAppDocuments(this.plugin.app)) {
+			const legacy = Array.from(targetDocument.body.classList).filter((c) =>
+				c.startsWith(LEGACY_THEME_CLASS_PREFIX),
+			);
+			if (legacy.length > 0) {
+				targetDocument.body.classList.remove(...legacy);
+			}
 		}
 	}
 

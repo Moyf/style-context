@@ -15,7 +15,7 @@ const zhTW: Messages = {
 	settings: {
 		intro: '此插件會將目前主題、筆記路徑規則與庫內圖片路徑發布為 CSS 類別和變數，讓 CSS 片段無需 JavaScript 即可回應執行階段狀態。',
 		documentation: { link: 'Obsidian 官方 CSS 程式碼片段文件' },
-		groups: { themeContext: '主題內容', notePathRules: '筆記路徑規則', localImageVariable: '本機圖片變數', backgroundImage: '背景圖片', backgroundDisplay: '顯示', backgroundFilter: '濾鏡', diagnostics: '診斷' },
+		groups: { themeContext: '主題內容', notePathRules: '筆記路徑規則', localImageVariable: '本機圖片變數', backgroundImage: '背景圖片', backgroundDisplay: '顯示', backgroundFilter: '濾鏡', backgroundLayout: '版面配置', diagnostics: '診斷' },
 		pages: { backgroundAppearance: '外觀', backgroundAppearanceDesc: '背景圖片圖層的不透明度、混合、尺寸、位置與 CSS 濾鏡。濾鏡保持預設值即不生效。' },
 		labels: { publishThemeClass: '發布主題類別', themeClassPrefix: '主題類別前綴', publishPathClasses: '發布路徑類別', publishLocalImageVariables: '發布本機圖片變數', liveStatus: '即時狀態', folder: '資料夾', keyword: '關鍵字', publishBackgroundImage: '啟用背景圖片', backgroundImageValue: '圖片值', backgroundOpacity: '圖片不透明度', backgroundBlendMode: '混合模式', backgroundSize: '背景尺寸', backgroundPosition: '背景位置', backgroundRepeat: '重複方式', backgroundAttachment: '附著方式', filterBrightness: '亮度', filterContrast: '對比度', filterSaturate: '飽和度', filterGrayscale: '灰階', filterSepia: '褐色', filterInvert: '反色', filterHueRotate: '色相旋轉', filterBlur: '模糊' },
 		descriptions: {
@@ -36,7 +36,7 @@ const zhTW: Messages = {
 			backgroundAttachment: '圖片是否隨文件捲動。',
 		},
 		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '資料夾前綴', keywordInPath: '路徑中的關鍵字', classNames: '類別1, 類別2', vaultFilePath: '庫內檔案路徑', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)' },
-		buttons: { addPathRule: '新增路徑規則', addImageVariable: '新增圖片變數', deleteRule: '刪除規則', refresh: '重新整理', copySnapshot: '複製快照', randomBackgroundImageValue: '隨機選擇圖片變數' },
+		buttons: { addPathRule: '新增路徑規則', addImageVariable: '新增圖片變數', deleteRule: '刪除規則', refresh: '重新整理', copySnapshot: '複製快照', randomBackgroundImageValue: '隨機選擇圖片變數', reset: '還原預設值' },
 		tooltips: {
 			clickToCopy: (value) => `按一下即可複製：${value}`,
 			ruleDisabled: '規則已停用', setCssVariableName: '請設定 CSS 變數名稱', variableNameInvalid: '變數名稱無效', setVaultImagePath: '請設定庫內圖片路徑', imageFileNotFound: '找不到圖片檔案', notAnImageFile: '不是圖片檔案', variableNotPublished: '變數尚未發布（請檢查模組開關）',

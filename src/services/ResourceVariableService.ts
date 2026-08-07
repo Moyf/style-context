@@ -1,6 +1,7 @@
 import type { Plugin } from 'obsidian';
 import { TFile, normalizePath } from 'obsidian';
 import type { StyleContextSettings, ResourceRule } from '../types';
+import { getAppDocuments } from '../utils/documents';
 
 export interface ResourceResolution {
 	ruleId: string;
@@ -22,6 +23,7 @@ export class ResourceVariableService {
 
 	/** Full property names this service currently publishes. */
 	private setVars = new Set<string>();
+	private touchedDocuments = new Set<Document>();
 
 	constructor(plugin: Plugin, getSettings: () => StyleContextSettings) {
 		this.plugin = plugin;
@@ -67,7 +69,18 @@ export class ResourceVariableService {
 	apply(): void {
 		this.clearAll();
 		if (!this.enabled) return;
+		for (const targetDocument of getAppDocuments(this.plugin.app)) {
+			this.applyToDocument(targetDocument);
+		}
+	}
 
+	/**
+	 * Publishes enabled variables into one specific window. Settings can be
+	 * rendered before Obsidian updates `activeDocument`, so the setting row's
+	 * ownerDocument is the only race-free target during first open.
+	 */
+	applyToDocument(targetDocument: Document): void {
+		if (!this.enabled) return;
 		const rules = this.getSettings().resourceRules;
 		for (const rule of rules) {
 			if (!rule.enabled) continue;
@@ -78,10 +91,11 @@ export class ResourceVariableService {
 				continue;
 			}
 			const url = this.plugin.app.vault.getResourcePath(file);
-			activeDocument.documentElement.style.setProperty(
+			targetDocument.documentElement.style.setProperty(
 				prop,
 				`url(${JSON.stringify(url)})`,
 			);
+			this.touchedDocuments.add(targetDocument);
 			this.setVars.add(prop);
 		}
 	}
@@ -95,10 +109,16 @@ export class ResourceVariableService {
 	}
 
 	private clearAll(): void {
-		for (const property of this.setVars) {
-			activeDocument.documentElement.style.removeProperty(property);
+		for (const targetDocument of new Set([
+			...this.touchedDocuments,
+			...getAppDocuments(this.plugin.app),
+		])) {
+			for (const property of this.setVars) {
+				targetDocument.documentElement.style.removeProperty(property);
+			}
 		}
 		this.setVars.clear();
+		this.touchedDocuments.clear();
 	}
 
 	/**
