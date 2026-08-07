@@ -3,11 +3,13 @@ export interface Messages {
 		copyCurrentContext: string;
 		reparseResourceVariables: string;
 		copyThemeSelector: string;
+		randomBackgroundImage: string;
 	};
 	notices: {
 		styleContextCopied: string;
 		resourceVariablesReparsed: string;
 		noImageVariables: string;
+		backgroundImageRandomized: string;
 		copied: (value: string) => string;
 	};
 	settings: {
@@ -28,6 +30,8 @@ export interface Messages {
 			backgroundAppearanceDesc: string;
 			interfaceTransparency: string;
 			interfaceTransparencyDesc: string;
+			backgroundRandomization: string;
+			backgroundRandomizationDesc: string;
 		};
 		labels: {
 			publishThemeClass: string;
@@ -54,6 +58,8 @@ export interface Messages {
 			filterHueRotate: string;
 			filterBlur: string;
 			mobileToolbarTransparent: string;
+			randomBackgroundOnStartup: string;
+			addRandomBackgroundRibbon: string;
 		};
 		descriptions: {
 			publishThemeClass: string;
@@ -72,6 +78,8 @@ export interface Messages {
 			backgroundRepeat: string;
 			backgroundAttachment: string;
 			mobileToolbarTransparent: string;
+			randomBackgroundOnStartup: string;
+			addRandomBackgroundRibbon: string;
 		};
 		placeholders: {
 			themeClassPrefix: string;
@@ -100,6 +108,8 @@ export interface Messages {
 			imageFileNotFound: string;
 			notAnImageFile: string;
 			variableNotPublished: string;
+			useForBackgroundImage: string;
+			backgroundImageExcluded: string;
 		};
 		validation: {
 			invalidPrefix: string;

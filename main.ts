@@ -1,4 +1,4 @@
-import { Plugin } from 'obsidian';
+import { Plugin, setIcon } from 'obsidian';
 import { DEFAULT_SETTINGS, type StyleContextSettings } from './src/types';
 import { ThemeContextService } from './src/services/ThemeContextService';
 import { NotePathContextService } from './src/services/NotePathContextService';
@@ -6,6 +6,7 @@ import { ResourceVariableService } from './src/services/ResourceVariableService'
 import { BackgroundImageService } from './src/services/BackgroundImageService';
 import { SettingsTab } from './src/settings/SettingsTab';
 import { registerCommands } from './src/commands';
+import { pickRandomBackgroundImageValue } from './src/utils/background';
 
 export default class StyleContextPlugin extends Plugin {
 	settings!: StyleContextSettings;
@@ -13,6 +14,8 @@ export default class StyleContextPlugin extends Plugin {
 	notePathCtx!: NotePathContextService;
 	resourceVarCtx!: ResourceVariableService;
 	backgroundImageCtx!: BackgroundImageService;
+	private settingsTab!: SettingsTab;
+	private randomBackgroundRibbon: HTMLElement | null = null;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -28,12 +31,17 @@ export default class StyleContextPlugin extends Plugin {
 			this.app,
 		);
 
-		this.addSettingTab(new SettingsTab(this.app, this));
-		registerCommands(this);
+			this.settingsTab = new SettingsTab(this.app, this);
+			this.addSettingTab(this.settingsTab);
+			registerCommands(this);
+			this.syncRandomBackgroundRibbon();
 		this.registerEvent(
 			this.app.workspace.on('window-open', () => this.applyAll()),
 		);
 
+		if (this.settings.backgroundImage.randomOnStartup) {
+			await this.randomizeBackgroundImage();
+		}
 		this.applyAll();
 	}
 
@@ -52,6 +60,10 @@ export default class StyleContextPlugin extends Plugin {
 				},
 			},
 		};
+		this.settings.resourceRules = this.settings.resourceRules.map((rule) => ({
+			...rule,
+			useForBackgroundImage: rule.useForBackgroundImage ?? true,
+		}));
 	}
 
 	async saveSettings(): Promise<void> {
@@ -102,6 +114,34 @@ export default class StyleContextPlugin extends Plugin {
 	async reparseResources(): Promise<void> {
 		this.resourceVarCtx.enable();
 		this.resourceVarCtx.apply();
+	}
+
+	/** Selects and applies one eligible background image variable. */
+	async randomizeBackgroundImage(): Promise<boolean> {
+		const value = pickRandomBackgroundImageValue(
+			this.settings.resourceRules,
+			this.settings.backgroundImage.imageValue,
+		);
+		if (!value) return false;
+		this.settings.backgroundImage.imageValue = value;
+		await this.saveSettings();
+		this.applyBackgroundImage();
+		this.settingsTab.update();
+		return true;
+	}
+
+	syncRandomBackgroundRibbon(): void {
+		this.randomBackgroundRibbon?.remove();
+		this.randomBackgroundRibbon = null;
+		if (!this.settings.backgroundImage.randomBackgroundRibbon) return;
+		this.randomBackgroundRibbon = this.addRibbonIcon(
+			'image',
+			'Randomize background image',
+			() => {
+				void this.randomizeBackgroundImage();
+			},
+		);
+		setIcon(this.randomBackgroundRibbon, 'image');
 	}
 
 	onunload(): void {

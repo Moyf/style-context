@@ -58,10 +58,11 @@ describe('isImageFile', () => {
 
 describe('pickRandomBackgroundImageValue', () => {
 	const rules = [
-		{ id: 'one', filePath: 'one.png', variableName: '--one', enabled: true },
-		{ id: 'two', filePath: 'two.png', variableName: '--two', enabled: true },
-		{ id: 'disabled', filePath: 'off.png', variableName: '--off', enabled: false },
-		{ id: 'invalid', filePath: 'bad.png', variableName: 'bad', enabled: true },
+			{ id: 'one', filePath: 'one.png', variableName: '--one', enabled: true, useForBackgroundImage: true },
+			{ id: 'two', filePath: 'two.png', variableName: '--two', enabled: true, useForBackgroundImage: true },
+			{ id: 'disabled', filePath: 'off.png', variableName: '--off', enabled: false, useForBackgroundImage: true },
+			{ id: 'excluded', filePath: 'excluded.png', variableName: '--excluded', enabled: true, useForBackgroundImage: false },
+			{ id: 'invalid', filePath: 'bad.png', variableName: 'bad', enabled: true, useForBackgroundImage: true },
 	];
 
 	it('chooses from enabled valid variables and avoids the current value', () => {
@@ -73,7 +74,7 @@ describe('pickRandomBackgroundImageValue', () => {
 	it('returns null when no usable image variables exist', () => {
 		expect(
 			pickRandomBackgroundImageValue([
-				{ id: 'off', filePath: 'off.png', variableName: '--off', enabled: false },
+					{ id: 'off', filePath: 'off.png', variableName: '--off', enabled: false, useForBackgroundImage: true },
 			]),
 		).toBeNull();
 	});

@@ -55,6 +55,10 @@ type ControlKey =
 	| 'themeContextEnabled'
 	| 'notePathContextEnabled'
 	| 'backgroundImage.enabled'
+	| 'backgroundImage.randomOnStartup'
+	| 'backgroundImage.randomBackgroundRibbon'
+		| 'backgroundImage.randomOnStartup'
+		| 'backgroundImage.randomBackgroundRibbon'
 	| 'backgroundImage.opacity'
 	| 'backgroundImage.blendMode'
 	| 'backgroundImage.size'
@@ -160,6 +164,9 @@ export class SettingsTab extends PluginSettingTab {
 		);
 		if (key.startsWith('backgroundImage.')) {
 			await this.persistAndApplyBackgroundImage();
+			if (key === 'backgroundImage.randomBackgroundRibbon') {
+				this.plugin.syncRandomBackgroundRibbon();
+			}
 			const messages = t();
 			this.refreshBackgroundImageValuePreview(
 				this.backgroundImageValuePreview,
@@ -558,6 +565,42 @@ export class SettingsTab extends PluginSettingTab {
 				},
 				{
 					type: 'page',
+					name: pages.backgroundRandomization,
+					desc: pages.backgroundRandomizationDesc,
+					visible: () => this.plugin.settings.backgroundImage.enabled,
+					items: [
+						{
+							name: labels.randomBackgroundOnStartup,
+							desc: descriptions.randomBackgroundOnStartup,
+							control: { type: 'toggle', key: 'backgroundImage.randomOnStartup' },
+						},
+						{
+							name: labels.addRandomBackgroundRibbon,
+							desc: descriptions.addRandomBackgroundRibbon,
+							control: { type: 'toggle', key: 'backgroundImage.randomBackgroundRibbon' },
+						},
+					],
+				},
+				{
+					type: 'page',
+					name: pages.backgroundRandomization,
+					desc: pages.backgroundRandomizationDesc,
+					visible: () => this.plugin.settings.backgroundImage.enabled,
+					items: [
+						{
+							name: labels.randomBackgroundOnStartup,
+							desc: descriptions.randomBackgroundOnStartup,
+							control: { type: 'toggle', key: 'backgroundImage.randomOnStartup' },
+						},
+						{
+							name: labels.addRandomBackgroundRibbon,
+							desc: descriptions.addRandomBackgroundRibbon,
+							control: { type: 'toggle', key: 'backgroundImage.randomBackgroundRibbon' },
+						},
+					],
+				},
+				{
+					type: 'page',
 					name: pages.interfaceTransparency,
 					desc: pages.interfaceTransparencyDesc,
 					items: [
@@ -581,6 +624,7 @@ export class SettingsTab extends PluginSettingTab {
 		return {
 			name: messages.settings.labels.backgroundImageValue,
 			desc: messages.settings.descriptions.backgroundImageValue,
+			visible: () => this.plugin.settings.backgroundImage.enabled,
 			render: (setting) => {
 				const background = this.plugin.settings.backgroundImage;
 				let variableText: TextComponent | null = null;
@@ -912,6 +956,7 @@ export class SettingsTab extends PluginSettingTab {
 									filePath: '',
 									variableName: this.generateDefaultVarName(),
 									enabled: true,
+									useForBackgroundImage: true,
 								});
 								await this.persistAndApply();
 								this.update();
@@ -999,13 +1044,21 @@ export class SettingsTab extends PluginSettingTab {
 								this.refreshRuleTile(rule);
 							});
 					})
-					.addToggle((toggle) =>
+					.addToggle((toggle) => {
 						toggle.setValue(rule.enabled).onChange(async (value) => {
 							rule.enabled = value;
 							await this.persistAndApply();
 							this.refreshRuleTile(rule);
-						}),
-					)
+						});
+					})
+					.addToggle((toggle) => {
+						toggle.setValue(rule.useForBackgroundImage !== false).onChange(async (value) => {
+							rule.useForBackgroundImage = value;
+							await this.persistAndApply();
+							this.refreshRuleTile(rule);
+						});
+						setTooltip(toggle.toggleEl, messages.settings.tooltips.useForBackgroundImage, { placement: 'top' });
+					})
 					.addExtraButton((button) =>
 						button
 							.setIcon('trash')
