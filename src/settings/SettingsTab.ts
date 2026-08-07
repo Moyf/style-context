@@ -61,6 +61,7 @@ type ControlKey =
 	| 'backgroundImage.position'
 	| 'backgroundImage.repeat'
 	| 'backgroundImage.attachment'
+	| 'backgroundImage.mobileToolbarTransparent'
 	| 'backgroundImage.filter.brightness'
 	| 'backgroundImage.filter.contrast'
 	| 'backgroundImage.filter.saturate'
@@ -552,6 +553,21 @@ export class SettingsTab extends PluginSettingTab {
 									'backgroundImage.repeat',
 								),
 							],
+						},
+					],
+				},
+				{
+					type: 'page',
+					name: pages.interfaceTransparency,
+					desc: pages.interfaceTransparencyDesc,
+					items: [
+						{
+							name: labels.mobileToolbarTransparent,
+							desc: descriptions.mobileToolbarTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.mobileToolbarTransparent',
+							},
 						},
 					],
 				},
