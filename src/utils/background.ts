@@ -2,6 +2,7 @@ import type { ResourceRule } from '../types';
 import { isValidCssVarName } from './validation';
 
 const FALLBACK_IMAGE_FUNCTION_RE = /^(?:none|(?:-webkit-)?(?:url|var|image|image-set|cross-fade|element|paint|(?:repeating-)?(?:linear|radial|conic)-gradient)\s*\()/i;
+const BARE_VAR_RE = /^var\(\s*(--[-_a-zA-Z][-_a-zA-Z0-9]*)\s*\)$/;
 
 /** Trims a complete CSS background-image value supplied by the user. */
 export function normalizeBackgroundImageValue(value: unknown): string {
@@ -30,6 +31,15 @@ export function isValidBackgroundImageValue(value: unknown): boolean {
 	// JSDOM and older webviews may not expose CSS.supports. Keep the fallback
 	// conservative; the browser still parses the value through setProperty().
 	return !/[;{}]/.test(normalized) && FALLBACK_IMAGE_FUNCTION_RE.test(normalized);
+}
+
+/** Returns true only for a bare `var(--name)` that references an updated image variable. */
+export function referencesImageVariable(
+	value: unknown,
+	variableNames: readonly string[],
+): boolean {
+	const match = BARE_VAR_RE.exec(normalizeBackgroundImageValue(value));
+	return match?.[1] !== undefined && variableNames.includes(match[1]);
 }
 
 /**
