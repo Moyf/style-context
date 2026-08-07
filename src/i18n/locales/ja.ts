@@ -41,7 +41,7 @@ const ja: Messages = {
 			clickToCopy: (value) => `クリックしてコピー: ${value}`,
 			ruleDisabled: 'ルールは無効です', setCssVariableName: 'CSS 変数名を設定してください', variableNameInvalid: '変数名が無効です', setVaultImagePath: '保管庫内の画像パスを設定してください', imageFileNotFound: '画像ファイルが見つかりません', notAnImageFile: '画像ファイルではありません', variableNotPublished: '変数が公開されていません（モジュールの切り替えを確認してください）',
 		},
-		validation: { invalidPrefix: '接頭辞が無効です', invalidClassNames: 'クラス名が無効です', invalidCssVariableName: 'CSS 変数名が無効です（-- で始める必要があります）', invalidBackgroundImageValue: 'CSS background-image の値が無効です', duplicateVariableName: (count) => `${count} 件の他のルールがこの変数名を使用しています。後のルールが前のルールを上書きします` },
+		validation: { invalidPrefix: '接頭辞が無効です', invalidClassNames: 'クラス名が無効です', invalidCssVariableName: 'CSS 変数名が無効です（-- で始める必要があります）', invalidBackgroundImageValue: 'CSS background-image の値が無効です', backgroundImageVariableRequiresVar: 'CSS 変数を var() で囲んでください（例: var(--image)）。上の画像変数プレビューをクリックしてコピーすることもできます。', duplicateVariableName: (count) => `${count} 件の他のルールがこの変数名を使用しています。後のルールが前のルールを上書きします` },
 		diagnostics: {
 			currentStyleContext: '現在のスタイルコンテキスト', localImageVariables: 'ローカル画像変数', noEnabledResourceRules: '有効なリソースルールはありません', theme: 'テーマ', notePathClasses: 'ノートパスのクラス', noOpenMarkdownViews: '開いている Markdown ビューはありません', headers: { variable: '変数', status: '状態', leafPath: 'リーフのパス', appliedClass: '適用済みクラス', rule: 'ルール' }, resolved: '解決済み', unresolved: '未解決', rawTheme: (rawName, slug) => `（元の名前: ${rawName || 'なし'}、スラッグ: ${slug}）`, unsaved: '（未保存）', filePathEmpty: 'ファイルパスが空です', fileNotFound: (path) => `ファイルが見つかりません: ${path}`,
 		},

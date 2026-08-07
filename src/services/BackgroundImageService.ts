@@ -8,6 +8,7 @@ import {
 import {
 	DEFAULT_SETTINGS,
 	type BackgroundFilterSettings,
+	type BackgroundImageSettings,
 	type StyleContextSettings,
 } from '../types';
 import {
@@ -15,11 +16,42 @@ import {
 	normalizeBackgroundImageValue,
 } from '../utils/background';
 
-export const BACKGROUND_IMAGE_STYLE_ID = 'style-context-background-image';
 const BACKGROUND_IMAGE_BODY_CLASS = 'sc-style-context-background-image';
-const BACKGROUND_IMAGE_VALUE_PROPERTY = '--sc-style-context-background-image-value';
+const BACKGROUND_IMAGE_PROPERTIES = {
+	value: '--sc-style-context-background-image-value',
+	inset: '--sc-style-context-background-image-inset',
+	blendMode: '--sc-style-context-background-image-blend-mode',
+	size: '--sc-style-context-background-image-size',
+	position: '--sc-style-context-background-image-position',
+	repeat: '--sc-style-context-background-image-repeat',
+	attachment: '--sc-style-context-background-image-attachment',
+	opacity: '--sc-style-context-background-image-opacity',
+	filter: '--sc-style-context-background-image-filter',
+} as const;
 
 type StringOptions = readonly string[];
+
+function setStyleProperty(
+	style: CSSStyleDeclaration,
+	property: string,
+	value: string,
+): void {
+	if (style.getPropertyValue(property) !== value) {
+		style.setProperty(property, value);
+	}
+}
+
+export interface ResolvedBackgroundImageStyle {
+	imageValue: string;
+	inset: string;
+	blendMode: string;
+	size: string;
+	position: string;
+	repeat: string;
+	attachment: string;
+	opacity: string;
+	filter: string;
+}
 
 function optionOrDefault(
 	value: unknown,
@@ -84,6 +116,50 @@ function buildFilterCss(filter: BackgroundFilterSettings): string {
 	return parts.join(' ');
 }
 
+/** Resolves persisted settings into the sanitized CSS shared by canvas and preview. */
+export function resolveBackgroundImageStyle(
+	settings: BackgroundImageSettings,
+): ResolvedBackgroundImageStyle | null {
+	const imageValue = normalizeBackgroundImageValue(settings.imageValue);
+	if (!isValidBackgroundImageValue(imageValue)) return null;
+
+	const blendMode = optionOrDefault(
+		settings.blendMode,
+		BACKGROUND_BLEND_MODES,
+		'normal',
+	);
+	const size = optionOrDefault(settings.size, BACKGROUND_SIZE_OPTIONS, 'cover');
+	const position = optionOrDefault(
+		settings.position,
+		BACKGROUND_POSITION_OPTIONS,
+		'center',
+	);
+	const repeat = optionOrDefault(
+		settings.repeat,
+		BACKGROUND_REPEAT_OPTIONS,
+		'no-repeat',
+	);
+	const attachment = optionOrDefault(
+		settings.attachment,
+		BACKGROUND_ATTACHMENT_OPTIONS,
+		'fixed',
+	);
+	const filter = resolveFilter(settings.filter);
+	const filterCss = buildFilterCss(filter);
+
+	return {
+		imageValue,
+		inset: filter.blur > 0 ? `-${Math.ceil(filter.blur)}px` : '0',
+		blendMode,
+		size,
+		position,
+		repeat,
+		attachment,
+		opacity: String(safeOpacity(settings.opacity)),
+		filter: filterCss || 'none',
+	};
+}
+
 /**
  * Applies a published image variable to the Obsidian canvas. The image is
  * rendered in a fixed, pointer-free pseudo-element so opacity and blend mode
@@ -115,102 +191,63 @@ export class BackgroundImageService {
 	}
 
 	apply(): void {
-		this.clear();
-		if (!this.enabled) return;
+		if (!this.enabled) {
+			this.clear();
+			return;
+		}
 
 		const settings = this.getSettings().backgroundImage;
-		const imageValue = normalizeBackgroundImageValue(settings?.imageValue);
-		if (!settings?.enabled || !isValidBackgroundImageValue(imageValue)) return;
+		if (!settings?.enabled) {
+			this.clear();
+			return;
+		}
+		const resolved = resolveBackgroundImageStyle(settings);
+		if (!resolved) {
+			this.clear();
+			return;
+		}
 
-		const blendMode = optionOrDefault(
-			settings.blendMode,
-			BACKGROUND_BLEND_MODES,
-			'normal',
+		const style = activeDocument.body.style;
+		setStyleProperty(
+			style,
+			BACKGROUND_IMAGE_PROPERTIES.value,
+			resolved.imageValue,
 		);
-		const size = optionOrDefault(settings.size, BACKGROUND_SIZE_OPTIONS, 'cover');
-		const position = optionOrDefault(
-			settings.position,
-			BACKGROUND_POSITION_OPTIONS,
-			'center',
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.inset, resolved.inset);
+		setStyleProperty(
+			style,
+			BACKGROUND_IMAGE_PROPERTIES.blendMode,
+			resolved.blendMode,
 		);
-		const repeat = optionOrDefault(
-			settings.repeat,
-			BACKGROUND_REPEAT_OPTIONS,
-			'no-repeat',
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.size, resolved.size);
+		setStyleProperty(
+			style,
+			BACKGROUND_IMAGE_PROPERTIES.position,
+			resolved.position,
 		);
-		const attachment = optionOrDefault(
-			settings.attachment,
-			BACKGROUND_ATTACHMENT_OPTIONS,
-			'fixed',
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.repeat, resolved.repeat);
+		setStyleProperty(
+			style,
+			BACKGROUND_IMAGE_PROPERTIES.attachment,
+			resolved.attachment,
 		);
-		const filter = resolveFilter(settings.filter);
-		const filterCss = buildFilterCss(filter);
-		// A blurred layer frays at the viewport edges (the blur kernel samples
-		// transparent pixels outside the box). Growing the layer by the blur
-		// radius keeps the softened edge outside the visible canvas.
-		const inset = filter.blur > 0 ? `-${Math.ceil(filter.blur)}px` : '0';
-		const filterRule = filterCss ? `\n\tfilter: ${filterCss};` : '';
-		activeDocument.body.style.setProperty(
-			BACKGROUND_IMAGE_VALUE_PROPERTY,
-			imageValue,
+		setStyleProperty(
+			style,
+			BACKGROUND_IMAGE_PROPERTIES.opacity,
+			resolved.opacity,
 		);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.filter, resolved.filter);
 
-		// Runtime-generated user settings cannot be represented in static styles.css.
-		// eslint-disable-next-line obsidianmd/no-forbidden-elements
-		const style = activeDocument.head.createEl('style');
-		style.id = BACKGROUND_IMAGE_STYLE_ID;
-		style.textContent = `
-/* Style Context background image layer */
-body.${BACKGROUND_IMAGE_BODY_CLASS} {
-	background-color: var(--background-primary) !important;
-	background-image: none !important;
-}
-
-body.${BACKGROUND_IMAGE_BODY_CLASS}::before {
-	content: "";
-	position: fixed;
-	inset: ${inset};
-	pointer-events: none;
-	z-index: -1;
-	background-image: var(${BACKGROUND_IMAGE_VALUE_PROPERTY});
-	background-color: var(--background-primary);
-	background-blend-mode: ${blendMode};
-	background-size: ${size};
-	background-position: ${position};
-	background-repeat: ${repeat};
-	background-attachment: ${attachment};
-	opacity: ${safeOpacity(settings.opacity)};${filterRule}
-}
-
-/* Let the fixed layer flow through Obsidian's standard canvas containers. */
-body.${BACKGROUND_IMAGE_BODY_CLASS} .app-container,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .workspace,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .workspace-split,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .workspace-tab-container,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .workspace-leaf,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .workspace-leaf-content,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .view-content,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .view-header,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .workspace-tab-header-container,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .workspace-tabs,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .workspace-ribbon,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .titlebar,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .titlebar-inner,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .titlebar-button-container,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .sidebar-toggle-button,
-body.${BACKGROUND_IMAGE_BODY_CLASS} .nav-files-container {
-	background-color: transparent !important;
-	background-image: none !important;
-}
-`;
-
-		activeDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
+		if (!activeDocument.body.classList.contains(BACKGROUND_IMAGE_BODY_CLASS)) {
+			activeDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
+		}
 	}
 
 	private clear(): void {
-		activeDocument.getElementById(BACKGROUND_IMAGE_STYLE_ID)?.remove();
 		activeDocument.body.classList.remove(BACKGROUND_IMAGE_BODY_CLASS);
-		activeDocument.body.style.removeProperty(BACKGROUND_IMAGE_VALUE_PROPERTY);
+		for (const property of Object.values(BACKGROUND_IMAGE_PROPERTIES)) {
+			activeDocument.body.style.removeProperty(property);
+		}
 	}
 
 	/** Exposes the selected variable for diagnostics and tests. */

@@ -77,6 +77,11 @@ export default class StyleContextPlugin extends Plugin {
 			this.resourceVarCtx.disable();
 		}
 
+		this.applyBackgroundImage();
+	}
+
+	/** Applies only the background service for live Appearance controls. */
+	applyBackgroundImage(): void {
 		if (this.settings.backgroundImage.enabled) {
 			this.backgroundImageCtx.enable();
 			this.backgroundImageCtx.apply();

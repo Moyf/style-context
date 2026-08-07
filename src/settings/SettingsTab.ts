@@ -21,6 +21,7 @@ import {
 	DEFAULT_THEME_SLUG,
 } from '../constants';
 import { ContextInspector } from '../services/ContextInspector';
+import { resolveBackgroundImageStyle } from '../services/BackgroundImageService';
 import { FolderSuggest } from '../ui/FolderSuggest';
 import { FileSuggest } from '../ui/FileSuggest';
 import { generateId } from '../utils/array';
@@ -33,6 +34,7 @@ import { isImageFile } from '../utils/media';
 import { readThemeName } from '../utils/internals';
 import { themeSlug } from '../utils/slug';
 import {
+	isBareBackgroundImageVariable,
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 	pickRandomBackgroundImageValue,
@@ -111,6 +113,8 @@ export class SettingsTab extends PluginSettingTab {
 	private refreshHandle: number | null = null;
 	/** Preview tiles keyed by rule id, refreshed independently to preserve input focus. */
 	private rulePreviewTiles = new Map<string, HTMLElement>();
+	private backgroundImageValuePreview: HTMLElement | null = null;
+	private backgroundImagePreview: HTMLElement | null = null;
 
 	constructor(app: App, plugin: StyleContextPlugin) {
 		super(app, plugin);
@@ -148,6 +152,19 @@ export class SettingsTab extends PluginSettingTab {
 			key,
 			value,
 		);
+		if (key.startsWith('backgroundImage.')) {
+			await this.persistAndApplyBackgroundImage();
+			const messages = t();
+			this.refreshBackgroundImageValuePreview(
+				this.backgroundImageValuePreview,
+				messages,
+			);
+			this.refreshBackgroundImagePreview(
+				this.backgroundImagePreview,
+				messages,
+			);
+			return;
+		}
 		await this.persistAndApply();
 	}
 
@@ -411,6 +428,7 @@ export class SettingsTab extends PluginSettingTab {
 					name: pages.backgroundAppearance,
 					desc: pages.backgroundAppearanceDesc,
 					items: [
+						this.buildBackgroundImagePreview(messages),
 						{
 							type: 'group',
 							heading: groups.backgroundDisplay,
@@ -538,6 +556,7 @@ export class SettingsTab extends PluginSettingTab {
 			render: (setting) => {
 				const background = this.plugin.settings.backgroundImage;
 				let variableText: TextComponent | null = null;
+				setting.setClass('sc-background-image-value-row');
 				setting.addText((text) => {
 					variableText = text;
 					text.setPlaceholder(messages.settings.placeholders.backgroundImageValue)
@@ -550,13 +569,24 @@ export class SettingsTab extends PluginSettingTab {
 							) {
 								this.showInputError(
 									text.inputEl,
-									messages.settings.validation.invalidBackgroundImageValue,
+									this.backgroundImageValidationMessage(
+										normalized,
+										messages,
+									),
 								);
 								return;
 							}
 							this.clearInputError(text.inputEl);
 							background.imageValue = normalized;
-							await this.persistAndApply();
+							this.refreshBackgroundImageValuePreview(
+								this.backgroundImageValuePreview,
+								messages,
+							);
+							this.refreshBackgroundImagePreview(
+								this.backgroundImagePreview,
+								messages,
+							);
+							await this.persistAndApplyBackgroundImage();
 						});
 				});
 
@@ -575,11 +605,138 @@ export class SettingsTab extends PluginSettingTab {
 							if (variableText) {
 								this.clearInputError(variableText.inputEl);
 							}
-							await this.persistAndApply();
+							this.refreshBackgroundImageValuePreview(
+								this.backgroundImageValuePreview,
+								messages,
+							);
+							this.refreshBackgroundImagePreview(
+								this.backgroundImagePreview,
+								messages,
+							);
+							await this.persistAndApplyBackgroundImage();
 						}),
 				);
+
+				const previewRow = setting.controlEl.createDiv({
+					cls: 'sc-background-image-value-preview-row',
+				});
+				const preview = previewRow.createDiv({
+					cls: ['sc-rule-preview-tile', 'sc-background-image-value-preview'],
+				});
+				this.backgroundImageValuePreview = preview;
+				this.refreshBackgroundImageValuePreview(preview, messages);
+				return () => {
+					if (this.backgroundImageValuePreview === preview) {
+						this.backgroundImageValuePreview = null;
+					}
+				};
 			},
 		};
+	}
+
+	private backgroundImageValidationMessage(
+		value: unknown,
+		messages: Messages,
+	): string {
+		return isBareBackgroundImageVariable(value)
+			? messages.settings.validation.backgroundImageVariableRequiresVar
+			: messages.settings.validation.invalidBackgroundImageValue;
+	}
+
+	private refreshBackgroundImageValuePreview(
+		preview: HTMLElement | null,
+		messages: Messages,
+	): void {
+		if (!preview) return;
+		preview.style.removeProperty('background-image');
+		preview.removeClass('is-valid');
+
+		const resolved = resolveBackgroundImageStyle(
+			this.plugin.settings.backgroundImage,
+		);
+		if (!resolved) {
+			setTooltip(
+				preview,
+				this.backgroundImageValidationMessage(
+					this.plugin.settings.backgroundImage.imageValue,
+					messages,
+				),
+				{ placement: 'top' },
+			);
+			return;
+		}
+
+		preview.style.setProperty('background-image', resolved.imageValue);
+		preview.addClass('is-valid');
+		setTooltip(preview, resolved.imageValue, { placement: 'top' });
+	}
+
+	private buildBackgroundImagePreview(
+		messages: Messages,
+	): SettingGroupItem<ControlKey> {
+		return {
+			name: messages.settings.labels.backgroundImageValue,
+			render: (setting) => {
+				setting.setClass('sc-background-image-preview-row');
+				const preview = setting.controlEl.createDiv({
+					cls: ['sc-rule-preview-tile', 'sc-background-image-preview'],
+				});
+				this.backgroundImagePreview = preview;
+				this.refreshBackgroundImagePreview(preview, messages);
+				return () => {
+					if (this.backgroundImagePreview === preview) {
+						this.backgroundImagePreview = null;
+					}
+				};
+			},
+		};
+	}
+
+	private refreshBackgroundImagePreview(
+		preview: HTMLElement | null,
+		messages: Messages,
+	): void {
+		if (!preview) return;
+		const properties = {
+			image: '--sc-background-image-preview-value',
+			inset: '--sc-background-image-preview-inset',
+			blendMode: '--sc-background-image-preview-blend-mode',
+			size: '--sc-background-image-preview-size',
+			position: '--sc-background-image-preview-position',
+			repeat: '--sc-background-image-preview-repeat',
+			opacity: '--sc-background-image-preview-opacity',
+			filter: '--sc-background-image-preview-filter',
+		} as const;
+		for (const property of Object.values(properties)) {
+			preview.style.removeProperty(property);
+		}
+		preview.removeClass('is-valid');
+
+		const resolved = resolveBackgroundImageStyle(
+			this.plugin.settings.backgroundImage,
+		);
+		if (!resolved) {
+			setTooltip(
+				preview,
+				this.backgroundImageValidationMessage(
+					this.plugin.settings.backgroundImage.imageValue,
+					messages,
+				),
+				{ placement: 'top' },
+			);
+			return;
+		}
+
+		preview.style.setProperty(properties.image, resolved.imageValue);
+		preview.style.setProperty(properties.inset, resolved.inset);
+		preview.style.setProperty(properties.blendMode, resolved.blendMode);
+		preview.style.setProperty(properties.size, resolved.size);
+		preview.style.setProperty(properties.position, resolved.position);
+		preview.style.setProperty(properties.repeat, resolved.repeat);
+		preview.style.setProperty(properties.opacity, resolved.opacity);
+		preview.style.setProperty(properties.filter, resolved.filter);
+		preview.addClass('is-valid');
+		setTooltip(preview, resolved.imageValue, { placement: 'top' });
 	}
 
 	private buildBackgroundDropdown(
@@ -1132,5 +1289,10 @@ export class SettingsTab extends PluginSettingTab {
 	private async persistAndApply(): Promise<void> {
 		await this.plugin.saveSettings();
 		this.plugin.applyAll();
+	}
+
+	private async persistAndApplyBackgroundImage(): Promise<void> {
+		await this.plugin.saveSettings();
+		this.plugin.applyBackgroundImage();
 	}
 }

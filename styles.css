@@ -1,3 +1,60 @@
+/* Style Context - built-in background image */
+
+body.sc-style-context-background-image {
+	background-color: var(--background-primary);
+	background-image: none;
+}
+
+body.sc-style-context-background-image::before {
+	content: "";
+	position: fixed;
+	inset: var(--sc-style-context-background-image-inset);
+	pointer-events: none;
+	z-index: -1;
+	background-image: var(--sc-style-context-background-image-value);
+	background-color: var(--background-primary);
+	background-blend-mode: var(--sc-style-context-background-image-blend-mode);
+	background-size: var(--sc-style-context-background-image-size);
+	background-position: var(--sc-style-context-background-image-position);
+	background-repeat: var(--sc-style-context-background-image-repeat);
+	background-attachment: var(--sc-style-context-background-image-attachment);
+	opacity: var(--sc-style-context-background-image-opacity);
+	filter: var(--sc-style-context-background-image-filter);
+}
+
+/* Let the fixed layer flow through Obsidian's standard canvas containers. */
+body.sc-style-context-background-image .app-container,
+body.sc-style-context-background-image.i-border-layout:not(.is-mobile) .app-container,
+body.sc-style-context-background-image .workspace,
+body.sc-style-context-background-image.theme-dark .workspace,
+body.sc-style-context-background-image .workspace-split,
+body.sc-style-context-background-image.theme-dark .workspace-split.mod-root,
+body.sc-style-context-background-image .workspace-tab-container,
+body.sc-style-context-background-image .workspace-leaf,
+body.sc-style-context-background-image .workspace-tabs .workspace-leaf,
+body.sc-style-context-background-image.theme-dark .workspace-tabs .workspace-leaf,
+body.sc-style-context-background-image .mod-root .workspace-tabs .workspace-leaf,
+body.sc-style-context-background-image .workspace-fake-target-overlay:not(.is-in-sidebar) .workspace-tabs .workspace-leaf,
+body.sc-style-context-background-image .workspace-leaf-content,
+body.sc-style-context-background-image .view-content,
+body.sc-style-context-background-image .workspace-split.mod-root .view-content,
+body.sc-style-context-background-image .view-header,
+body.sc-style-context-background-image.is-focused .workspace-leaf.mod-active .view-header,
+body.sc-style-context-background-image .workspace-tab-header-container,
+body.sc-style-context-background-image .workspace-tabs,
+body.sc-style-context-background-image .workspace-ribbon,
+body.sc-style-context-background-image .workspace-ribbon.mod-left::before,
+body.sc-style-context-background-image .titlebar,
+body.sc-style-context-background-image .titlebar-inner,
+body.sc-style-context-background-image .titlebar-button-container,
+body.sc-style-context-background-image .sidebar-toggle-button,
+body.sc-style-context-background-image .nav-files-container,
+body.sc-style-context-background-image:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile,
+body.sc-style-context-background-image .status-bar {
+	background-color: transparent;
+	background-image: none;
+}
+
 /* Style Context - settings diagnostics panel */
 
 .sc-settings-diagnostics {
@@ -193,4 +250,95 @@
 
 .sc-rule-preview-tile.is-valid:active {
 	transform: scale(0.95);
+}
+
+/* Image value layout: controls, preview, then validation feedback. */
+.setting-item.sc-background-image-value-row .setting-item-info {
+	min-width: 0;
+}
+
+.setting-item.sc-background-image-value-row .setting-item-description {
+	overflow-wrap: anywhere;
+}
+
+.setting-item.sc-background-image-value-row .setting-item-control {
+	flex-wrap: wrap;
+}
+
+.setting-item.sc-background-image-value-row input[type="text"] {
+	flex: 1 1 160px;
+	min-width: 0;
+	order: 1;
+}
+
+.setting-item.sc-background-image-value-row .extra-setting-button {
+	order: 1;
+}
+
+.sc-background-image-value-preview-row {
+	display: flex;
+	flex: 1 0 100%;
+	order: 2;
+	width: 100%;
+	margin-top: 8px;
+}
+
+.sc-background-image-value-preview {
+	width: 128px;
+	height: 72px;
+}
+
+.sc-background-image-value-row > .setting-item-control > .sc-setting-error {
+	flex: 1 0 100%;
+	order: 3;
+}
+
+/* Full-width preview at the top of the background Appearance page. */
+.sc-background-image-preview-row .setting-item-info {
+	display: none;
+}
+
+.setting-item.sc-background-image-preview-row .setting-item-control {
+	width: 100%;
+	flex: 1 1 100%;
+}
+
+.sc-background-image-preview-row .sc-background-image-preview {
+	position: relative;
+	overflow: hidden;
+	width: 100%;
+	height: auto;
+	min-width: 100%;
+	min-height: 120px;
+	aspect-ratio: 16 / 9;
+	flex: 1 1 100%;
+	cursor: default;
+}
+
+.sc-background-image-preview.is-valid {
+	background-color: var(--background-primary);
+	background-image: none;
+}
+
+.sc-background-image-preview.is-valid::before {
+	content: "";
+	position: absolute;
+	inset: var(--sc-background-image-preview-inset);
+	pointer-events: none;
+	background-color: var(--background-primary);
+	background-image: var(--sc-background-image-preview-value);
+	background-blend-mode: var(--sc-background-image-preview-blend-mode);
+	background-size: var(--sc-background-image-preview-size);
+	background-position: var(--sc-background-image-preview-position);
+	background-repeat: var(--sc-background-image-preview-repeat);
+	/* Keep the rectangle as the preview viewport. Fixed attachment would
+	   position the image against the entire settings window instead. */
+	background-attachment: scroll;
+	opacity: var(--sc-background-image-preview-opacity);
+	filter: var(--sc-background-image-preview-filter);
+}
+
+.sc-background-image-preview.is-valid:hover,
+.sc-background-image-preview.is-valid:active {
+	transform: none;
 }

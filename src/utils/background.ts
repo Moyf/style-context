@@ -9,6 +9,11 @@ export function normalizeBackgroundImageValue(value: unknown): string {
 	return value.trim();
 }
 
+/** Returns true when a valid custom property name still needs `var(...)`. */
+export function isBareBackgroundImageVariable(value: unknown): boolean {
+	return isValidCssVarName(normalizeBackgroundImageValue(value));
+}
+
 /** Validates a complete value intended for the CSS background-image property. */
 export function isValidBackgroundImageValue(value: unknown): boolean {
 	const normalized = normalizeBackgroundImageValue(value);

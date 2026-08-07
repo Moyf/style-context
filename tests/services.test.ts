@@ -24,9 +24,7 @@ function settings(
 beforeEach(() => {
 	document.documentElement.removeAttribute('style');
 	document.body.removeAttribute('style');
-	document.getElementById('style-context-background-image')?.remove();
 	document.body.classList.remove('sc-style-context-background-image');
-	document.getElementById('style-context-resources')?.remove();
 	Object.defineProperty(globalThis, 'activeDocument', {
 		configurable: true,
 		value: document,
@@ -34,6 +32,17 @@ beforeEach(() => {
 });
 
 describe('BackgroundImageService', () => {
+	it('keeps background styles inactive when the setting is disabled', () => {
+		const service = new BackgroundImageService(() => settings());
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-background-image'),
+		).toBe(false);
+		expect(document.body.getAttribute('style')).toBeNull();
+	});
+
 	it('renders the selected variable in an isolated, configurable layer', () => {
 		const currentSettings = settings({
 			backgroundImage: {
@@ -61,29 +70,56 @@ describe('BackgroundImageService', () => {
 
 		service.enable();
 
-		const style = document.getElementById('style-context-background-image');
-		expect(style?.textContent).toContain(
-			'background-image: var(--sc-style-context-background-image-value)',
-		);
 		expect(
 			document.body.style.getPropertyValue(
 				'--sc-style-context-background-image-value',
 			),
 		).toBe('var(--image-1)');
-		expect(style?.textContent).toContain('opacity: 0.6');
-		expect(style?.textContent).toContain('background-blend-mode: multiply');
-		expect(style?.textContent).toContain('background-size: contain');
-		expect(style?.textContent).toContain('background-position: top right');
-		expect(style?.textContent).toContain('background-repeat: repeat');
-		expect(style?.textContent).toContain('background-attachment: scroll');
-		expect(style?.textContent).toContain('filter: brightness(1.2) blur(4px)');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-opacity',
+			),
+		).toBe('0.6');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-blend-mode',
+			),
+		).toBe('multiply');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-size',
+			),
+		).toBe('contain');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-position',
+			),
+		).toBe('top right');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-repeat',
+			),
+		).toBe('repeat');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-attachment',
+			),
+		).toBe('scroll');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-filter',
+			),
+		).toBe('brightness(1.2) blur(4px)');
 		// The layer grows by the blur radius so softened edges stay off-canvas.
-		expect(style?.textContent).toContain('inset: -4px');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-inset',
+			),
+		).toBe('-4px');
 		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(true);
 		expect(service.currentImageValue()).toBe('var(--image-1)');
 
 		service.disable();
-		expect(document.getElementById('style-context-background-image')).toBeNull();
 		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(false);
 		expect(
 			document.body.style.getPropertyValue(
@@ -105,17 +141,21 @@ describe('BackgroundImageService', () => {
 
 		service.enable();
 
-		const css = document.getElementById('style-context-background-image')?.textContent;
-		expect(css).toContain(
-			'background-image: var(--sc-style-context-background-image-value)',
-		);
 		expect(
 			document.body.style.getPropertyValue(
 				'--sc-style-context-background-image-value',
 			),
 		).toBe('var(--image-1)');
-		expect(css).not.toContain('filter:');
-		expect(css).toContain('inset: 0');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-filter',
+			),
+		).toBe('none');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-inset',
+			),
+		).toBe('0');
 	});
 
 	it('accepts a remote URL as a complete CSS image value', () => {
@@ -135,7 +175,7 @@ describe('BackgroundImageService', () => {
 				'--sc-style-context-background-image-value',
 			),
 		).toBe('url("https://example.com/hero.jpg")');
-		expect(document.getElementById('style-context-background-image')).not.toBeNull();
+		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(true);
 	});
 
 	it('paints the canvas with the theme color so zero opacity falls back to it', () => {
@@ -151,9 +191,11 @@ describe('BackgroundImageService', () => {
 
 		service.enable();
 
-		const css = document.getElementById('style-context-background-image')?.textContent;
-		expect(css).toContain('opacity: 0');
-		expect(css).toContain('background-color: var(--background-primary) !important');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-opacity',
+			),
+		).toBe('0');
 	});
 
 	it('does not inject a layer for an empty or invalid variable', () => {
@@ -168,8 +210,8 @@ describe('BackgroundImageService', () => {
 
 		service.enable();
 
-		expect(document.getElementById('style-context-background-image')).toBeNull();
 		expect(document.body.classList.contains('sc-style-context-background-image')).toBe(false);
+		expect(document.body.getAttribute('style')).toBeNull();
 	});
 
 	it('sanitizes persisted advanced options before writing CSS', () => {
@@ -200,19 +242,48 @@ describe('BackgroundImageService', () => {
 
 		service.enable();
 
-		const css = document.getElementById('style-context-background-image')?.textContent;
-		expect(css).toContain('opacity: 1');
-		expect(css).toContain('background-blend-mode: normal');
-		expect(css).toContain('background-size: cover');
-		expect(css).toContain('background-position: center');
-		expect(css).toContain('background-repeat: no-repeat');
-		expect(css).toContain('background-attachment: fixed');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-opacity',
+			),
+		).toBe('1');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-blend-mode',
+			),
+		).toBe('normal');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-size',
+			),
+		).toBe('cover');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-position',
+			),
+		).toBe('center');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-repeat',
+			),
+		).toBe('no-repeat');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-attachment',
+			),
+		).toBe('fixed');
 		// Out-of-range filters clamp into range; unparseable ones fall back
 		// to neutral defaults and drop out of the filter list entirely.
-		expect(css).toContain(
-			'filter: brightness(2) sepia(1) invert(0.5) hue-rotate(360deg)',
-		);
-		expect(css).toContain('inset: 0');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-filter',
+			),
+		).toBe('brightness(2) sepia(1) invert(0.5) hue-rotate(360deg)');
+		expect(
+			document.body.style.getPropertyValue(
+				'--sc-style-context-background-image-inset',
+			),
+		).toBe('0');
 	});
 });
 
@@ -275,9 +346,9 @@ describe('ResourceVariableService', () => {
 		document.documentElement.style.setProperty('--external-variable', 'keep-me');
 
 		service.enable();
-		expect(document.getElementById('style-context-resources')?.textContent).toContain(
-			'app://vault/assets/Hero.PNG',
-		);
+		expect(
+			document.documentElement.style.getPropertyValue('--hero-image'),
+		).toBe('url("app://vault/assets/Hero.PNG")');
 		expect(
 			document.documentElement.style.getPropertyValue('--external-variable'),
 		).toBe('keep-me');
@@ -291,7 +362,9 @@ describe('ResourceVariableService', () => {
 		]);
 
 		service.disable();
-		expect(document.getElementById('style-context-resources')).toBeNull();
+		expect(
+			document.documentElement.style.getPropertyValue('--hero-image'),
+		).toBe('');
 		expect(
 			document.documentElement.style.getPropertyValue('--external-variable'),
 		).toBe('keep-me');
@@ -329,14 +402,16 @@ describe('ResourceVariableService', () => {
 		);
 
 		service.enable();
-		expect(document.getElementById('style-context-resources')).toBeNull();
+		expect(
+			document.documentElement.style.getPropertyValue('--hero-image'),
+		).toBe('');
 
 		files.set('assets/Hero.PNG', new TFile('assets/Hero.PNG'));
 		onLayoutReady?.();
 
-		expect(document.getElementById('style-context-resources')?.textContent).toContain(
-			'app://vault/assets/Hero.PNG',
-		);
+		expect(
+			document.documentElement.style.getPropertyValue('--hero-image'),
+		).toBe('url("app://vault/assets/Hero.PNG")');
 		expect(workspace.onLayoutReady).toHaveBeenCalledTimes(1);
 	});
 });

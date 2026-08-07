@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isImageFile } from '../src/utils/media';
 import {
+	isBareBackgroundImageVariable,
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 	pickRandomBackgroundImageValue,
@@ -95,5 +96,11 @@ describe('background image values', () => {
 		).toBe(true);
 		expect(isValidBackgroundImageValue('--hero-image')).toBe(false);
 		expect(isValidBackgroundImageValue('hero-image')).toBe(false);
+	});
+
+	it('recognizes bare custom properties that need var()', () => {
+		expect(isBareBackgroundImageVariable(' --hero-image ')).toBe(true);
+		expect(isBareBackgroundImageVariable('var(--hero-image)')).toBe(false);
+		expect(isBareBackgroundImageVariable('hero-image')).toBe(false);
 	});
 });

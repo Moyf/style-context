@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🚀 Added
+
+- **Background image previews**: Show a compact source preview beside the Image value controls and a full Appearance preview that reflects the configured opacity, blend mode, sizing, positioning, repeat, and filters.
+
+### ⚡ Changed
+
+- **Efficient live updates**: Apply Appearance changes only to the background service and update only CSS custom properties whose values changed, avoiding unrelated resource, theme, and note-path work while adjusting controls.
+
+### 🐛 Fixed
+
+- **Official review compliance**: Move background-layer rules into the static plugin stylesheet and publish runtime background and resource values through CSS custom properties, eliminating forbidden runtime `<style>` elements and lint suppressions.
+- **Image value guidance**: Explain that bare custom properties such as `--image` must be wrapped as `var(--image)`, with localized guidance to copy a ready-to-use variable from its preview.
+- **Responsive Image value layout**: Keep the input and shuffle button together, place the preview and validation feedback on separate rows, and wrap long CSS image examples within narrow settings panes.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **背景图片预览**：在「图片值」控件旁显示紧凑的源图片预览，并在「外观」页面显示完整预览，实时反映不透明度、混合模式、尺寸、位置、重复方式和滤镜设置。
+
+### ⚡ 变更
+
+- **高效实时更新**：调整外观控件时仅应用背景服务，并只更新值发生变化的 CSS 自定义属性，避免重复执行无关的资源变量、主题和笔记路径处理。
+
+### 🐛 修复
+
+- **官方审核合规性**：将背景图层规则迁移至插件静态样式表，并通过 CSS 自定义属性发布运行时背景与资源值，彻底移除审核禁止的运行时 `<style>` 元素和 lint 规则禁用指令。
+- **图片值输入指引**：输入 `--image` 等裸 CSS 自定义属性时，明确提示使用 `var(--image)` 包裹，并引导用户点击预览复制可直接使用的变量值。
+- **图片值响应式布局**：保持输入框与随机按钮位于同一行，将预览和校验提示分别放置在后续行，并确保窄设置面板中的长 CSS 图片示例能够正常换行。
+
+</details>
+
+---
+
 ## [0.3.1] - 2026-08-07
 ### 🚀 Added
 

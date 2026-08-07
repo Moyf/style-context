@@ -41,7 +41,7 @@ const zhCN: Messages = {
 			clickToCopy: (value) => `点击复制：${value}`,
 			ruleDisabled: '规则已禁用', setCssVariableName: '请设置 CSS 变量名', variableNameInvalid: '变量名无效', setVaultImagePath: '请设置库内图片路径', imageFileNotFound: '未找到图片文件', notAnImageFile: '不是图片文件', variableNotPublished: '变量尚未发布（请检查模块开关）',
 		},
-		validation: { invalidPrefix: '前缀无效', invalidClassNames: '类名无效', invalidCssVariableName: 'CSS 变量名无效（必须以 -- 开头）', invalidBackgroundImageValue: 'CSS background-image 值无效', duplicateVariableName: (count) => `另有 ${count} 条规则使用此变量名；后面的规则会覆盖前面的规则` },
+		validation: { invalidPrefix: '前缀无效', invalidClassNames: '类名无效', invalidCssVariableName: 'CSS 变量名无效（必须以 -- 开头）', invalidBackgroundImageValue: 'CSS background-image 值无效', backgroundImageVariableRequiresVar: '请用 var() 包裹 CSS 变量，例如 var(--image)。也可以点击上方图片变量的预览图快速复制。', duplicateVariableName: (count) => `另有 ${count} 条规则使用此变量名；后面的规则会覆盖前面的规则` },
 		diagnostics: {
 			currentStyleContext: '当前样式上下文', localImageVariables: '本地图片变量', noEnabledResourceRules: '没有启用的资源规则', theme: '主题', notePathClasses: '笔记路径类', noOpenMarkdownViews: '没有打开的 Markdown 视图', headers: { variable: '变量', status: '状态', leafPath: '叶子路径', appliedClass: '已应用的类', rule: '规则' }, resolved: '已解析', unresolved: '未解析', rawTheme: (rawName, slug) => `（原始名称：${rawName || '无'}，slug：${slug}）`, unsaved: '（未保存）', filePathEmpty: '文件路径为空', fileNotFound: (path) => `未找到文件：${path}`,
 		},

@@ -9,12 +9,10 @@ export interface ResourceResolution {
 	error?: string;
 }
 
-const RESOURCE_STYLE_ID = 'style-context-resources';
-
 /**
  * SC-03: Resolves vault files into `url("...")` values and publishes them
- * as user-defined CSS variables in a dedicated :root stylesheet. Missing files produce
- * a clear error and never write a stale value.
+ * as user-defined CSS variables on the root element. Missing files produce a
+ * clear error and never write a stale value.
  */
 export class ResourceVariableService {
 	private plugin: Plugin;
@@ -64,14 +62,12 @@ export class ResourceVariableService {
 	/**
 	 * Re-resolves every enabled resource rule. Always clears prior values
 	 * first so stale URLs never linger. The variable name is published
-	 * verbatim — no prefix is added. A dedicated style element keeps these
-	 * dynamic declarations out of the html element's inline style attribute.
+	 * verbatim — no prefix is added.
 	 */
 	apply(): void {
 		this.clearAll();
 		if (!this.enabled) return;
 
-		const declarations: string[] = [];
 		const rules = this.getSettings().resourceRules;
 		for (const rule of rules) {
 			if (!rule.enabled) continue;
@@ -82,16 +78,11 @@ export class ResourceVariableService {
 				continue;
 			}
 			const url = this.plugin.app.vault.getResourcePath(file);
-			declarations.push(`\t${prop}: url(${JSON.stringify(url)});`);
+			activeDocument.documentElement.style.setProperty(
+				prop,
+				`url(${JSON.stringify(url)})`,
+			);
 			this.setVars.add(prop);
-		}
-
-		if (declarations.length > 0) {
-			// Runtime-generated vault URLs cannot be represented in static styles.css.
-			// eslint-disable-next-line obsidianmd/no-forbidden-elements
-			const style = activeDocument.head.createEl('style');
-			style.id = RESOURCE_STYLE_ID;
-			style.textContent = `:root {\n${declarations.join('\n')}\n}`;
 		}
 	}
 
@@ -104,7 +95,9 @@ export class ResourceVariableService {
 	}
 
 	private clearAll(): void {
-		activeDocument.getElementById(RESOURCE_STYLE_ID)?.remove();
+		for (const property of this.setVars) {
+			activeDocument.documentElement.style.removeProperty(property);
+		}
 		this.setVars.clear();
 	}
 

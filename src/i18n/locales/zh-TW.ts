@@ -41,7 +41,7 @@ const zhTW: Messages = {
 			clickToCopy: (value) => `按一下即可複製：${value}`,
 			ruleDisabled: '規則已停用', setCssVariableName: '請設定 CSS 變數名稱', variableNameInvalid: '變數名稱無效', setVaultImagePath: '請設定庫內圖片路徑', imageFileNotFound: '找不到圖片檔案', notAnImageFile: '不是圖片檔案', variableNotPublished: '變數尚未發布（請檢查模組開關）',
 		},
-		validation: { invalidPrefix: '前綴無效', invalidClassNames: '類別名稱無效', invalidCssVariableName: 'CSS 變數名稱無效（必須以 -- 開頭）', invalidBackgroundImageValue: 'CSS background-image 值無效', duplicateVariableName: (count) => `另有 ${count} 條規則使用此變數名稱；後面的規則會覆寫前面的規則` },
+		validation: { invalidPrefix: '前綴無效', invalidClassNames: '類別名稱無效', invalidCssVariableName: 'CSS 變數名稱無效（必須以 -- 開頭）', invalidBackgroundImageValue: 'CSS background-image 值無效', backgroundImageVariableRequiresVar: '請用 var() 包住 CSS 變數，例如 var(--image)。也可以點擊上方圖片變數的預覽圖快速複製。', duplicateVariableName: (count) => `另有 ${count} 條規則使用此變數名稱；後面的規則會覆寫前面的規則` },
 		diagnostics: {
 			currentStyleContext: '目前樣式內容', localImageVariables: '本機圖片變數', noEnabledResourceRules: '沒有啟用的資源規則', theme: '主題', notePathClasses: '筆記路徑類別', noOpenMarkdownViews: '沒有開啟的 Markdown 檢視', headers: { variable: '變數', status: '狀態', leafPath: '分頁路徑', appliedClass: '已套用的類別', rule: '規則' }, resolved: '已解析', unresolved: '未解析', rawTheme: (rawName, slug) => `（原始名稱：${rawName || '無'}，slug：${slug}）`, unsaved: '（未儲存）', filePathEmpty: '檔案路徑為空', fileNotFound: (path) => `找不到檔案：${path}`,
 		},
