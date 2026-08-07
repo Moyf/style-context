@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+### 🐛 Fixed
+
+- **Image variable path tracking**: Automatically update configured image-variable paths when a vault image file or containing folder is moved or renamed, then republish affected variables and refresh matching built-in backgrounds.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **图片变量路径跟踪**：在仓库内移动或重命名图片文件及其上层文件夹时，自动更新已配置的图片变量路径，并重新发布受影响变量、刷新匹配的内置背景。
+
+</details>
+
+---
+
 ## [0.3.3] - 2026-08-07
 ### 🚀 Added
 
