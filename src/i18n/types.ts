@@ -28,6 +28,8 @@ export interface Messages {
 		pages: {
 			backgroundAppearance: string;
 			backgroundAppearanceDesc: string;
+			lightBackgroundAppearance: string;
+			darkBackgroundAppearance: string;
 			interfaceTransparency: string;
 			interfaceTransparencyDesc: string;
 			backgroundRandomization: string;
@@ -42,7 +44,10 @@ export interface Messages {
 			folder: string;
 			keyword: string;
 			publishBackgroundImage: string;
+			perModeBackground: string;
 			backgroundImageValue: string;
+			lightBackgroundImageValue: string;
+			darkBackgroundImageValue: string;
 			backgroundOpacity: string;
 			backgroundBlendMode: string;
 			backgroundSize: string;
@@ -58,6 +63,9 @@ export interface Messages {
 			filterHueRotate: string;
 			filterBlur: string;
 			mobileToolbarTransparent: string;
+			statusBarTransparent: string;
+			ribbonTransparent: string;
+			titlebarTransparent: string;
 			randomBackgroundOnStartup: string;
 			addRandomBackgroundRibbon: string;
 		};
@@ -70,6 +78,7 @@ export interface Messages {
 			themePrefixExample: string;
 			currentThemeClass: string;
 			publishBackgroundImage: string;
+			perModeBackground: string;
 			backgroundImageValue: string;
 			backgroundOpacity: string;
 			backgroundBlendMode: string;
@@ -78,6 +87,9 @@ export interface Messages {
 			backgroundRepeat: string;
 			backgroundAttachment: string;
 			mobileToolbarTransparent: string;
+			statusBarTransparent: string;
+			ribbonTransparent: string;
+			titlebarTransparent: string;
 			randomBackgroundOnStartup: string;
 			addRandomBackgroundRibbon: string;
 		};
@@ -101,6 +113,7 @@ export interface Messages {
 		};
 		tooltips: {
 			clickToCopy: (value: string) => string;
+			resourceVariableEnabled: string;
 			ruleDisabled: string;
 			setCssVariableName: string;
 			variableNameInvalid: string;

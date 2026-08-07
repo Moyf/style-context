@@ -34,4 +34,37 @@ describe('i18n', () => {
 			expect(getMessages(language).settings.labels.mobileToolbarTransparent).toBe(expected);
 		});
 	});
+
+	describe('labels.statusBarTransparent', () => {
+		it.each([
+			['en', 'Transparent status bar'],
+			['zh', '状态栏透明'],
+			['zh-TW', '狀態列透明'],
+			['ja', 'ステータスバーを透明化'],
+		])('has the correct label for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.labels.statusBarTransparent).toBe(expected);
+		});
+	});
+
+	describe('labels.ribbonTransparent', () => {
+		it.each([
+			['en', 'Transparent ribbon'],
+			['zh', 'Ribbon 透明'],
+			['zh-TW', 'Ribbon 透明'],
+			['ja', 'Ribbon を透明化'],
+		])('has the correct label for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.labels.ribbonTransparent).toBe(expected);
+		});
+	});
+
+	describe('labels.titlebarTransparent', () => {
+		it.each([
+			['en', 'Transparent title bar'],
+			['zh', '窗口标题栏透明'],
+			['zh-TW', '視窗標題列透明'],
+			['ja', 'ウィンドウタイトルバーを透明化'],
+		])('has the correct label for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.labels.titlebarTransparent).toBe(expected);
+		});
+	});
 });
