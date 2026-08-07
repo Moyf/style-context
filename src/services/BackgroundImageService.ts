@@ -10,17 +10,23 @@ import {
 	DEFAULT_SETTINGS,
 	type BackgroundFilterSettings,
 	type BackgroundImageSettings,
+	type BackgroundModeSettings,
 	type StyleContextSettings,
 } from '../types';
 import {
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
+	resolveBackgroundImageConfig,
 } from '../utils/background';
 import { getAppDocuments } from '../utils/documents';
+import {
+	INTERFACE_TRANSPARENCY_CLASSES,
+	applyInterfaceTransparency,
+	resolveInterfaceTransparency,
+	type InterfaceTransparency,
+} from './InterfaceTransparency';
 
 const BACKGROUND_IMAGE_BODY_CLASS = 'sc-style-context-background-image';
-const MOBILE_TOOLBAR_TRANSPARENT_BODY_CLASS =
-	'sc-style-context-mobile-toolbar-transparent';
 const BACKGROUND_IMAGE_PROPERTIES = {
 	value: '--sc-style-context-background-image-value',
 	inset: '--sc-style-context-background-image-inset',
@@ -122,7 +128,7 @@ function buildFilterCss(filter: BackgroundFilterSettings): string {
 
 /** Resolves persisted settings into the sanitized CSS shared by canvas and preview. */
 export function resolveBackgroundImageStyle(
-	settings: BackgroundImageSettings,
+	settings: BackgroundModeSettings,
 ): ResolvedBackgroundImageStyle | null {
 	const imageValue = normalizeBackgroundImageValue(settings.imageValue);
 	if (!isValidBackgroundImageValue(imageValue)) return null;
@@ -208,19 +214,36 @@ export class BackgroundImageService {
 			this.clear();
 			return;
 		}
-		const resolved = resolveBackgroundImageStyle(settings);
-		if (!resolved) {
-			this.clear();
-			return;
-		}
 
-		// Legacy data predates this key, so anything but an explicit `false`
-		// keeps the default-on behaviour.
-		const mobileToolbarTransparent = settings.mobileToolbarTransparent !== false;
+		const transparency = resolveInterfaceTransparency(settings);
 
-		for (const targetDocument of getAppDocuments(this.app)) {
-			this.applyToDocument(targetDocument, resolved, mobileToolbarTransparent);
+		// Include previously touched documents so an unfocused detached
+		// window still follows mode/config changes, exactly like clear().
+		for (const targetDocument of new Set([
+			...this.touchedDocuments,
+			...getAppDocuments(this.app),
+		])) {
+			const resolved = this.resolveForDocument(settings, targetDocument);
+			if (!resolved) {
+				this.clearDocument(targetDocument);
+				continue;
+			}
+			this.applyToDocument(targetDocument, resolved, transparency);
 		}
+	}
+
+	/**
+	 * Resolves one document's style through the shared per-mode resolver.
+	 * An empty/invalid resolved image value makes apply() clear that
+	 * document's layer instead of borrowing the other mode's image.
+	 */
+	private resolveForDocument(
+		settings: BackgroundImageSettings,
+		targetDocument: Document,
+	): ResolvedBackgroundImageStyle | null {
+		return resolveBackgroundImageStyle(
+			resolveBackgroundImageConfig(settings, targetDocument),
+		);
 	}
 
 	private clear(): void {
@@ -228,21 +251,26 @@ export class BackgroundImageService {
 			...this.touchedDocuments,
 			...getAppDocuments(this.app),
 		])) {
-			targetDocument.body.classList.remove(
-				BACKGROUND_IMAGE_BODY_CLASS,
-				MOBILE_TOOLBAR_TRANSPARENT_BODY_CLASS,
-			);
-			for (const property of Object.values(BACKGROUND_IMAGE_PROPERTIES)) {
-				targetDocument.body.style.removeProperty(property);
-			}
+			this.clearDocument(targetDocument);
 		}
 		this.touchedDocuments.clear();
+	}
+
+	private clearDocument(targetDocument: Document): void {
+		targetDocument.body.classList.remove(
+			BACKGROUND_IMAGE_BODY_CLASS,
+			...Object.values(INTERFACE_TRANSPARENCY_CLASSES),
+		);
+		for (const property of Object.values(BACKGROUND_IMAGE_PROPERTIES)) {
+			targetDocument.body.style.removeProperty(property);
+		}
+		this.touchedDocuments.delete(targetDocument);
 	}
 
 	private applyToDocument(
 		targetDocument: Document,
 		resolved: ResolvedBackgroundImageStyle,
-		mobileToolbarTransparent: boolean,
+		transparency: InterfaceTransparency,
 	): void {
 		const style = targetDocument.body.style;
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.value, resolved.imageValue);
@@ -255,10 +283,7 @@ export class BackgroundImageService {
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, resolved.opacity);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.filter, resolved.filter);
 		targetDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
-		targetDocument.body.classList.toggle(
-			MOBILE_TOOLBAR_TRANSPARENT_BODY_CLASS,
-			mobileToolbarTransparent,
-		);
+		applyInterfaceTransparency(targetDocument, transparency);
 		this.touchedDocuments.add(targetDocument);
 	}
 
