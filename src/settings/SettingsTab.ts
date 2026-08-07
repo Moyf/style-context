@@ -42,9 +42,36 @@ import {
 } from '../utils/background';
 import { t } from '../i18n/i18n';
 import type { Messages } from '../i18n/types';
-import { DEFAULT_SETTINGS, type PathRule, type ResourceRule } from '../types';
+import {
+	DEFAULT_SETTINGS,
+	type BackgroundModeSettings,
+	type PathRule,
+	type ResourceRule,
+} from '../types';
 
 const DIAG_REFRESH_MS = 2000;
+
+/**
+ * Dot-path prefixes that own a full set of appearance controls: the global
+ * background fields plus each per-mode config.
+ */
+type BackgroundAppearancePrefix =
+	| 'backgroundImage'
+	| 'backgroundImage.light'
+	| 'backgroundImage.dark';
+
+type BackgroundFilterControlKey =
+	| 'brightness'
+	| 'contrast'
+	| 'saturate'
+	| 'grayscale'
+	| 'sepia'
+	| 'invert'
+	| 'hueRotate'
+	| 'blur';
+
+/** Which background config a row or page targets. */
+type BackgroundImageMode = 'global' | 'light' | 'dark';
 
 /**
  * Dot-paths into StyleContextSettings that declarative controls bind to.
@@ -55,25 +82,20 @@ type ControlKey =
 	| 'themeContextEnabled'
 	| 'notePathContextEnabled'
 	| 'backgroundImage.enabled'
+	| 'backgroundImage.perModeEnabled'
 	| 'backgroundImage.randomOnStartup'
 	| 'backgroundImage.randomBackgroundRibbon'
-		| 'backgroundImage.randomOnStartup'
-		| 'backgroundImage.randomBackgroundRibbon'
-	| 'backgroundImage.opacity'
-	| 'backgroundImage.blendMode'
-	| 'backgroundImage.size'
-	| 'backgroundImage.position'
-	| 'backgroundImage.repeat'
 	| 'backgroundImage.attachment'
 	| 'backgroundImage.mobileToolbarTransparent'
-	| 'backgroundImage.filter.brightness'
-	| 'backgroundImage.filter.contrast'
-	| 'backgroundImage.filter.saturate'
-	| 'backgroundImage.filter.grayscale'
-	| 'backgroundImage.filter.sepia'
-	| 'backgroundImage.filter.invert'
-	| 'backgroundImage.filter.hueRotate'
-	| 'backgroundImage.filter.blur';
+	| 'backgroundImage.statusBarTransparent'
+	| 'backgroundImage.ribbonTransparent'
+	| 'backgroundImage.titlebarTransparent'
+	| `${BackgroundAppearancePrefix}.opacity`
+	| `${BackgroundAppearancePrefix}.blendMode`
+	| `${BackgroundAppearancePrefix}.size`
+	| `${BackgroundAppearancePrefix}.position`
+	| `${BackgroundAppearancePrefix}.repeat`
+	| `${BackgroundAppearancePrefix}.filter.${BackgroundFilterControlKey}`;
 
 function getPath(source: unknown, path: string): unknown {
 	let cursor = source;
@@ -119,8 +141,13 @@ export class SettingsTab extends PluginSettingTab {
 	private refreshHandle: number | null = null;
 	/** Preview tiles keyed by rule id, refreshed independently to preserve input focus. */
 	private rulePreviewTiles = new Map<string, HTMLElement>();
-	private backgroundImageValuePreview: HTMLElement | null = null;
-	private backgroundImagePreview: HTMLElement | null = null;
+	/** Image-value preview tiles keyed by the config they reflect. */
+	private backgroundImageValuePreviews = new Map<
+		BackgroundImageMode,
+		HTMLElement
+	>();
+	/** Appearance-page previews keyed by the config they reflect. */
+	private backgroundImagePreviews = new Map<BackgroundImageMode, HTMLElement>();
 
 	constructor(app: App, plugin: StyleContextPlugin) {
 		super(app, plugin);
@@ -168,14 +195,10 @@ export class SettingsTab extends PluginSettingTab {
 				this.plugin.syncRandomBackgroundRibbon();
 			}
 			const messages = t();
-			this.refreshBackgroundImageValuePreview(
-				this.backgroundImageValuePreview,
-				messages,
-			);
-			this.refreshBackgroundImagePreview(
-				this.backgroundImagePreview,
-				messages,
-			);
+			for (const mode of ['global', 'light', 'dark'] as const) {
+				this.refreshBackgroundImageValuePreview(mode, messages);
+				this.refreshBackgroundImagePreview(mode, messages);
+			}
 			return;
 		}
 		await this.persistAndApply();
@@ -425,7 +448,6 @@ export class SettingsTab extends PluginSettingTab {
 		const labels = messages.settings.labels;
 		const descriptions = messages.settings.descriptions;
 		const pages = messages.settings.pages;
-		const groups = messages.settings.groups;
 		return {
 			type: 'group',
 			heading: messages.settings.groups.backgroundImage,
@@ -435,152 +457,30 @@ export class SettingsTab extends PluginSettingTab {
 					desc: descriptions.publishBackgroundImage,
 					control: { type: 'toggle', key: 'backgroundImage.enabled' },
 				},
-				this.buildBackgroundImageValueRow(messages),
 				{
-					type: 'page',
-					name: pages.backgroundAppearance,
-					desc: pages.backgroundAppearanceDesc,
-					items: [
-						this.buildBackgroundImagePreview(messages),
-						{
-							type: 'group',
-							heading: groups.backgroundDisplay,
-							items: [
-								this.buildSlider(
-									labels.backgroundOpacity,
-									'backgroundImage.opacity',
-									0,
-									1,
-									0.05,
-									this.plugin.settings.backgroundImage.opacity,
-									formatPercent,
-									descriptions.backgroundOpacity,
-									DEFAULT_SETTINGS.backgroundImage.opacity,
-								),
-								this.buildBackgroundDropdown(
-									labels.backgroundBlendMode,
-									descriptions.backgroundBlendMode,
-									BACKGROUND_BLEND_MODES,
-									'backgroundImage.blendMode',
-								),
-							],
-						},
-						{
-							type: 'group',
-							heading: groups.backgroundFilter,
-							items: [
-								this.buildFilterSlider(
-									labels.filterBrightness,
-									'backgroundImage.filter.brightness',
-									0,
-									2,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.brightness,
-								),
-								this.buildFilterSlider(
-									labels.filterBlur,
-									'backgroundImage.filter.blur',
-									0,
-									20,
-									formatPixels,
-									DEFAULT_SETTINGS.backgroundImage.filter.blur,
-									0.5,
-								),
-								this.buildFilterSlider(
-									labels.filterContrast,
-									'backgroundImage.filter.contrast',
-									0,
-									2,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.contrast,
-								),
-								this.buildFilterSlider(
-									labels.filterSaturate,
-									'backgroundImage.filter.saturate',
-									0,
-									2,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.saturate,
-								),
-								this.buildFilterSlider(
-									labels.filterGrayscale,
-									'backgroundImage.filter.grayscale',
-									0,
-									1,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.grayscale,
-								),
-								this.buildFilterSlider(
-									labels.filterHueRotate,
-									'backgroundImage.filter.hueRotate',
-									0,
-									360,
-									formatDegrees,
-									DEFAULT_SETTINGS.backgroundImage.filter.hueRotate,
-									5,
-								),
-								this.buildFilterSlider(
-									labels.filterSepia,
-									'backgroundImage.filter.sepia',
-									0,
-									1,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.sepia,
-								),
-								this.buildFilterSlider(
-									labels.filterInvert,
-									'backgroundImage.filter.invert',
-									0,
-									1,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.invert,
-								),
-							],
-						},
-						{
-							type: 'group',
-							heading: groups.backgroundLayout,
-							items: [
-								this.buildBackgroundDropdown(
-									labels.backgroundSize,
-									descriptions.backgroundSize,
-									BACKGROUND_SIZE_OPTIONS,
-									'backgroundImage.size',
-								),
-								this.buildBackgroundDropdown(
-									labels.backgroundPosition,
-									descriptions.backgroundPosition,
-									BACKGROUND_POSITION_OPTIONS,
-									'backgroundImage.position',
-								),
-								this.buildBackgroundDropdown(
-									labels.backgroundRepeat,
-									descriptions.backgroundRepeat,
-									BACKGROUND_REPEAT_OPTIONS,
-									'backgroundImage.repeat',
-								),
-							],
-						},
-					],
-				},
-				{
-					type: 'page',
-					name: pages.backgroundRandomization,
-					desc: pages.backgroundRandomizationDesc,
+					name: labels.perModeBackground,
+					desc: descriptions.perModeBackground,
 					visible: () => this.plugin.settings.backgroundImage.enabled,
-					items: [
-						{
-							name: labels.randomBackgroundOnStartup,
-							desc: descriptions.randomBackgroundOnStartup,
-							control: { type: 'toggle', key: 'backgroundImage.randomOnStartup' },
-						},
-						{
-							name: labels.addRandomBackgroundRibbon,
-							desc: descriptions.addRandomBackgroundRibbon,
-							control: { type: 'toggle', key: 'backgroundImage.randomBackgroundRibbon' },
-						},
-					],
+					control: { type: 'toggle', key: 'backgroundImage.perModeEnabled' },
 				},
+				this.buildBackgroundImageValueRow(
+					messages,
+					'global',
+					labels.backgroundImageValue,
+				),
+				this.buildBackgroundAppearancePage(messages, 'global'),
+				this.buildBackgroundImageValueRow(
+					messages,
+					'light',
+					labels.lightBackgroundImageValue,
+				),
+				this.buildBackgroundAppearancePage(messages, 'light'),
+				this.buildBackgroundImageValueRow(
+					messages,
+					'dark',
+					labels.darkBackgroundImageValue,
+				),
+				this.buildBackgroundAppearancePage(messages, 'dark'),
 				{
 					type: 'page',
 					name: pages.backgroundRandomization,
@@ -603,6 +503,7 @@ export class SettingsTab extends PluginSettingTab {
 					type: 'page',
 					name: pages.interfaceTransparency,
 					desc: pages.interfaceTransparencyDesc,
+					visible: () => this.plugin.settings.backgroundImage.enabled,
 					items: [
 						{
 							name: labels.mobileToolbarTransparent,
@@ -612,27 +513,223 @@ export class SettingsTab extends PluginSettingTab {
 								key: 'backgroundImage.mobileToolbarTransparent',
 							},
 						},
+						{
+							name: labels.statusBarTransparent,
+							desc: descriptions.statusBarTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.statusBarTransparent',
+							},
+						},
+						{
+							name: labels.ribbonTransparent,
+							desc: descriptions.ribbonTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.ribbonTransparent',
+							},
+						},
+						{
+							name: labels.titlebarTransparent,
+							desc: descriptions.titlebarTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.titlebarTransparent',
+							},
+						},
 					],
 				},
 			],
 		};
 	}
 
+	/**
+	 * The Appearance page for one config target. The global page mirrors the
+	 * historical layout; the per-mode pages bind the same controls to the
+	 * `light` / `dark` config objects instead of the global fields.
+	 */
+	private buildBackgroundAppearancePage(
+		messages: Messages,
+		mode: BackgroundImageMode,
+	): SettingGroupItem<ControlKey> {
+		const labels = messages.settings.labels;
+		const descriptions = messages.settings.descriptions;
+		const pages = messages.settings.pages;
+		const groups = messages.settings.groups;
+		const prefix: BackgroundAppearancePrefix =
+			mode === 'global' ? 'backgroundImage' : `backgroundImage.${mode}`;
+		let name = pages.backgroundAppearance;
+		if (mode === 'light') name = pages.lightBackgroundAppearance;
+		if (mode === 'dark') name = pages.darkBackgroundAppearance;
+		const config = this.backgroundImageConfig(mode);
+		return {
+			type: 'page',
+			name,
+			desc: pages.backgroundAppearanceDesc,
+			visible: () => {
+				const background = this.plugin.settings.backgroundImage;
+				return mode === 'global'
+					? !background.perModeEnabled
+					: background.enabled && background.perModeEnabled;
+			},
+			items: [
+				this.buildBackgroundImagePreview(messages, mode),
+				{
+					type: 'group',
+					heading: groups.backgroundDisplay,
+					items: [
+						this.buildSlider(
+							labels.backgroundOpacity,
+							`${prefix}.opacity`,
+							0,
+							1,
+							0.05,
+							config.opacity,
+							formatPercent,
+							descriptions.backgroundOpacity,
+							DEFAULT_SETTINGS.backgroundImage.opacity,
+						),
+						this.buildBackgroundDropdown(
+							labels.backgroundBlendMode,
+							descriptions.backgroundBlendMode,
+							BACKGROUND_BLEND_MODES,
+							`${prefix}.blendMode`,
+						),
+					],
+				},
+				{
+					type: 'group',
+					heading: groups.backgroundFilter,
+					items: [
+						this.buildFilterSlider(
+							labels.filterBrightness,
+							`${prefix}.filter.brightness`,
+							0,
+							2,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.brightness,
+						),
+						this.buildFilterSlider(
+							labels.filterBlur,
+							`${prefix}.filter.blur`,
+							0,
+							20,
+							formatPixels,
+							DEFAULT_SETTINGS.backgroundImage.filter.blur,
+							0.5,
+						),
+						this.buildFilterSlider(
+							labels.filterContrast,
+							`${prefix}.filter.contrast`,
+							0,
+							2,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.contrast,
+						),
+						this.buildFilterSlider(
+							labels.filterSaturate,
+							`${prefix}.filter.saturate`,
+							0,
+							2,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.saturate,
+						),
+						this.buildFilterSlider(
+							labels.filterGrayscale,
+							`${prefix}.filter.grayscale`,
+							0,
+							1,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.grayscale,
+						),
+						this.buildFilterSlider(
+							labels.filterHueRotate,
+							`${prefix}.filter.hueRotate`,
+							0,
+							360,
+							formatDegrees,
+							DEFAULT_SETTINGS.backgroundImage.filter.hueRotate,
+							5,
+						),
+						this.buildFilterSlider(
+							labels.filterSepia,
+							`${prefix}.filter.sepia`,
+							0,
+							1,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.sepia,
+						),
+						this.buildFilterSlider(
+							labels.filterInvert,
+							`${prefix}.filter.invert`,
+							0,
+							1,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.invert,
+						),
+					],
+				},
+				{
+					type: 'group',
+					heading: groups.backgroundLayout,
+					items: [
+						this.buildBackgroundDropdown(
+							labels.backgroundSize,
+							descriptions.backgroundSize,
+							BACKGROUND_SIZE_OPTIONS,
+							`${prefix}.size`,
+						),
+						this.buildBackgroundDropdown(
+							labels.backgroundPosition,
+							descriptions.backgroundPosition,
+							BACKGROUND_POSITION_OPTIONS,
+							`${prefix}.position`,
+						),
+						this.buildBackgroundDropdown(
+							labels.backgroundRepeat,
+							descriptions.backgroundRepeat,
+							BACKGROUND_REPEAT_OPTIONS,
+							`${prefix}.repeat`,
+						),
+					],
+				},
+			],
+		};
+	}
+
+	/** Returns the config object a row or page reads from and writes to. */
+	private backgroundImageConfig(
+		mode: BackgroundImageMode,
+	): BackgroundModeSettings {
+		const background = this.plugin.settings.backgroundImage;
+		if (mode === 'light') return background.light;
+		if (mode === 'dark') return background.dark;
+		return background;
+	}
+
 	private buildBackgroundImageValueRow(
 		messages: Messages,
+		mode: BackgroundImageMode,
+		label: string,
 	): SettingGroupItem<ControlKey> {
 		return {
-			name: messages.settings.labels.backgroundImageValue,
+			name: label,
 			desc: messages.settings.descriptions.backgroundImageValue,
-			visible: () => this.plugin.settings.backgroundImage.enabled,
-			render: (setting) => {
+			visible: () => {
 				const background = this.plugin.settings.backgroundImage;
+				if (!background.enabled) return false;
+				return mode === 'global'
+					? !background.perModeEnabled
+					: background.perModeEnabled;
+			},
+			render: (setting) => {
+				const config = this.backgroundImageConfig(mode);
 				let variableText: TextComponent | null = null;
 				setting.setClass('sc-background-image-value-row');
 				setting.addText((text) => {
 					variableText = text;
 					text.setPlaceholder(messages.settings.placeholders.backgroundImageValue)
-						.setValue(normalizeBackgroundImageValue(background.imageValue))
+						.setValue(normalizeBackgroundImageValue(config.imageValue))
 						.onChange(async (value) => {
 							const normalized = normalizeBackgroundImageValue(value);
 							if (
@@ -649,15 +746,9 @@ export class SettingsTab extends PluginSettingTab {
 								return;
 							}
 							this.clearInputError(text.inputEl);
-							background.imageValue = normalized;
-							this.refreshBackgroundImageValuePreview(
-								this.backgroundImageValuePreview,
-								messages,
-							);
-							this.refreshBackgroundImagePreview(
-								this.backgroundImagePreview,
-								messages,
-							);
+							config.imageValue = normalized;
+							this.refreshBackgroundImageValuePreview(mode, messages);
+							this.refreshBackgroundImagePreview(mode, messages);
 							await this.persistAndApplyBackgroundImage();
 						});
 				});
@@ -667,24 +758,20 @@ export class SettingsTab extends PluginSettingTab {
 						.setIcon('shuffle')
 						.setTooltip(messages.settings.buttons.randomBackgroundImageValue)
 						.onClick(async () => {
-							const value = this.pickRandomBackgroundImageValue();
+							const value = this.pickRandomBackgroundImageValue(
+								config.imageValue,
+							);
 							if (!value) {
 								new Notice(messages.notices.noImageVariables);
 								return;
 							}
-							background.imageValue = value;
+							config.imageValue = value;
 							variableText?.setValue(value);
 							if (variableText) {
 								this.clearInputError(variableText.inputEl);
 							}
-							this.refreshBackgroundImageValuePreview(
-								this.backgroundImageValuePreview,
-								messages,
-							);
-							this.refreshBackgroundImagePreview(
-								this.backgroundImagePreview,
-								messages,
-							);
+							this.refreshBackgroundImageValuePreview(mode, messages);
+							this.refreshBackgroundImagePreview(mode, messages);
 							await this.persistAndApplyBackgroundImage();
 						}),
 				);
@@ -695,11 +782,11 @@ export class SettingsTab extends PluginSettingTab {
 				const preview = previewRow.createDiv({
 					cls: ['sc-rule-preview-tile', 'sc-background-image-value-preview'],
 				});
-				this.backgroundImageValuePreview = preview;
-				this.refreshBackgroundImageValuePreview(preview, messages);
+				this.backgroundImageValuePreviews.set(mode, preview);
+				this.refreshBackgroundImageValuePreview(mode, messages);
 				return () => {
-					if (this.backgroundImageValuePreview === preview) {
-						this.backgroundImageValuePreview = null;
+					if (this.backgroundImageValuePreviews.get(mode) === preview) {
+						this.backgroundImageValuePreviews.delete(mode);
 					}
 				};
 			},
@@ -716,23 +803,20 @@ export class SettingsTab extends PluginSettingTab {
 	}
 
 	private refreshBackgroundImageValuePreview(
-		preview: HTMLElement | null,
+		mode: BackgroundImageMode,
 		messages: Messages,
 	): void {
+		const preview = this.backgroundImageValuePreviews.get(mode);
 		if (!preview) return;
 		preview.style.removeProperty('background-image');
 		preview.removeClass('is-valid');
 
-		const resolved = resolveBackgroundImageStyle(
-			this.plugin.settings.backgroundImage,
-		);
+		const config = this.backgroundImageConfig(mode);
+		const resolved = resolveBackgroundImageStyle(config);
 		if (!resolved) {
 			setTooltip(
 				preview,
-				this.backgroundImageValidationMessage(
-					this.plugin.settings.backgroundImage.imageValue,
-					messages,
-				),
+				this.backgroundImageValidationMessage(config.imageValue, messages),
 				{ placement: 'top' },
 			);
 			return;
@@ -745,6 +829,7 @@ export class SettingsTab extends PluginSettingTab {
 
 	private buildBackgroundImagePreview(
 		messages: Messages,
+		mode: BackgroundImageMode,
 	): SettingGroupItem<ControlKey> {
 		return {
 			name: messages.settings.labels.backgroundImageValue,
@@ -753,11 +838,11 @@ export class SettingsTab extends PluginSettingTab {
 				const preview = setting.controlEl.createDiv({
 					cls: ['sc-rule-preview-tile', 'sc-background-image-preview'],
 				});
-				this.backgroundImagePreview = preview;
-				this.refreshBackgroundImagePreview(preview, messages);
+				this.backgroundImagePreviews.set(mode, preview);
+				this.refreshBackgroundImagePreview(mode, messages);
 				return () => {
-					if (this.backgroundImagePreview === preview) {
-						this.backgroundImagePreview = null;
+					if (this.backgroundImagePreviews.get(mode) === preview) {
+						this.backgroundImagePreviews.delete(mode);
 					}
 				};
 			},
@@ -765,9 +850,10 @@ export class SettingsTab extends PluginSettingTab {
 	}
 
 	private refreshBackgroundImagePreview(
-		preview: HTMLElement | null,
+		mode: BackgroundImageMode,
 		messages: Messages,
 	): void {
+		const preview = this.backgroundImagePreviews.get(mode);
 		if (!preview) return;
 		const properties = {
 			image: '--sc-background-image-preview-value',
@@ -784,16 +870,12 @@ export class SettingsTab extends PluginSettingTab {
 		}
 		preview.removeClass('is-valid');
 
-		const resolved = resolveBackgroundImageStyle(
-			this.plugin.settings.backgroundImage,
-		);
+		const config = this.backgroundImageConfig(mode);
+		const resolved = resolveBackgroundImageStyle(config);
 		if (!resolved) {
 			setTooltip(
 				preview,
-				this.backgroundImageValidationMessage(
-					this.plugin.settings.backgroundImage.imageValue,
-					messages,
-				),
+				this.backgroundImageValidationMessage(config.imageValue, messages),
 				{ placement: 'top' },
 			);
 			return;
@@ -893,10 +975,10 @@ export class SettingsTab extends PluginSettingTab {
 		};
 	}
 
-	private pickRandomBackgroundImageValue(): string | null {
+	private pickRandomBackgroundImageValue(currentValue: string): string | null {
 		return pickRandomBackgroundImageValue(
 			this.plugin.settings.resourceRules,
-			this.plugin.settings.backgroundImage.imageValue,
+			currentValue,
 		);
 	}
 
@@ -1050,6 +1132,11 @@ export class SettingsTab extends PluginSettingTab {
 							await this.persistAndApply();
 							this.refreshRuleTile(rule);
 						});
+						setTooltip(
+							toggle.toggleEl,
+							messages.settings.tooltips.resourceVariableEnabled,
+							{ placement: 'top' },
+						);
 					})
 					.addToggle((toggle) => {
 						toggle.setValue(rule.useForBackgroundImage !== false).onChange(async (value) => {

@@ -43,14 +43,28 @@ body.sc-style-context-background-image .view-header,
 body.sc-style-context-background-image.is-focused .workspace-leaf.mod-active .view-header,
 body.sc-style-context-background-image .workspace-tab-header-container,
 body.sc-style-context-background-image .workspace-tabs,
-body.sc-style-context-background-image .workspace-ribbon,
-body.sc-style-context-background-image .workspace-ribbon.mod-left::before,
-body.sc-style-context-background-image .titlebar,
-body.sc-style-context-background-image .titlebar-inner,
-body.sc-style-context-background-image .titlebar-button-container,
 body.sc-style-context-background-image .sidebar-toggle-button,
 body.sc-style-context-background-image .nav-files-container,
 body.sc-style-context-background-image:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile {
+	background-color: transparent;
+	background-image: none;
+}
+
+/* Style Context - ribbon transparency (opt-out) */
+
+body.sc-style-context-background-image.sc-style-context-ribbon-transparent .workspace-ribbon,
+body.sc-style-context-background-image.sc-style-context-ribbon-transparent .workspace-ribbon.mod-left::before {
+	background-color: transparent;
+	background-image: none;
+}
+
+/* Style Context - window title bar transparency (opt-out).
+   `.sidebar-toggle-button` stays in the unconditional list above because it
+   also renders inside mobile view headers, not just the title bar. */
+
+body.sc-style-context-background-image.sc-style-context-titlebar-transparent .titlebar,
+body.sc-style-context-background-image.sc-style-context-titlebar-transparent .titlebar-inner,
+body.sc-style-context-background-image.sc-style-context-titlebar-transparent .titlebar-button-container {
 	background-color: transparent;
 	background-image: none;
 }
@@ -65,6 +79,13 @@ body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transpare
 body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent.is-floating-nav .mobile-toolbar,
 body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent .is-floating-nav .mobile-toolbar {
 	box-shadow: none;
+}
+
+/* Style Context - status bar transparency (opt-out) */
+
+body.sc-style-context-background-image.sc-style-context-status-bar-transparent .status-bar {
+	background-color: transparent;
+	background-image: none;
 }
 
 /* Style Context - settings diagnostics panel */
