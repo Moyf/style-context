@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+### 🚀 Added
+
+- **Light/dark background images**: Optionally configure separate image values and appearance settings for `theme-light` and `theme-dark` windows, while retaining the existing global configuration as the default.
+- **Mode-aware random backgrounds**: Random background selection now updates the image value for the current light or dark mode when separate backgrounds are enabled.
+
+### ⚡ Changed
+
+- **Background settings layout**: Keep each image value directly paired with its corresponding Appearance page.
+- **Startup randomization default**: Keep `Choose a random background image on startup` disabled by default.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **明暗模式背景图**：可分别为 `theme-light` 和 `theme-dark` 窗口设置图片值与外观，同时保留原有全局配置作为默认配置。
+- **按模式随机背景**：启用明暗模式背景后，随机背景图片只更新当前明暗模式对应的图片值。
+
+### ⚡ 变更
+
+- **背景设置布局**：每个 Image value 都会紧跟对应的 Appearance 设置。
+- **启动随机背景默认值**：默认关闭「Choose a random background image on startup」。
+
+</details>
+
+---
+
 ## [0.3.3] - 2026-08-07
 ### 🚀 Added
 

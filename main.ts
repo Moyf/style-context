@@ -6,7 +6,7 @@ import { ResourceVariableService } from './src/services/ResourceVariableService'
 import { BackgroundImageService } from './src/services/BackgroundImageService';
 import { SettingsTab } from './src/settings/SettingsTab';
 import { registerCommands } from './src/commands';
-import { pickRandomBackgroundImageValue } from './src/utils/background';
+import { randomizeBackgroundImageValue } from './src/utils/background';
 
 export default class StyleContextPlugin extends Plugin {
 	settings!: StyleContextSettings;
@@ -38,6 +38,13 @@ export default class StyleContextPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on('window-open', () => this.applyAll()),
 		);
+		// A css-change swaps the theme-light/theme-dark body classes, so the
+		// per-mode background must be re-resolved for every document.
+		this.registerEvent(
+			this.app.workspace.on('css-change', () =>
+				this.applyBackgroundImage(),
+			),
+		);
 
 		if (this.settings.backgroundImage.randomOnStartup) {
 			await this.randomizeBackgroundImage();
@@ -48,15 +55,32 @@ export default class StyleContextPlugin extends Plugin {
 	async loadSettings(): Promise<void> {
 		const stored =
 			((await this.loadData()) as Partial<StyleContextSettings> | null) ?? {};
+		const storedBackground = stored.backgroundImage;
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			...stored,
 			backgroundImage: {
 				...DEFAULT_SETTINGS.backgroundImage,
-				...(stored.backgroundImage ?? {}),
+				...(storedBackground ?? {}),
 				filter: {
 					...DEFAULT_SETTINGS.backgroundImage.filter,
-					...(stored.backgroundImage?.filter ?? {}),
+					...(storedBackground?.filter ?? {}),
+				},
+				light: {
+					...DEFAULT_SETTINGS.backgroundImage.light,
+					...(storedBackground?.light ?? {}),
+					filter: {
+						...DEFAULT_SETTINGS.backgroundImage.light.filter,
+						...(storedBackground?.light?.filter ?? {}),
+					},
+				},
+				dark: {
+					...DEFAULT_SETTINGS.backgroundImage.dark,
+					...(storedBackground?.dark ?? {}),
+					filter: {
+						...DEFAULT_SETTINGS.backgroundImage.dark.filter,
+						...(storedBackground?.dark?.filter ?? {}),
+					},
 				},
 			},
 		};
@@ -116,14 +140,21 @@ export default class StyleContextPlugin extends Plugin {
 		this.resourceVarCtx.apply();
 	}
 
-	/** Selects and applies one eligible background image variable. */
+	/**
+	 * Selects and applies one eligible background image variable. With
+	 * per-mode enabled, only the current window's light/dark config is
+	 * updated — never the global config or the opposite mode.
+	 */
 	async randomizeBackgroundImage(): Promise<boolean> {
-		const value = pickRandomBackgroundImageValue(
-			this.settings.resourceRules,
-			this.settings.backgroundImage.imageValue,
+		const targetDocument =
+			typeof activeDocument === 'undefined'
+				? globalThis.document
+				: activeDocument;
+		const value = randomizeBackgroundImageValue(
+			this.settings,
+			targetDocument,
 		);
 		if (!value) return false;
-		this.settings.backgroundImage.imageValue = value;
 		await this.saveSettings();
 		this.applyBackgroundImage();
 		this.settingsTab.update();
