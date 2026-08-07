@@ -34,7 +34,7 @@ Obsidian regenerates resource URLs on vault reload, so raw paths are not stable 
 
 ![Image variable](assets/setting-image-var.webp)
 
-Pick an image in settings, assign a CSS variable name, and then use `var(--name)` directly in your CSS.
+Pick an image in settings, assign a CSS variable name, and then use `var(--name)` directly in your CSS. If you later move or rename that image or one of its containing folders inside the vault, the plugin automatically updates the stored path so your variable keeps pointing to the right file.
 
 Click the preview image on the left to quickly copy the variable reference:  
 ![Copy image variable](assets/setting-copy-image-var.webp)
@@ -151,7 +151,7 @@ Obsidian 每次重载仓库时都会重新生成资源 URL，因此原始路径�
 ![Image variable](assets/setting-image-var.webp)
 
 
-只需要在设置中选择图片文件，分配给它的 CSS 变量名——Viola！你就可以在 CSS 中直接使用 `var(--name)` 来引用它了。  
+只需要在设置中选择图片文件，分配给它的 CSS 变量名——Viola！你就可以在 CSS 中直接使用 `var(--name)` 来引用它了。如果后续在仓库内移动或重命名了该图片或它所在的上层文件夹，插件会自动更新保存的路径，变量引用始终有效。
 
 点击左侧的预览图片可以快速复制该图片变量：  
 ![alt text](assets/setting-copy-image-var.webp)

@@ -5,6 +5,7 @@ import {
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 	pickRandomBackgroundImageValue,
+	referencesImageVariable,
 } from '../src/utils/background';
 import { themeSlug } from '../src/utils/slug';
 import {
@@ -102,5 +103,19 @@ describe('background image values', () => {
 		expect(isBareBackgroundImageVariable(' --hero-image ')).toBe(true);
 		expect(isBareBackgroundImageVariable('var(--hero-image)')).toBe(false);
 		expect(isBareBackgroundImageVariable('hero-image')).toBe(false);
+	});
+
+	it('detects only bare matching background var() values', () => {
+		const variables = ['--hero-image', '--cover-image'];
+
+		expect(referencesImageVariable(' var( --hero-image ) ', variables)).toBe(true);
+		expect(referencesImageVariable('var(--cover-image)', variables)).toBe(true);
+		expect(referencesImageVariable('url(var(--hero-image))', variables)).toBe(false);
+		expect(referencesImageVariable('var(--hero-image), var(--cover-image)', variables)).toBe(false);
+		expect(referencesImageVariable('linear-gradient(red, blue)', variables)).toBe(false);
+		expect(referencesImageVariable('none', variables)).toBe(false);
+		expect(referencesImageVariable('var(--other-image)', variables)).toBe(false);
+		expect(referencesImageVariable('--hero-image', variables)).toBe(false);
+		expect(referencesImageVariable(null, variables)).toBe(false);
 	});
 });

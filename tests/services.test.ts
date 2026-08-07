@@ -5,6 +5,10 @@ import { ThemeContextService } from '../src/services/ThemeContextService';
 import { ResourceVariableService } from '../src/services/ResourceVariableService';
 import { NotePathContextService } from '../src/services/NotePathContextService';
 import { BackgroundImageService } from '../src/services/BackgroundImageService';
+import {
+	ResourcePathSyncService,
+	type ResourcePathSyncResult,
+} from '../src/services/ResourcePathSyncService';
 
 type ListenerMap = Map<string, () => void>;
 
@@ -13,6 +17,36 @@ function createEventSource(listeners: ListenerMap) {
 		listeners.set(event, callback);
 		return { event, callback };
 	});
+}
+
+/** A vault renamed item as reported by the `rename` event. */
+type RenamedItem = TFile | { path: string };
+
+type RenameListener = (item: RenamedItem, oldPath: string) => void;
+
+type RenameListenerMap = Map<string, RenameListener[]>;
+
+/**
+ * Like `createEventSource`, but keeps every registration and forwards the
+ * `(item, oldPath)` arguments the rename event carries.
+ */
+function createRenameEventSource(listeners: RenameListenerMap) {
+	return vi.fn((event: string, callback: RenameListener) => {
+		const existing = listeners.get(event) ?? [];
+		existing.push(callback);
+		listeners.set(event, existing);
+		return { event, callback };
+	});
+}
+
+function emitRename(
+	listeners: RenameListenerMap,
+	item: RenamedItem,
+	oldPath: string,
+): void {
+	for (const listener of listeners.get('rename') ?? []) {
+		listener(item, oldPath);
+	}
 }
 
 function settings(
@@ -488,6 +522,318 @@ describe('ResourceVariableService', () => {
 		expect(
 			settingsDocument.documentElement.style.getPropertyValue('--hero-image'),
 		).toBe('url("app://vault/assets/Hero.PNG")');
+	});
+});
+
+interface SyncHarnessOptions {
+	rules: StyleContextSettings['resourceRules'];
+	overrides?: Partial<StyleContextSettings>;
+}
+
+function createSyncHarness(options: SyncHarnessOptions) {
+	const listeners: RenameListenerMap = new Map();
+	const vaultOn = createRenameEventSource(listeners);
+	const registerEvent = vi.fn();
+	const plugin = { app: { vault: { on: vaultOn } }, registerEvent };
+	const currentSettings = settings({
+		...options.overrides,
+		resourceRules: options.rules,
+	});
+	const commits: ResourcePathSyncResult[] = [];
+	const commit = vi.fn(async (result: ResourcePathSyncResult) => {
+		commits.push(result);
+	});
+	const service = new ResourcePathSyncService(
+		plugin as never,
+		() => currentSettings,
+		commit,
+	);
+
+	return {
+		commit,
+		commits,
+		currentSettings,
+		listeners,
+		registerEvent,
+		service,
+		vaultOn,
+	};
+}
+
+/** Drains the microtask queue so queued saves have a chance to start. */
+function flushMicrotasks(): Promise<void> {
+	return new Promise<void>((resolve) => {
+		setTimeout(resolve, 0);
+	});
+}
+
+describe('ResourcePathSyncService', () => {
+	it('updates a matching rule and commits the affected variables', async () => {
+		const harness = createSyncHarness({
+			rules: [
+				{
+					id: 'hero',
+					filePath: 'assets/Hero.PNG',
+					variableName: '--hero-image',
+					enabled: true,
+				},
+			],
+		});
+		const rule = harness.currentSettings.resourceRules[0];
+		harness.service.enable();
+
+		emitRename(
+			harness.listeners,
+			new TFile('media/Banner.PNG'),
+			'assets/Hero.PNG',
+		);
+		await flushMicrotasks();
+
+		expect(harness.currentSettings.resourceRules[0]).toBe(rule);
+		expect(rule?.filePath).toBe('media/Banner.PNG');
+		expect(harness.commit).toHaveBeenCalledTimes(1);
+		expect(harness.commits[0]).toEqual({
+			updates: [
+				{
+					ruleId: 'hero',
+					variableName: '--hero-image',
+					previousPath: 'assets/Hero.PNG',
+					nextPath: 'media/Banner.PNG',
+				},
+			],
+			updatedVariableNames: ['--hero-image'],
+			backgroundAffected: false,
+		});
+	});
+
+	it('rewrites folder descendants, disabled rules, and leaves outsiders untouched', async () => {
+		const harness = createSyncHarness({
+			rules: [
+				{
+					id: 'exact',
+					filePath: 'assets/img',
+					variableName: '--img-dir',
+					enabled: true,
+				},
+				{
+					id: 'direct',
+					filePath: 'assets/img/Hero.PNG',
+					variableName: '--hero-image',
+					enabled: true,
+				},
+				{
+					id: 'nested',
+					filePath: 'assets/img/deep/Icon.png',
+					variableName: '--icon-image',
+					enabled: false,
+				},
+				{
+					id: 'sibling',
+					filePath: 'assets/imgx/Other.png',
+					variableName: '--other-image',
+					enabled: true,
+				},
+			],
+		});
+		harness.service.enable();
+
+		emitRename(harness.listeners, { path: 'media/pics' }, 'assets/img');
+		await flushMicrotasks();
+
+		expect(
+			harness.currentSettings.resourceRules.map((rule) => rule.filePath),
+		).toEqual([
+			'media/pics',
+			'media/pics/Hero.PNG',
+			'media/pics/deep/Icon.png',
+			'assets/imgx/Other.png',
+		]);
+		expect(harness.commit).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not commit when no resource path changes', async () => {
+		const harness = createSyncHarness({
+			rules: [
+				{
+					id: 'hero',
+					filePath: 'assets/Hero.PNG',
+					variableName: '--hero-image',
+					enabled: true,
+				},
+			],
+		});
+		harness.service.enable();
+
+		emitRename(harness.listeners, new TFile('notes/Diary.md'), 'notes/Journal.md');
+		await flushMicrotasks();
+
+		expect(harness.currentSettings.resourceRules[0]?.filePath).toBe(
+			'assets/Hero.PNG',
+		);
+		expect(harness.commit).not.toHaveBeenCalled();
+	});
+
+	it('marks background affected only for a bare matching image variable', async () => {
+		const harness = createSyncHarness({
+			rules: [
+				{
+					id: 'hero',
+					filePath: 'assets/Hero.PNG',
+					variableName: '--hero-image',
+					enabled: true,
+				},
+			],
+			overrides: {
+				backgroundImage: {
+					...DEFAULT_SETTINGS.backgroundImage,
+					enabled: true,
+					imageValue: ' var( --hero-image ) ',
+				},
+			},
+		});
+		harness.service.enable();
+
+		emitRename(
+			harness.listeners,
+			new TFile('media/Banner.PNG'),
+			'assets/Hero.PNG',
+		);
+		await flushMicrotasks();
+
+		expect(harness.commits[0]?.backgroundAffected).toBe(true);
+	});
+
+	it('leaves background unaffected for wrapped or unrelated image variables', async () => {
+		const wrapped = createSyncHarness({
+			rules: [
+				{
+					id: 'hero',
+					filePath: 'assets/Hero.PNG',
+					variableName: '--hero-image',
+					enabled: true,
+				},
+			],
+			overrides: {
+				backgroundImage: {
+					...DEFAULT_SETTINGS.backgroundImage,
+					enabled: true,
+					imageValue: 'url(var(--hero-image))',
+				},
+			},
+		});
+		const unrelated = createSyncHarness({
+			rules: [
+				{
+					id: 'hero',
+					filePath: 'assets/Hero.PNG',
+					variableName: '--hero-image',
+					enabled: true,
+				},
+			],
+			overrides: {
+				backgroundImage: {
+					...DEFAULT_SETTINGS.backgroundImage,
+					enabled: true,
+					imageValue: 'var(--other-image)',
+				},
+			},
+		});
+
+		wrapped.service.enable();
+		unrelated.service.enable();
+		emitRename(wrapped.listeners, new TFile('media/Banner.PNG'), 'assets/Hero.PNG');
+		emitRename(unrelated.listeners, new TFile('media/Banner.PNG'), 'assets/Hero.PNG');
+		await flushMicrotasks();
+
+		expect(wrapped.commits[0]?.backgroundAffected).toBe(false);
+		expect(unrelated.commits[0]?.backgroundAffected).toBe(false);
+	});
+
+	it('registers once through enable-disable-enable', () => {
+		const harness = createSyncHarness({ rules: [] });
+
+		harness.service.enable();
+		harness.service.disable();
+		harness.service.enable();
+
+		expect(harness.vaultOn).toHaveBeenCalledTimes(1);
+		expect(harness.vaultOn.mock.calls[0]?.[0]).toBe('rename');
+		expect(harness.registerEvent).toHaveBeenCalledTimes(1);
+	});
+
+	it('stays inert after disable', async () => {
+		const harness = createSyncHarness({
+			rules: [
+				{
+					id: 'hero',
+					filePath: 'assets/Hero.PNG',
+					variableName: '--hero-image',
+					enabled: true,
+				},
+			],
+		});
+		harness.service.enable();
+		harness.service.disable();
+
+		emitRename(
+			harness.listeners,
+			new TFile('media/Banner.PNG'),
+			'assets/Hero.PNG',
+		);
+		await flushMicrotasks();
+
+		expect(harness.currentSettings.resourceRules[0]?.filePath).toBe(
+			'assets/Hero.PNG',
+		);
+		expect(harness.commit).not.toHaveBeenCalled();
+	});
+
+	it('converges when duplicate folder and child events arrive in either order', async () => {
+		const folderFirst = createSyncHarness({
+			rules: [
+				{
+					id: 'hero',
+					filePath: 'assets/img/Hero.PNG',
+					variableName: '--hero-image',
+					enabled: true,
+				},
+			],
+		});
+		const childFirst = createSyncHarness({
+			rules: [
+				{
+					id: 'hero',
+					filePath: 'assets/img/Hero.PNG',
+					variableName: '--hero-image',
+					enabled: true,
+				},
+			],
+		});
+		folderFirst.service.enable();
+		childFirst.service.enable();
+
+		emitRename(folderFirst.listeners, { path: 'media/pics' }, 'assets/img');
+		emitRename(
+			folderFirst.listeners,
+			new TFile('media/pics/Hero.PNG'),
+			'assets/img/Hero.PNG',
+		);
+		emitRename(
+			childFirst.listeners,
+			new TFile('media/pics/Hero.PNG'),
+			'assets/img/Hero.PNG',
+		);
+		emitRename(childFirst.listeners, { path: 'media/pics' }, 'assets/img');
+		await flushMicrotasks();
+
+		expect(folderFirst.currentSettings.resourceRules[0]?.filePath).toBe(
+			'media/pics/Hero.PNG',
+		);
+		expect(childFirst.currentSettings.resourceRules[0]?.filePath).toBe(
+			'media/pics/Hero.PNG',
+		);
+		expect(folderFirst.commit).toHaveBeenCalledTimes(1);
+		expect(childFirst.commit).toHaveBeenCalledTimes(1);
 	});
 });
 

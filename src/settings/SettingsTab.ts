@@ -116,6 +116,7 @@ export class SettingsTab extends PluginSettingTab {
 	private rulePreviewTiles = new Map<string, HTMLElement>();
 	private backgroundImageValuePreview: HTMLElement | null = null;
 	private backgroundImagePreview: HTMLElement | null = null;
+	private isRendered = false;
 
 	constructor(app: App, plugin: StyleContextPlugin) {
 		super(app, plugin);
@@ -127,6 +128,7 @@ export class SettingsTab extends PluginSettingTab {
 	// ------------------------------------------------------------------
 
 	getSettingDefinitions(): SettingDefinitionItem<ControlKey>[] {
+		this.isRendered = true;
 		// A detached Settings window has its own Document. Republish before
 		// rendering so image variables and live previews are immediately
 		// available there without forcing the user to reselect an image.
@@ -174,8 +176,13 @@ export class SettingsTab extends PluginSettingTab {
 	}
 
 	hide(): void {
+		this.isRendered = false;
 		this.stopDiagnosticsRefresh();
 		super.hide();
+	}
+
+	refreshIfRendered(): void {
+		if (this.isRendered) this.update();
 	}
 
 	// ------------------------------------------------------------------
