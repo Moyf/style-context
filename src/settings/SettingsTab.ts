@@ -948,12 +948,15 @@ export class SettingsTab extends PluginSettingTab {
 			name,
 			desc: description,
 			render: (setting) => {
+				const currentValue = getPath(this.plugin.settings, key);
+				const initialValue =
+					typeof currentValue === 'number' ? currentValue : value;
 				let slider: SliderComponent;
 				let resetButton: ExtraButtonComponent;
 				setting.addSlider((component) => {
 					slider = component
 						.setLimits(min, max, step)
-						.setValue(value)
+						.setValue(initialValue)
 						.setDisplayFormat(displayFormat)
 						.onChange(async (newValue) => {
 							resetButton.setDisabled(newValue === defaultValue);
@@ -964,7 +967,7 @@ export class SettingsTab extends PluginSettingTab {
 					resetButton = button
 						.setIcon('rotate-ccw')
 						.setTooltip(t().settings.buttons.reset)
-						.setDisabled(value === defaultValue)
+						.setDisabled(initialValue === defaultValue)
 						.onClick(async () => {
 							slider.setValue(defaultValue);
 							resetButton.setDisabled(true);
