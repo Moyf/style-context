@@ -61,10 +61,12 @@ export interface BackgroundFilterSettings {
 	blur: number;
 }
 
-export interface BackgroundImageSettings {
-	enabled: boolean;
-	randomOnStartup: boolean;
-	randomBackgroundRibbon: boolean;
+/**
+ * Image value plus appearance for one rendering target. The global settings
+ * carry these fields directly; per-mode configs nest them under
+ * `BackgroundImageSettings.light` / `.dark`.
+ */
+export interface BackgroundModeSettings {
 	/** A complete CSS background-image value. */
 	imageValue: string;
 	opacity: number;
@@ -73,8 +75,25 @@ export interface BackgroundImageSettings {
 	position: BackgroundPosition;
 	repeat: BackgroundRepeat;
 	attachment: BackgroundAttachment;
-	mobileToolbarTransparent: boolean;
 	filter: BackgroundFilterSettings;
+}
+
+export interface BackgroundImageSettings extends BackgroundModeSettings {
+	enabled: boolean;
+	randomOnStartup: boolean;
+	randomBackgroundRibbon: boolean;
+	mobileToolbarTransparent: boolean;
+	statusBarTransparent: boolean;
+	ribbonTransparent: boolean;
+	titlebarTransparent: boolean;
+	/**
+	 * When true, documents whose body carries Obsidian's `theme-light` /
+	 * `theme-dark` class use the matching per-mode config instead of the
+	 * global image value and appearance above.
+	 */
+	perModeEnabled: boolean;
+	light: BackgroundModeSettings;
+	dark: BackgroundModeSettings;
 }
 
 export interface StyleContextSettings {
@@ -86,6 +105,31 @@ export interface StyleContextSettings {
 	pathRules: PathRule[];
 	resourceRules: ResourceRule[];
 	backgroundImage: BackgroundImageSettings;
+}
+
+const DEFAULT_BACKGROUND_FILTER: BackgroundFilterSettings = {
+	brightness: 1,
+	contrast: 1,
+	saturate: 1,
+	grayscale: 0,
+	sepia: 0,
+	invert: 0,
+	hueRotate: 0,
+	blur: 0,
+};
+
+/** Fresh object per call so the light/dark defaults never alias each other. */
+function defaultBackgroundModeSettings(): BackgroundModeSettings {
+	return {
+		imageValue: '',
+		opacity: 0.35,
+		blendMode: 'normal',
+		size: 'cover',
+		position: 'center',
+		repeat: 'no-repeat',
+		attachment: 'fixed',
+		filter: { ...DEFAULT_BACKGROUND_FILTER },
+	};
 }
 
 export const DEFAULT_SETTINGS: StyleContextSettings = {
@@ -108,15 +152,12 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 		repeat: 'no-repeat',
 		attachment: 'fixed',
 		mobileToolbarTransparent: true,
-		filter: {
-			brightness: 1,
-			contrast: 1,
-			saturate: 1,
-			grayscale: 0,
-			sepia: 0,
-			invert: 0,
-			hueRotate: 0,
-			blur: 0,
-		},
+		statusBarTransparent: true,
+		ribbonTransparent: true,
+		titlebarTransparent: true,
+		filter: { ...DEFAULT_BACKGROUND_FILTER },
+		perModeEnabled: false,
+		light: defaultBackgroundModeSettings(),
+		dark: defaultBackgroundModeSettings(),
 	},
 };

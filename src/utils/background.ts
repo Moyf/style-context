@@ -1,4 +1,9 @@
-import type { ResourceRule } from '../types';
+import type {
+	BackgroundImageSettings,
+	BackgroundModeSettings,
+	ResourceRule,
+	StyleContextSettings,
+} from '../types';
 import { isValidCssVarName } from './validation';
 
 const FALLBACK_IMAGE_FUNCTION_RE = /^(?:none|(?:-webkit-)?(?:url|var|image|image-set|cross-fade|element|paint|(?:repeating-)?(?:linear|radial|conic)-gradient)\s*\()/i;
@@ -62,4 +67,56 @@ export function pickRandomBackgroundImageValue(
 			: candidates;
 	const index = Math.min(pool.length - 1, Math.floor(random() * pool.length));
 	return pool[index] ?? null;
+}
+
+/** Obsidian publishes the active mode as one of these classes on each body. */
+const THEME_LIGHT_BODY_CLASS = 'theme-light';
+const THEME_DARK_BODY_CLASS = 'theme-dark';
+
+/**
+ * Picks the config one target document resolves to. With per-mode enabled,
+ * a document whose body carries `theme-light` / `theme-dark` resolves its
+ * own mode's config; a document with neither class falls back to the global
+ * config. Selection never consults the community theme name/slug. The
+ * returned object is a live reference, so writes land on the selected
+ * config only.
+ */
+export function resolveBackgroundImageConfig(
+	settings: BackgroundImageSettings,
+	targetDocument: Document,
+): BackgroundModeSettings {
+	if (settings.perModeEnabled) {
+		if (targetDocument.body.classList.contains(THEME_LIGHT_BODY_CLASS)) {
+			return settings.light;
+		}
+		if (targetDocument.body.classList.contains(THEME_DARK_BODY_CLASS)) {
+			return settings.dark;
+		}
+	}
+	return settings;
+}
+
+/**
+ * Randomizes the image value of the config the target document currently
+ * displays — with per-mode enabled, only that document's light/dark config;
+ * never the global config or the opposite mode. Returns the new value, or
+ * null when no eligible variable exists (nothing is mutated then).
+ */
+export function randomizeBackgroundImageValue(
+	settings: StyleContextSettings,
+	targetDocument: Document,
+	random = Math.random,
+): string | null {
+	const config = resolveBackgroundImageConfig(
+		settings.backgroundImage,
+		targetDocument,
+	);
+	const value = pickRandomBackgroundImageValue(
+		settings.resourceRules,
+		config.imageValue,
+		random,
+	);
+	if (!value) return null;
+	config.imageValue = value;
+	return value;
 }

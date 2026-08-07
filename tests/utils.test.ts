@@ -1,11 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import { isImageFile } from '../src/utils/media';
 import {
 	isBareBackgroundImageVariable,
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 	pickRandomBackgroundImageValue,
+	randomizeBackgroundImageValue,
 } from '../src/utils/background';
+import { DEFAULT_SETTINGS, type StyleContextSettings } from '../src/types';
 import { themeSlug } from '../src/utils/slug';
 import {
 	areValidClassNames,
@@ -103,5 +105,95 @@ describe('background image values', () => {
 		expect(isBareBackgroundImageVariable(' --hero-image ')).toBe(true);
 		expect(isBareBackgroundImageVariable('var(--hero-image)')).toBe(false);
 		expect(isBareBackgroundImageVariable('hero-image')).toBe(false);
+	});
+});
+
+describe('randomizeBackgroundImageValue', () => {
+	function perModeSettings(): StyleContextSettings {
+		return {
+			...DEFAULT_SETTINGS,
+			resourceRules: [
+				{ id: 'one', filePath: 'one.png', variableName: '--one', enabled: true, useForBackgroundImage: true },
+				{ id: 'two', filePath: 'two.png', variableName: '--two', enabled: true, useForBackgroundImage: true },
+			],
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--global)',
+				perModeEnabled: true,
+				light: {
+					...DEFAULT_SETTINGS.backgroundImage.light,
+					imageValue: 'var(--one)',
+				},
+				dark: {
+					...DEFAULT_SETTINGS.backgroundImage.dark,
+					imageValue: 'var(--one)',
+				},
+			},
+		};
+	}
+
+	beforeEach(() => {
+		document.body.classList.remove('theme-light', 'theme-dark');
+	});
+
+	it('updates only the light config for a theme-light document', () => {
+		const current = perModeSettings();
+		document.body.classList.add('theme-light');
+
+		// The light config's current value is excluded, leaving one candidate.
+		const value = randomizeBackgroundImageValue(current, document, () => 0);
+
+		expect(value).toBe('var(--two)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--two)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.imageValue).toBe('var(--global)');
+	});
+
+	it('updates only the dark config for a theme-dark document', () => {
+		const current = perModeSettings();
+		document.body.classList.add('theme-dark');
+
+		const value = randomizeBackgroundImageValue(current, document, () => 0);
+
+		expect(value).toBe('var(--two)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--two)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.imageValue).toBe('var(--global)');
+	});
+
+	it('falls back to the global config for a document with neither theme class', () => {
+		const current = perModeSettings();
+
+		const value = randomizeBackgroundImageValue(current, document, () => 0.999);
+
+		expect(value).toBe('var(--two)');
+		expect(current.backgroundImage.imageValue).toBe('var(--two)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--one)');
+	});
+
+	it('targets the global config while per-mode is disabled, even with a theme class', () => {
+		const current = perModeSettings();
+		current.backgroundImage.perModeEnabled = false;
+		document.body.classList.add('theme-light');
+
+		const value = randomizeBackgroundImageValue(current, document, () => 0.999);
+
+		expect(value).toBe('var(--two)');
+		expect(current.backgroundImage.imageValue).toBe('var(--two)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--one)');
+	});
+
+	it('returns null and mutates nothing when no image variable is eligible', () => {
+		const current = perModeSettings();
+		current.resourceRules = [];
+		document.body.classList.add('theme-dark');
+
+		expect(randomizeBackgroundImageValue(current, document, () => 0)).toBeNull();
+		expect(current.backgroundImage.imageValue).toBe('var(--global)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--one)');
 	});
 });
