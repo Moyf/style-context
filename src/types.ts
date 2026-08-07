@@ -33,6 +33,8 @@ export interface ResourceRule {
 	filePath: string;
 	variableName: string;
 	enabled: boolean;
+	/** Whether this published variable may be selected as a background image. */
+	useForBackgroundImage?: boolean;
 }
 
 /**
@@ -61,6 +63,8 @@ export interface BackgroundFilterSettings {
 
 export interface BackgroundImageSettings {
 	enabled: boolean;
+	randomOnStartup: boolean;
+	randomBackgroundRibbon: boolean;
 	/** A complete CSS background-image value. */
 	imageValue: string;
 	opacity: number;
@@ -93,6 +97,8 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 	resourceRules: [],
 	backgroundImage: {
 		enabled: false,
+		randomOnStartup: false,
+		randomBackgroundRibbon: true,
 		imageValue: '',
 		opacity: 0.35,
 		blendMode: 'normal',

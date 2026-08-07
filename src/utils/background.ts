@@ -43,8 +43,13 @@ export function pickRandomBackgroundImageValue(
 ): string | null {
 	const candidates = [
 		...new Set(
-			rules
-				.filter((rule) => rule.enabled && isValidCssVarName(rule.variableName.trim()))
+				rules
+					.filter(
+						(rule) =>
+							rule.enabled &&
+						rule.useForBackgroundImage !== false &&
+							isValidCssVarName(rule.variableName.trim()),
+					)
 				.map((rule) => `var(${rule.variableName.trim()})`),
 		),
 	];
