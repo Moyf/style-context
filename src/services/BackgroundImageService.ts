@@ -180,6 +180,15 @@ export function resolveBackgroundImageStyle(
  * canvas color, so a faded layer cross-fades toward the theme color — at zero
  * opacity the canvas falls back to the theme's canvas color instead of the
  * bare app backdrop.
+ *
+ * Theme compatibility lives in a dedicated styles.css layer with exactly
+ * two extension points: the --sc-style-context-theme-canvas token chain
+ * (how a theme expresses its canvas — e.g. Composer's --background-gradient
+ * instead of a solid --background-primary) and the surface-reset selector
+ * lists (which elements cover the canvas). The chain is painted on the
+ * repainted body and layered beneath the image, so blend and cross-fade
+ * stay anchored to the theme's real canvas; supporting a new theme only
+ * extends those two points.
  */
 export class BackgroundImageService {
 	private getSettings: () => StyleContextSettings;
