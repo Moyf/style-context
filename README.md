@@ -106,6 +106,15 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 
 you can run `npm run build:local` to build and auto-copy into your vault.
 
+### Theme compatibility
+
+The background image repaints the canvas, so themes deviating from Obsidian's default canvas model are absorbed by a dedicated compatibility layer at the top of `styles.css`. It has exactly two extension points — supporting a new theme touches these and nothing else:
+
+- **Canvas token chain** (`--sc-style-context-theme-canvas`): how a theme *expresses* its canvas. Solid `--background-primary` themes need no entry; a theme with its own token (e.g. Composer's `--background-gradient`) appends it to the fallback chain.
+- **Surface resets**: which elements *cover* the canvas. The selector lists reset Obsidian's standard containers and repeat the marker class so equal-specificity theme rules (theme.css loads after plugin CSS) cannot win; a theme painting extra opaque surfaces adds its selectors to the matching list.
+
+Theme behavior beyond CSS reach — JS-injected styles or `!important` rules — is out of scope.
+
 ## Release
 
 After writing complete notes under `## [Unreleased]`, run `npm run release -- <version>`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- <version>` to validate without changing anything.
@@ -224,6 +233,15 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 ```
 
 那么你就可以直接使用 `npm run build:local` 来构建并自动拷贝到你的仓库内 `;)`
+
+### 主题兼容
+
+背景图会重绘画布，因此偏离 Obsidian 默认画布模型的主题由 `styles.css` 顶部的兼容层统一吸收。它有且只有两个扩展点——兼容新主题只动这两处：
+
+- **画布 token 链**（`--sc-style-context-theme-canvas`）：主题如何*表达*画布。使用纯色 `--background-primary` 的主题无需登记；使用自有 token 的主题（如 Composer 的 `--background-gradient`）把它追加进兜底链。
+- **表面重置**：哪些元素*覆盖*画布。选择器列表重置 Obsidian 标准容器并重复标记 class，使同特异性的主题规则（theme.css 在插件 CSS 之后加载）无法获胜；若某主题在额外表面上绘制不透明背景，把选择器加进对应列表。
+
+超出 CSS 能力的主题行为——JS 注入样式或 `!important` 规则——不在处理范围内。
 
 ## 发布
 

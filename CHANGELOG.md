@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+### 🐛 Fixed
+
+- **Gradient theme canvases**: Honor `--background-gradient` (e.g. Composer) instead of flattening the canvas to `--background-primary` — the body repaint and the image layer's blend base keep the theme's gradient, in the settings preview too. All theme canvas tokens resolve through the single `--sc-style-context-theme-canvas` fallback chain in styles.css, so new theme tokens are a one-line append.
+- **Transparency reset priority**: Repeat the marker class in every transparency reset so same-specificity theme rules (loaded after plugin CSS, such as Composer's workspace gradient) can no longer cover the background image.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **渐变主题画布**：兼容通过 `--background-gradient` 表达画布的主题（如 Composer），body 重绘与图片图层的混合基底保留主题渐变，不再压平为 `--background-primary` 纯色，设置页预览同步该表现。所有主题画布 token 统一收口到 styles.css 的 `--sc-style-context-theme-canvas` 兜底链，新增主题 token 只需追加一行。
+- **透明规则优先级**：所有透明化规则重复标记 class，避免同特异性主题规则（在插件 CSS 之后加载，如 Composer 的 workspace 渐变）盖住背景图。
+
+</details>
+
+---
+
 ## [0.3.5] - 2026-08-07
 ### 🐛 Fixed
 
