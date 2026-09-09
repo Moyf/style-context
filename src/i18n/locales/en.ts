@@ -26,8 +26,13 @@ const en: Messages = {
 			publishLocalImageVariables: 'Resource URLs are regenerated on every reload, so raw image paths are not stable CSS values. This module maps a vault image to a stable CSS variable for background-image and similar use cases.',
 			liveStatus: 'Shows the current theme class, path-class map, and resource resolution.',
 			themePrefixBefore: 'Adds a body class derived from the current theme name, for per-theme styling.',
+			// UI copy fragments that continue around an inline code element,
+			// plus a proper theme name, so sentence-case does not apply.
+			// eslint-disable-next-line obsidianmd/ui/sentence-case-locale-module -- "Brutal Gum" is a proper theme name.
 			themePrefixExampleBefore: 'For example, with the "Brutal Gum" theme, the class ',
+			// eslint-disable-next-line obsidianmd/ui/sentence-case-locale-module -- continues the sentence after the code element.
 			themePrefixExampleAfter: ' is registered.',
+			// eslint-disable-next-line obsidianmd/ui/sentence-case-locale-module -- parenthetical hint, not a sentence.
 			themeClassCopyHint: '(Click to copy)',
 			currentThemeClass: "Current theme's mod CSS class: ",
 				publishBackgroundImage: 'Render a CSS image value as a fixed canvas background. The layer is pointer-free, so it does not block notes or controls.',
@@ -38,7 +43,8 @@ const en: Messages = {
 			statusBarTransparent: 'Make the status bar background transparent so the canvas background shows through.',
 			ribbonTransparent: 'Make the ribbon background transparent so the canvas background shows through.',
 			titlebarTransparent: 'Make the window title bar background transparent so the canvas background shows through.',
-			backgroundImageValue: 'Enter a full CSS image value, such as var(--image-1) or url("https://example.com/image.jpg"). A bare variable name (--image-1) also works and is treated as var(--image-1). Remote URLs contact the image host. The shuffle button chooses a local image variable.',
+			backgroundImageValue: 'Enter a full CSS image value, such as var(--image-1) or url("https://example.com/image.jpg"). A bare variable name (--image-1) also works and is treated as var(--image-1). Remote URLs contact the image host.',
+			backgroundImageShuffleHint: 'The shuffle button chooses a local image variable.',
 			backgroundOpacity: 'Controls only the image layer opacity.',
 			backgroundBlendMode: 'Controls how the image blends with the current theme.',
 			backgroundSize: 'How the image fits the canvas.',

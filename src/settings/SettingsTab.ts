@@ -882,6 +882,24 @@ export class SettingsTab extends PluginSettingTab {
 		return background;
 	}
 
+	/**
+	 * Two-paragraph description: usage rules first, then the shuffle hint
+	 * as its own visually separated line.
+	 */
+	private renderBackgroundImageValueDesc(
+		setting: Setting,
+		messages: Messages,
+	): void {
+		const descEl = setting.descEl;
+		descEl.empty();
+		descEl.appendText(messages.settings.descriptions.backgroundImageValue);
+		const shuffleLine = descEl.createDiv();
+		shuffleLine.addClass('sc-background-image-shuffle-hint');
+		shuffleLine.appendText(
+			messages.settings.descriptions.backgroundImageShuffleHint,
+		);
+	}
+
 	private buildBackgroundImageValueRow(
 		messages: Messages,
 		mode: BackgroundImageMode,
@@ -889,7 +907,6 @@ export class SettingsTab extends PluginSettingTab {
 	): SettingGroupItem<ControlKey> {
 		return {
 			name: label,
-			desc: messages.settings.descriptions.backgroundImageValue,
 			visible: () => {
 				const background = this.plugin.settings.backgroundImage;
 				if (!background.enabled) return false;
@@ -898,6 +915,7 @@ export class SettingsTab extends PluginSettingTab {
 					: background.perModeEnabled;
 			},
 			render: (setting) => {
+				this.renderBackgroundImageValueDesc(setting, messages);
 				const config = this.backgroundImageConfig(mode);
 				let variableText: TextComponent | null = null;
 				setting.setClass('sc-background-image-value-row');

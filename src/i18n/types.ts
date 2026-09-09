@@ -88,6 +88,7 @@ export interface Messages {
 			publishBackgroundImage: string;
 			perModeBackground: string;
 			backgroundImageValue: string;
+			backgroundImageShuffleHint: string;
 			backgroundOpacity: string;
 			backgroundBlendMode: string;
 			backgroundSize: string;

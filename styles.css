@@ -281,6 +281,11 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 	margin-top: var(--size-4-2);
 }
 
+/* Gap between the image-value usage paragraph and the shuffle hint. */
+.sc-background-image-value-row .sc-background-image-shuffle-hint {
+	margin-top: var(--size-4-2);
+}
+
 /* Second text input (CSS classes / variable name): compact, wraps to
    row 2 alongside the toggle and delete button. */
 .sc-path-rule-row input[type="text"]:nth-of-type(2),
