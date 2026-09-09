@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+### 🚀 Added
+
+- **Shuffle button hint**: The image value row now shows a visible hint under the input explaining that the shuffle button picks one of the local image variables — the explanation moved out of the crowded field description.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **随机按钮提示**：图片值输入框下方现在会显示一条可见提示，说明随机按钮会从本地图片变量中选择一个——说明文字从原本拥挤的字段描述中独立出来。
+
+</details>
+
+---
+
 ## [0.4.0] - 2026-09-09
 ### 🚀 Added
 
