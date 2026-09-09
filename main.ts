@@ -165,9 +165,11 @@ export default class StyleContextPlugin extends Plugin {
 	 * are excluded so consecutive randoms show different images.
 	 */
 	async randomizeBackgroundImage(): Promise<boolean> {
+		// Plugin code always loads in the main window realm, so window is
+		// the same global object the old globalThis fallback referenced.
 		const targetDocument =
 			typeof activeDocument === 'undefined'
-				? globalThis.document
+				? window.document
 				: activeDocument;
 		const value = randomizeBackgroundImageValue(
 			this.settings,
