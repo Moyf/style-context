@@ -100,33 +100,45 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 	flex-wrap: wrap;
 }
 
+/* Height is capped so long rule lists scroll inside the panel instead of
+   stretching the settings page. */
 .sc-settings-diagnostics {
 	width: 100%;
+	max-height: 400px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
-	padding: 12px;
+	padding: 10px 12px;
 	margin-top: 12px;
 	background: var(--background-secondary);
 	font-size: var(--font-ui-smaller);
+	line-height: 1.5;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-title {
+	font-size: var(--font-ui-small);
 	font-weight: 600;
-	margin-bottom: 8px;
 	color: var(--text-normal);
+	margin-bottom: 8px;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-section {
-	margin-bottom: 10px;
+	padding-top: 8px;
 }
 
-.sc-settings-diagnostics .sc-diagnostics-section:last-child {
-	margin-bottom: 0;
+.sc-settings-diagnostics .sc-diagnostics-section + .sc-diagnostics-section {
+	border-top: 1px solid var(--background-modifier-border-hover);
+	margin-top: 8px;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-label {
+	font-size: var(--font-ui-smallest);
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 	color: var(--text-muted);
-	margin-bottom: 4px;
+	margin-bottom: 6px;
 }
 
 .sc-settings-diagnostics code,
@@ -134,21 +146,47 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 	font-family: var(--font-monospace);
 }
 
+.sc-settings-diagnostics code {
+	font-size: var(--font-ui-smaller);
+}
+
+.sc-settings-diagnostics .sc-diagnostics-mono {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	word-break: break-word;
+}
+
 .sc-settings-diagnostics .sc-diagnostics-table {
 	width: 100%;
 	border-collapse: collapse;
+	font-size: var(--font-ui-smaller);
 }
 
 .sc-settings-diagnostics .sc-diagnostics-table th,
 .sc-settings-diagnostics .sc-diagnostics-table td {
 	text-align: left;
-	padding: 3px 8px 3px 0;
-	border-bottom: 1px solid var(--background-modifier-border);
+	padding: 4px 12px 4px 0;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-table th {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--background-secondary);
+	font-size: var(--font-ui-smallest);
 	font-weight: 600;
-	color: var(--text-muted);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--text-faint);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.sc-settings-diagnostics .sc-diagnostics-table td {
+	border-bottom: 1px solid var(--background-modifier-border-hover);
+}
+
+.sc-settings-diagnostics .sc-diagnostics-table tr:last-child td {
+	border-bottom: none;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-error {
