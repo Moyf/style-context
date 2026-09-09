@@ -36,7 +36,7 @@ const en: Messages = {
 			statusBarTransparent: 'Make the status bar background transparent so the canvas background shows through.',
 			ribbonTransparent: 'Make the ribbon background transparent so the canvas background shows through.',
 			titlebarTransparent: 'Make the window title bar background transparent so the canvas background shows through.',
-			backgroundImageValue: 'Enter a full CSS image value, such as var(--image-1) or url("https://example.com/image.jpg"). Remote URLs contact the image host. The shuffle button chooses a local image variable.',
+			backgroundImageValue: 'Enter a full CSS image value, such as var(--image-1) or url("https://example.com/image.jpg"). A bare variable name (--image-1) also works and is treated as var(--image-1). Remote URLs contact the image host. The shuffle button chooses a local image variable.',
 			backgroundOpacity: 'Controls only the image layer opacity.',
 			backgroundBlendMode: 'Controls how the image blends with the current theme.',
 			backgroundSize: 'How the image fits the canvas.',
@@ -51,7 +51,7 @@ const en: Messages = {
 			clickToCopy: (value) => `Click to copy: ${value}`,
 			resourceVariableEnabled: 'Enable or disable publishing this image variable', ruleDisabled: 'Rule disabled', randomScope: 'Which random background pools include this image', randomScopeAll: 'All modes', randomScopeLightOnly: 'Light only', randomScopeDarkOnly: 'Dark only', randomScopeNone: 'No random', setCssVariableName: 'Set a CSS variable name', variableNameInvalid: 'Variable name is invalid', setVaultImagePath: 'Set a vault image path', imageFileNotFound: 'Image file not found', notAnImageFile: 'Not an image file', variableNotPublished: 'Variable not published (check module toggle)',
 		},
-		validation: { invalidPrefix: 'Invalid prefix', invalidClassNames: 'Invalid class names', invalidCssVariableName: 'Invalid CSS variable name (must start with --, then only letters, digits, hyphens, or underscores)', invalidBackgroundImageValue: 'Invalid CSS background-image value', backgroundImageVariableRequiresVar: 'Wrap the CSS variable in var(), for example var(--image). You can click an image variable preview above to copy it.', duplicateVariableName: (count) => `Used by ${count} other rule(s); later rules override earlier ones` },
+		validation: { invalidPrefix: 'Invalid prefix', invalidClassNames: 'Invalid class names', invalidCssVariableName: 'Invalid CSS variable name (must start with --, then only letters, digits, hyphens, or underscores)', invalidBackgroundImageValue: 'Invalid CSS background-image value', duplicateVariableName: (count) => `Used by ${count} other rule(s); later rules override earlier ones` },
 		diagnostics: {
 			currentStyleContext: 'Current style context', localImageVariables: 'Local image variables', noEnabledResourceRules: 'No enabled resource rules', theme: 'Theme', notePathClasses: 'Note path classes', noOpenMarkdownViews: 'No open Markdown views', headers: { variable: 'Variable', status: 'Status', leafPath: 'Leaf path', appliedClass: 'Applied class', rule: 'Rule' }, resolved: 'Resolved', unresolved: 'Unresolved', rawTheme: (rawName, slug) => ` (raw: ${rawName || '(none)'}, slug: ${slug})`, unsaved: '(unsaved)', filePathEmpty: 'File path is empty', fileNotFound: (path) => `File not found: ${path}`,
 		},

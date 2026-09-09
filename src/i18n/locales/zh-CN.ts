@@ -36,7 +36,7 @@ const zhCN: Messages = {
 			statusBarTransparent: '将状态栏背景设为透明，使画布背景透出。',
 			ribbonTransparent: '将 Ribbon 背景设为透明，使画布背景透出。',
 			titlebarTransparent: '将窗口标题栏背景设为透明，使画布背景透出。',
-			backgroundImageValue: '填写完整的 CSS 图片值，例如 var(--image-1) 或 url("https://example.com/image.jpg")。远程 URL 会连接图片所在网站；随机按钮会选择一个本地图片变量。',
+			backgroundImageValue: '填写完整的 CSS 图片值，例如 var(--image-1) 或 url("https://example.com/image.jpg")。只写变量名（--image-1）也可以，会自动按 var(--image-1) 处理。远程 URL 会连接图片所在网站；随机按钮会选择一个本地图片变量。',
 			backgroundOpacity: '只调整背景图片图层的不透明度。',
 			backgroundBlendMode: '控制图片与当前主题的混合方式。',
 			backgroundSize: '图片如何适配画布。',
@@ -50,7 +50,7 @@ const zhCN: Messages = {
 			clickToCopy: (value) => `点击复制：${value}`,
 				resourceVariableEnabled: '启用或禁用发布此图片变量', ruleDisabled: '规则已禁用', randomScope: '随机背景图片参与范围：仅亮色/仅暗色时，只在对应外观模式下参与随机', randomScopeAll: '全部模式', randomScopeLightOnly: '仅亮色', randomScopeDarkOnly: '仅暗色', randomScopeNone: '不参与随机', setCssVariableName: '请设置 CSS 变量名', variableNameInvalid: '变量名无效', setVaultImagePath: '请设置库内图片路径', imageFileNotFound: '未找到图片文件', notAnImageFile: '不是图片文件', variableNotPublished: '变量尚未发布（请检查模块开关）',
 		},
-		validation: { invalidPrefix: '前缀无效', invalidClassNames: '类名无效', invalidCssVariableName: 'CSS 变量名无效（需以 -- 开头，且只能包含英文字母、数字、连字符或下划线）', invalidBackgroundImageValue: 'CSS background-image 值无效', backgroundImageVariableRequiresVar: '请用 var() 包裹 CSS 变量，例如 var(--image)。也可以点击上方图片变量的预览图快速复制。', duplicateVariableName: (count) => `另有 ${count} 条规则使用此变量名；后面的规则会覆盖前面的规则` },
+		validation: { invalidPrefix: '前缀无效', invalidClassNames: '类名无效', invalidCssVariableName: 'CSS 变量名无效（需以 -- 开头，且只能包含英文字母、数字、连字符或下划线）', invalidBackgroundImageValue: 'CSS background-image 值无效', duplicateVariableName: (count) => `另有 ${count} 条规则使用此变量名；后面的规则会覆盖前面的规则` },
 		diagnostics: {
 			currentStyleContext: '当前样式上下文', localImageVariables: '本地图片变量', noEnabledResourceRules: '没有启用的资源规则', theme: '主题', notePathClasses: '笔记路径类', noOpenMarkdownViews: '没有打开的 Markdown 视图', headers: { variable: '变量', status: '状态', leafPath: '叶子路径', appliedClass: '已应用的类', rule: '规则' }, resolved: '已解析', unresolved: '未解析', rawTheme: (rawName, slug) => `（原始名称：${rawName || '无'}，slug：${slug}）`, unsaved: '（未保存）', filePathEmpty: '文件路径为空', fileNotFound: (path) => `未找到文件：${path}`,
 		},

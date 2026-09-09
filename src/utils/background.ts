@@ -9,15 +9,18 @@ import { isValidCssVarName } from './validation';
 
 const FALLBACK_IMAGE_FUNCTION_RE = /^(?:none|(?:-webkit-)?(?:url|var|image|image-set|cross-fade|element|paint|(?:repeating-)?(?:linear|radial|conic)-gradient)\s*\()/i;
 
-/** Trims a complete CSS background-image value supplied by the user. */
+/**
+ * Trims a user-supplied CSS background-image value. A bare custom property
+ * name is accepted as shorthand for var(...) and wrapped automatically, so
+ * `--image-1` and `var(--image-1)` both end up canonical and valid.
+ */
 export function normalizeBackgroundImageValue(value: unknown): string {
 	if (typeof value !== 'string') return '';
-	return value.trim();
-}
-
-/** Returns true when a valid custom property name still needs `var(...)`. */
-export function isBareBackgroundImageVariable(value: unknown): boolean {
-	return isValidCssVarName(normalizeBackgroundImageValue(value));
+	const trimmed = value.trim();
+	if (isValidCssVarName(trimmed)) {
+		return `var(${trimmed})`;
+	}
+	return trimmed;
 }
 
 /** Validates a complete value intended for the CSS background-image property. */

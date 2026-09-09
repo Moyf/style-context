@@ -1,7 +1,6 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { isImageFile } from '../src/utils/media';
 import {
-	isBareBackgroundImageVariable,
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 	pickRandomBackgroundImageValue,
@@ -190,19 +189,28 @@ describe('background image values', () => {
 		).toBe('url("https://example.com/hero.jpg")');
 	});
 
-	it('accepts image expressions and rejects plain invalid tokens', () => {
+	it('wraps a bare custom property name into var()', () => {
+		expect(normalizeBackgroundImageValue('--hero-image')).toBe(
+			'var(--hero-image)',
+		);
+		expect(normalizeBackgroundImageValue(' --hero-image ')).toBe(
+			'var(--hero-image)',
+		);
+		// Already-wrapped values pass through untouched.
+		expect(normalizeBackgroundImageValue('var(--hero-image)')).toBe(
+			'var(--hero-image)',
+		);
+		// Non-variable tokens are left alone.
+		expect(normalizeBackgroundImageValue('hero-image')).toBe('hero-image');
+	});
+
+	it('accepts image expressions, bare variables, and rejects plain tokens', () => {
 		expect(isValidBackgroundImageValue('var(--hero-image)')).toBe(true);
 		expect(
 			isValidBackgroundImageValue('url("https://example.com/hero.jpg")'),
 		).toBe(true);
-		expect(isValidBackgroundImageValue('--hero-image')).toBe(false);
+		expect(isValidBackgroundImageValue('--hero-image')).toBe(true);
 		expect(isValidBackgroundImageValue('hero-image')).toBe(false);
-	});
-
-	it('recognizes bare custom properties that need var()', () => {
-		expect(isBareBackgroundImageVariable(' --hero-image ')).toBe(true);
-		expect(isBareBackgroundImageVariable('var(--hero-image)')).toBe(false);
-		expect(isBareBackgroundImageVariable('hero-image')).toBe(false);
 	});
 });
 

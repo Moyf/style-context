@@ -36,7 +36,7 @@ const ja: Messages = {
 			statusBarTransparent: 'ステータスバーの背景を透明にして、キャンバスの背景を透過させます。',
 			ribbonTransparent: 'Ribbon の背景を透明にして、キャンバスの背景を透過させます。',
 			titlebarTransparent: 'ウィンドウタイトルバーの背景を透明にして、キャンバスの背景を透過させます。',
-			backgroundImageValue: 'var(--image-1) や url("https://example.com/image.jpg") など、完全な CSS 画像値を入力します。リモート URL は画像ホストへ接続します。シャッフルボタンではローカル画像変数を選択します。',
+			backgroundImageValue: 'var(--image-1) や url("https://example.com/image.jpg") など、完全な CSS 画像値を入力します。変数名だけ（--image-1）を入力した場合は var(--image-1) として扱われます。リモート URL は画像ホストへ接続します。シャッフルボタンではローカル画像変数を選択します。',
 			backgroundOpacity: '背景画像レイヤーだけの不透明度を調整します。',
 			backgroundBlendMode: '画像と現在のテーマの合成方法を設定します。',
 			backgroundSize: '画像のキャンバスへの収め方。',
@@ -50,7 +50,7 @@ const ja: Messages = {
 			clickToCopy: (value) => `クリックしてコピー: ${value}`,
 				resourceVariableEnabled: 'この画像変数の公開を有効または無効にします', ruleDisabled: 'ルールは無効です', randomScope: 'ランダム背景画像の参加範囲。ライトのみ/ダークのみを選ぶと、対応するモードでのみ候補になります', randomScopeAll: 'すべてのモード', randomScopeLightOnly: 'ライトのみ', randomScopeDarkOnly: 'ダークのみ', randomScopeNone: 'ランダムに参加しない', setCssVariableName: 'CSS 変数名を設定してください', variableNameInvalid: '変数名が無効です', setVaultImagePath: '保管庫内の画像パスを設定してください', imageFileNotFound: '画像ファイルが見つかりません', notAnImageFile: '画像ファイルではありません', variableNotPublished: '変数が公開されていません（モジュールの切り替えを確認してください）',
 		},
-		validation: { invalidPrefix: '接頭辞が無効です', invalidClassNames: 'クラス名が無効です', invalidCssVariableName: 'CSS 変数名が無効です（-- で始め、英字・数字・ハイフン・アンダースコアのみ使用できます）', invalidBackgroundImageValue: 'CSS background-image の値が無効です', backgroundImageVariableRequiresVar: 'CSS 変数を var() で囲んでください（例: var(--image)）。上の画像変数プレビューをクリックしてコピーすることもできます。', duplicateVariableName: (count) => `${count} 件の他のルールがこの変数名を使用しています。後のルールが前のルールを上書きします` },
+		validation: { invalidPrefix: '接頭辞が無効です', invalidClassNames: 'クラス名が無効です', invalidCssVariableName: 'CSS 変数名が無効です（-- で始め、英字・数字・ハイフン・アンダースコアのみ使用できます）', invalidBackgroundImageValue: 'CSS background-image の値が無効です', duplicateVariableName: (count) => `${count} 件の他のルールがこの変数名を使用しています。後のルールが前のルールを上書きします` },
 		diagnostics: {
 			currentStyleContext: '現在のスタイルコンテキスト', localImageVariables: 'ローカル画像変数', noEnabledResourceRules: '有効なリソースルールはありません', theme: 'テーマ', notePathClasses: 'ノートパスのクラス', noOpenMarkdownViews: '開いている Markdown ビューはありません', headers: { variable: '変数', status: '状態', leafPath: 'リーフのパス', appliedClass: '適用済みクラス', rule: 'ルール' }, resolved: '解決済み', unresolved: '未解決', rawTheme: (rawName, slug) => `（元の名前: ${rawName || 'なし'}、スラッグ: ${slug}）`, unsaved: '（未保存）', filePathEmpty: 'ファイルパスが空です', fileNotFound: (path) => `ファイルが見つかりません: ${path}`,
 		},

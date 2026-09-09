@@ -37,7 +37,6 @@ import { isImageFile } from '../utils/media';
 import { readThemeName } from '../utils/internals';
 import { themeSlug } from '../utils/slug';
 import {
-	isBareBackgroundImageVariable,
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 	pickRandomBackgroundImageValue,
@@ -808,10 +807,8 @@ export class SettingsTab extends PluginSettingTab {
 							) {
 								this.showInputError(
 									text.inputEl,
-									this.backgroundImageValidationMessage(
-										normalized,
-										messages,
-									),
+									messages.settings.validation
+										.invalidBackgroundImageValue,
 								);
 								return;
 							}
@@ -872,15 +869,6 @@ export class SettingsTab extends PluginSettingTab {
 		};
 	}
 
-	private backgroundImageValidationMessage(
-		value: unknown,
-		messages: Messages,
-	): string {
-		return isBareBackgroundImageVariable(value)
-			? messages.settings.validation.backgroundImageVariableRequiresVar
-			: messages.settings.validation.invalidBackgroundImageValue;
-	}
-
 	private refreshBackgroundImageValuePreview(
 		mode: BackgroundImageMode,
 		messages: Messages,
@@ -895,7 +883,7 @@ export class SettingsTab extends PluginSettingTab {
 		if (!resolved) {
 			setTooltip(
 				preview,
-				this.backgroundImageValidationMessage(config.imageValue, messages),
+				messages.settings.validation.invalidBackgroundImageValue,
 				{ placement: 'top' },
 			);
 			return;
@@ -954,7 +942,7 @@ export class SettingsTab extends PluginSettingTab {
 		if (!resolved) {
 			setTooltip(
 				preview,
-				this.backgroundImageValidationMessage(config.imageValue, messages),
+				messages.settings.validation.invalidBackgroundImageValue,
 				{ placement: 'top' },
 			);
 			return;

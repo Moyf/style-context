@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚡ Changed
 
 - **Filter slider ranges**: Brightness, contrast, and saturate cap at 150% (down from 200%) since values beyond that are rarely useful, and the blur slider now steps in whole pixels (1 px instead of 0.5 px). Saved values above the new caps are kept until the slider is moved.
+- **Bare variable names in Image value**: The background image value now accepts a bare custom property name — typing `--image-1` is stored as `var(--image-1)` automatically, so both forms validate, preview, and resolve identically.
+- **Diagnostics panel polish**: The "Live status" panel is capped at 400 px and scrolls internally with sticky table headers, so long rule lists no longer stretch the settings page. Typography is refined throughout — compact uppercase section labels and table headers, tighter rows with subtler separators, and muted secondary text.
 
 ### 🐛 Fixed
 
@@ -36,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚡ 变更
 
 - **滤镜滑块范围**：亮度、对比度、饱和度上限从 200% 降为 150%（更高的值很少实用）；模糊滑块步长改为整像素（1 px，原为 0.5 px）。已保存的超上限数值会保留，直到再次拖动滑块。
+- **图片值支持裸变量名**：背景图片值现在接受不带 var() 的变量名——输入 `--image-1` 会自动存为 `var(--image-1)`，两种写法的校验、预览和解析行为完全一致。
+- **诊断面板优化**：「实时状态」面板高度上限 400 px，内部滚动并固定表头，超长规则列表不再拉长设置页。整体排版更精细——分节标签与表头改为紧凑的大写字样，行距收紧、分隔线更淡，次要文字使用弱化配色。
 
 ### 🐛 修复
 

@@ -136,7 +136,6 @@ export interface Messages {
 			invalidClassNames: string;
 			invalidCssVariableName: string;
 			invalidBackgroundImageValue: string;
-			backgroundImageVariableRequiresVar: string;
 			duplicateVariableName: (count: number) => string;
 		};
 		diagnostics: {

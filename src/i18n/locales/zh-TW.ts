@@ -36,7 +36,7 @@ const zhTW: Messages = {
 			statusBarTransparent: '將狀態列背景設為透明，使畫布背景透出。',
 			ribbonTransparent: '將 Ribbon 背景設為透明，使畫布背景透出。',
 			titlebarTransparent: '將視窗標題列背景設為透明，使畫布背景透出。',
-			backgroundImageValue: '填寫完整的 CSS 圖片值，例如 var(--image-1) 或 url("https://example.com/image.jpg")。遠端 URL 會連線至圖片網站；隨機按鈕會選擇本機圖片變數。',
+			backgroundImageValue: '填寫完整的 CSS 圖片值，例如 var(--image-1) 或 url("https://example.com/image.jpg")。只寫變數名稱（--image-1）也可以，會自動按 var(--image-1) 處理。遠端 URL 會連線至圖片網站；隨機按鈕會選擇本機圖片變數。',
 			backgroundOpacity: '只調整背景圖片圖層的不透明度。',
 			backgroundBlendMode: '控制圖片與目前主題的混合方式。',
 			backgroundSize: '圖片如何適配畫布。',
@@ -50,7 +50,7 @@ const zhTW: Messages = {
 			clickToCopy: (value) => `按一下即可複製：${value}`,
 				resourceVariableEnabled: '啟用或停用發布此圖片變數', ruleDisabled: '規則已停用', randomScope: '隨機背景圖片參與範圍：僅亮色/僅暗色時，只在對應外觀模式下參與隨機', randomScopeAll: '全部模式', randomScopeLightOnly: '僅亮色', randomScopeDarkOnly: '僅暗色', randomScopeNone: '不參與隨機', setCssVariableName: '請設定 CSS 變數名稱', variableNameInvalid: '變數名稱無效', setVaultImagePath: '請設定庫內圖片路徑', imageFileNotFound: '找不到圖片檔案', notAnImageFile: '不是圖片檔案', variableNotPublished: '變數尚未發布（請檢查模組開關）',
 		},
-		validation: { invalidPrefix: '前綴無效', invalidClassNames: '類別名稱無效', invalidCssVariableName: 'CSS 變數名稱無效（需以 -- 開頭，且只能包含英文字母、數字、連字符或底線）', invalidBackgroundImageValue: 'CSS background-image 值無效', backgroundImageVariableRequiresVar: '請用 var() 包住 CSS 變數，例如 var(--image)。也可以點擊上方圖片變數的預覽圖快速複製。', duplicateVariableName: (count) => `另有 ${count} 條規則使用此變數名稱；後面的規則會覆寫前面的規則` },
+		validation: { invalidPrefix: '前綴無效', invalidClassNames: '類別名稱無效', invalidCssVariableName: 'CSS 變數名稱無效（需以 -- 開頭，且只能包含英文字母、數字、連字符或底線）', invalidBackgroundImageValue: 'CSS background-image 值無效', duplicateVariableName: (count) => `另有 ${count} 條規則使用此變數名稱；後面的規則會覆寫前面的規則` },
 		diagnostics: {
 			currentStyleContext: '目前樣式內容', localImageVariables: '本機圖片變數', noEnabledResourceRules: '沒有啟用的資源規則', theme: '主題', notePathClasses: '筆記路徑類別', noOpenMarkdownViews: '沒有開啟的 Markdown 檢視', headers: { variable: '變數', status: '狀態', leafPath: '分頁路徑', appliedClass: '已套用的類別', rule: '規則' }, resolved: '已解析', unresolved: '未解析', rawTheme: (rawName, slug) => `（原始名稱：${rawName || '無'}，slug：${slug}）`, unsaved: '（未儲存）', filePathEmpty: '檔案路徑為空', fileNotFound: (path) => `找不到檔案：${path}`,
 		},
