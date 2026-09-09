@@ -42,9 +42,13 @@ export interface ResourceRule {
 	enabled: boolean;
 	/** Which random background pools include this image. Defaults to 'all'. */
 	randomScope?: RandomImageScope;
-	/** @deprecated Legacy on/off flag superseded by `randomScope`. Kept so
-	 * newer data files keep working after a downgrade; new code must read
-	 * `randomScope` only. */
+	/**
+	 * Legacy on/off flag, superseded by `randomScope`. Still written so
+	 * newer data files keep working after a downgrade; new code should
+	 * read `randomScope` only. Intentionally carries no deprecation tag:
+	 * ObsidianReviewBot forbids disabling eslint's no-deprecated rule,
+	 * and the migration boundary in loadSettings must touch this flag.
+	 */
 	useForBackgroundImage?: boolean;
 }
 
