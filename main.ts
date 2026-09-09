@@ -6,7 +6,11 @@ import { ResourceVariableService } from './src/services/ResourceVariableService'
 import { BackgroundImageService } from './src/services/BackgroundImageService';
 import { SettingsTab } from './src/settings/SettingsTab';
 import { registerCommands } from './src/commands';
-import { randomizeBackgroundImageValue } from './src/utils/background';
+import {
+	normalizeBackgroundImageValue,
+	RANDOM_IMAGE_HISTORY_DEPTH,
+	randomizeBackgroundImageValue,
+} from './src/utils/background';
 
 export default class StyleContextPlugin extends Plugin {
 	settings!: StyleContextSettings;
@@ -16,6 +20,12 @@ export default class StyleContextPlugin extends Plugin {
 	backgroundImageCtx!: BackgroundImageService;
 	private settingsTab!: SettingsTab;
 	private randomBackgroundRibbon: HTMLElement | null = null;
+	/**
+	 * In-memory cache of recently picked image variables (most recent
+	 * last). Randomizing avoids these so consecutive picks show different
+	 * images; it is intentionally not persisted.
+	 */
+	private randomImageHistory: string[] = [];
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -151,7 +161,8 @@ export default class StyleContextPlugin extends Plugin {
 	/**
 	 * Selects and applies one eligible background image variable. With
 	 * per-mode enabled, only the current window's light/dark config is
-	 * updated — never the global config or the opposite mode.
+	 * updated — never the global config or the opposite mode. Recent picks
+	 * are excluded so consecutive randoms show different images.
 	 */
 	async randomizeBackgroundImage(): Promise<boolean> {
 		const targetDocument =
@@ -161,12 +172,34 @@ export default class StyleContextPlugin extends Plugin {
 		const value = randomizeBackgroundImageValue(
 			this.settings,
 			targetDocument,
+			Math.random,
+			this.randomImageHistory,
 		);
 		if (!value) return false;
+		this.recordRandomImagePick(value);
 		await this.saveSettings();
 		this.applyBackgroundImage();
 		this.settingsTab.update();
 		return true;
+	}
+
+	/**
+	 * Appends a normalized pick to the no-repeat history, trimming the list
+	 * to the configured depth.
+	 */
+	recordRandomImagePick(value: string): void {
+		this.randomImageHistory.push(normalizeBackgroundImageValue(value));
+		if (this.randomImageHistory.length > RANDOM_IMAGE_HISTORY_DEPTH) {
+			this.randomImageHistory.splice(
+				0,
+				this.randomImageHistory.length - RANDOM_IMAGE_HISTORY_DEPTH,
+			);
+		}
+	}
+
+	/** Read-only view of the recent picks, for callers outside main.ts. */
+	get recentRandomImagePicks(): readonly string[] {
+		return this.randomImageHistory;
 	}
 
 	syncRandomBackgroundRibbon(): void {

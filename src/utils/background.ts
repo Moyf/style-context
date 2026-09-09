@@ -78,15 +78,26 @@ export function randomScopeIcon(scope: RandomImageScope): string {
 }
 
 /**
+ * How many of the most recent picks stay excluded from randomization.
+ * Recent-but-older picks only matter while the pool is large enough;
+ * exclusion relaxes progressively so a pick always happens.
+ */
+export const RANDOM_IMAGE_HISTORY_DEPTH = 3;
+
+/**
  * Picks an enabled, valid image variable that is eligible for the given
- * mode's random pool. When possible, the current choice is excluded so
- * pressing the shuffle button produces a visible change.
+ * mode's random pool. When possible, the current choice AND the recent
+ * picks are excluded so repeated randomizing keeps producing visible
+ * changes instead of bouncing between two images. Exclusion relaxes in
+ * tiers — recent history first, then just the current value — so a small
+ * pool never blocks a pick entirely.
  */
 export function pickRandomBackgroundImageValue(
 	rules: readonly ResourceRule[],
 	currentImageValue = '',
 	random = Math.random,
 	mode: RandomImageMode = 'any',
+	recentPicks: readonly string[] = [],
 ): string | null {
 	const candidates = [
 		...new Set(
@@ -103,12 +114,20 @@ export function pickRandomBackgroundImageValue(
 	if (candidates.length === 0) return null;
 
 	const currentValue = normalizeBackgroundImageValue(currentImageValue);
-	const pool =
-		candidates.length > 1
-			? candidates.filter((variableName) => variableName !== currentValue)
-			: candidates;
-	const index = Math.min(pool.length - 1, Math.floor(random() * pool.length));
-	return pool[index] ?? null;
+	const exclusionTiers: ReadonlySet<string>[] = [
+		new Set([currentValue, ...recentPicks.map(normalizeBackgroundImageValue)]),
+		new Set([currentValue]),
+	];
+	for (const excluded of exclusionTiers) {
+		const pool = candidates.filter(
+			(variableName) => !excluded.has(variableName),
+		);
+		if (pool.length === 0) continue;
+		const index = Math.min(pool.length - 1, Math.floor(random() * pool.length));
+		return pool[index] ?? null;
+	}
+	// The only candidate is the current value — nothing else to show.
+	return candidates[candidates.length - 1] ?? null;
 }
 
 /** Obsidian publishes the active mode as one of these classes on each body. */
@@ -167,6 +186,7 @@ export function randomizeBackgroundImageValue(
 	settings: StyleContextSettings,
 	targetDocument: Document,
 	random = Math.random,
+	recentPicks: readonly string[] = [],
 ): string | null {
 	const config = resolveBackgroundImageConfig(
 		settings.backgroundImage,
@@ -177,6 +197,7 @@ export function randomizeBackgroundImageValue(
 		config.imageValue,
 		random,
 		resolveBackgroundImageMode(targetDocument),
+		recentPicks,
 	);
 	if (!value) return null;
 	config.imageValue = value;

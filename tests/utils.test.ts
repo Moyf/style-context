@@ -155,6 +155,73 @@ describe('pickRandomBackgroundImageValue', () => {
 			).toBe('var(--old)');
 		});
 
+		describe('recent-pick avoidance', () => {
+			const pool: ResourceRule[] = [
+				{ id: '1', filePath: '1.png', variableName: '--one', enabled: true },
+				{ id: '2', filePath: '2.png', variableName: '--two', enabled: true },
+				{ id: '3', filePath: '3.png', variableName: '--three', enabled: true },
+				{ id: '4', filePath: '4.png', variableName: '--four', enabled: true },
+			];
+
+			it('skips everything in the recent history when the pool allows', () => {
+				const recent = ['var(--one)', 'var(--two)', 'var(--three)'];
+				expect(pickRandomBackgroundImageValue(pool, '', () => 0, 'any', recent)).toBe('var(--four)');
+			});
+
+			it('relaxes the history exclusion when it would empty the pool', () => {
+				const recent = ['var(--one)', 'var(--two)', 'var(--three)'];
+				// Tier 1 (recent + current) leaves nothing; tier 2 (current only,
+				// and current is empty) falls back to the full pool.
+				expect(pickRandomBackgroundImageValue(pool, '', () => 0, 'any', [...recent, 'var(--four)'])).toBe('var(--one)');
+			});
+
+			it('still avoids the current value like before', () => {
+				expect(pickRandomBackgroundImageValue(pool, 'var(--one)', () => 0, 'any', ['var(--one)'])).toBe('var(--two)');
+			});
+
+			it('returns the current value when it is the only candidate', () => {
+				expect(
+					pickRandomBackgroundImageValue(
+						[{ id: '1', filePath: '1.png', variableName: '--one', enabled: true }],
+						'var(--one)',
+						() => 0,
+						'any',
+						['var(--one)'],
+					),
+				).toBe('var(--one)');
+			});
+
+			it('alternates with a two-image pool (never repeats consecutively)', () => {
+				const two: ResourceRule[] = [pool[0], pool[1]];
+				// History covers the whole pool, tier 2 kicks in and only
+				// excludes the current value — leaving exactly one pick.
+				expect(pickRandomBackgroundImageValue(two, 'var(--one)', () => 0, 'any', ['var(--one)', 'var(--two)'])).toBe('var(--two)');
+				expect(pickRandomBackgroundImageValue(two, 'var(--two)', () => 0, 'any', ['var(--two)', 'var(--one)'])).toBe('var(--one)');
+			});
+
+			it('never repeats the current value with a three-image pool', () => {
+				const three: ResourceRule[] = [pool[0], pool[1], pool[2]];
+				// History covers all three, so tier 2 excludes only the current
+				// value and the pick is random among the other two.
+				expect(pickRandomBackgroundImageValue(three, 'var(--two)', () => 0, 'any', ['var(--one)', 'var(--two)', 'var(--three)'])).toBe('var(--one)');
+				expect(pickRandomBackgroundImageValue(three, 'var(--two)', () => 0.999, 'any', ['var(--one)', 'var(--two)', 'var(--three)'])).toBe('var(--three)');
+			});
+
+			it('randomizeBackgroundImageValue forwards the recent history', () => {
+				const settings: StyleContextSettings = {
+					...DEFAULT_SETTINGS,
+					resourceRules: pool,
+					backgroundImage: {
+						...DEFAULT_SETTINGS.backgroundImage,
+						enabled: true,
+						imageValue: 'var(--one)',
+					},
+				};
+				const recent = ['var(--two)', 'var(--three)'];
+				expect(randomizeBackgroundImageValue(settings, document, () => 0, recent)).toBe('var(--four)');
+			});
+		});
+
 		it('randomizeBackgroundImageValue applies the document mode to the pool', () => {
 			const settings: StyleContextSettings = {
 				...DEFAULT_SETTINGS,
