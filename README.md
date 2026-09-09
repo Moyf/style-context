@@ -106,6 +106,8 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 
 you can run `npm run build:local` to build and auto-copy into your vault.
 
+`npm run build:local:set` does the same and then opens the plugin's settings page in your running Obsidian (requires the Obsidian CLI on PATH), so settings changes are immediately visible after Hot Reload.
+
 ## Release
 
 After writing complete notes under `## [Unreleased]`, run `npm run release -- <version>`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- <version>` to validate without changing anything.
@@ -224,6 +226,8 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 ```
 
 那么你就可以直接使用 `npm run build:local` 来构建并自动拷贝到你的仓库内 `;)`
+
+另外，`npm run build:local:set` 会在构建拷贝之后自动打开运行中 Obsidian 的本插件设置页（需要 PATH 中有 Obsidian CLI），Hot Reload 重载完即可立即看到设置页改动。
 
 ## 发布
 
