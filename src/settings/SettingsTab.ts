@@ -291,6 +291,7 @@ export class SettingsTab extends PluginSettingTab {
 				{
 					name: messages.settings.labels.themeClassPrefix,
 					render: (setting) => {
+						setting.setClass('sc-theme-prefix-row');
 						this.renderThemePrefixDesc(setting);
 						setting.addText((text) => {
 							text.setPlaceholder(messages.settings.placeholders.themeClassPrefix)
@@ -333,7 +334,7 @@ export class SettingsTab extends PluginSettingTab {
 		const exampleLine = descEl.createDiv();
 		exampleLine.appendText(messages.settings.descriptions.themePrefixExample);
 		exampleLine.appendText(' ');
-		exampleLine.createEl('code', { text: `.${prefix}brutal-gum` });
+		exampleLine.createEl('code', { text: `${prefix}brutal-gum` });
 
 		// Current preview — clickable to copy the full selector
 		const rawName = readThemeName(this.app);
@@ -343,6 +344,10 @@ export class SettingsTab extends PluginSettingTab {
 		previewLine.appendText(messages.settings.descriptions.currentThemeClass);
 		const previewCode = previewLine.createEl('code', { text: selector });
 		previewCode.addClass('sc-clickable-code');
+		previewLine.appendText(' ');
+		previewLine.appendText(
+			messages.settings.descriptions.themeClassCopyHint,
+		);
 		setTooltip(previewCode, messages.settings.tooltips.clickToCopy(selector), {
 			placement: 'top',
 		});
@@ -385,7 +390,7 @@ export class SettingsTab extends PluginSettingTab {
 		return {
 			type: 'page',
 			name: messages.settings.pages.managePathRules,
-			desc: messages.settings.pages.managePathRulesDesc,
+			desc: `${messages.settings.pages.managePathRulesDesc} ${messages.settings.pages.pathRuleCount(this.plugin.settings.pathRules.length)}`,
 			items: [
 				{
 					name: '',
@@ -1208,7 +1213,7 @@ export class SettingsTab extends PluginSettingTab {
 		return {
 			type: 'page',
 			name: messages.settings.pages.manageImageVariables,
-			desc: messages.settings.pages.manageImageVariablesDesc,
+			desc: `${messages.settings.pages.manageImageVariablesDesc} ${messages.settings.pages.imageVariableCount(this.plugin.settings.resourceRules.length)}`,
 			items: [
 				{
 					name: '',

@@ -38,6 +38,8 @@ export interface Messages {
 			manageImageVariablesDesc: string;
 			managePathRules: string;
 			managePathRulesDesc: string;
+			imageVariableCount: (count: number) => string;
+			pathRuleCount: (count: number) => string;
 		};
 		labels: {
 			publishThemeClass: string;
@@ -80,6 +82,7 @@ export interface Messages {
 			liveStatus: string;
 			themePrefixBefore: string;
 			themePrefixExample: string;
+			themeClassCopyHint: string;
 			currentThemeClass: string;
 			publishBackgroundImage: string;
 			perModeBackground: string;

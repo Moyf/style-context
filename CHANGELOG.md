@@ -10,17 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### 🚀 Added
 
-- **Per-image random scope**: Each registered image variable can now choose which random background pools include it — all modes (default), light only, dark only, or none. The choice lives on a compact icon button (`dices` / `sun` / `moon` / `circle-slash`) that opens the picker on click, and the previous per-image toggle is migrated automatically. Random picks follow the window's current light/dark mode even when separate light/dark backgrounds are disabled.
-- **Image variable filter**: The variable list now lives on its own "Manage image variables" subpage, topped by a toolbar with the "Add image variable" button and a filter box that narrows variables by path or variable name as you type. New variables are inserted at the top with the caret placed in their path input, and the button is disabled while an add is in flight.
-- **Path rules subpage**: The note path rules list moved into its own "Manage path rules" subpage with a toolbar that pairs a filter box (matching pattern or class names) with the "Add path rule" button. New rules are inserted at the top with the caret placed in their pattern input.
+- **Per-image random scope**: Each registered image variable can now choose which random background pools include it — all (default), light only, dark only, or none. The choice lives on a compact icon button that opens the picker on click.
+- **Settings page restructure**: The image variable list and the note path rules moved into their own subpages. The add button was repositioned and a filter box added for when the list grows long.
 - **Appearance reset all**: Each Appearance page now ends with a "Reset all" button that restores every parameter on the page — display, filter, and layout — to that mode's defaults. The image value itself is not part of the page and stays untouched.
 
 ### ⚡ Changed
 
 - **Filter slider ranges**: Brightness, contrast, and saturate cap at 150% (down from 200%) since values beyond that are rarely useful, and the blur slider now steps in whole pixels (1 px instead of 0.5 px). Saved values above the new caps are kept until the slider is moved.
 - **Bare variable names in Image value**: The background image value now accepts a bare custom property name — typing `--image-1` is stored as `var(--image-1)` automatically, so both forms validate, preview, and resolve identically.
-- **No-repeat randomness**: Randomizing the background image now keeps an in-memory cache of the last three picks and avoids them, so consecutive randoms no longer bounce between the same two images. Exclusion relaxes automatically when the eligible pool is too small, so a pick always happens.
-- **Diagnostics panel polish**: The "Live status" panel is capped at 400 px and scrolls internally, so long rule lists no longer stretch the settings page. Typography is refined throughout — compact uppercase section labels and table headers, tighter rows with subtler separators, and muted secondary text.
+- **No-repeat randomness**: Randomizing the background image now keeps an in-memory cache of the last three picks and avoids them, so consecutive randoms no longer alternate between the same images.
+- **Diagnostics panel polish**: The "Live status" panel is capped at 400 px and scrolls internally, so long rule lists no longer stretch the settings page.
 
 ### 🐛 Fixed
 
@@ -33,17 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🚀 新增
 
-- **图片随机范围**：每个注册的图片变量现在可以选择参与哪些随机背景池——全部模式（默认）、仅亮色、仅暗色，或不参与随机。选项收纳在一个紧凑的图标按钮上（`dices` / `sun` / `moon` / `circle-slash`），点击弹出选择菜单；原有的单图开关会自动迁移。即使未开启亮暗分离背景，随机结果也会跟随当前窗口的亮色/暗色模式。
-- **图片变量过滤**：变量列表移入独立的「管理图片变量」子页，页首工具栏包含「添加图片变量」按钮和过滤框，输入时按路径或变量名实时筛选。新变量插入到列表顶部并自动聚焦到路径输入框；添加过程中按钮会短暂禁用。
-- **路径规则子页**：笔记路径规则列表移入独立的「管理路径规则」子页，工具栏同时提供过滤框（匹配模式或类名）和「添加路径规则」按钮。新规则插入到列表顶部并自动聚焦到匹配输入框。
+- **图片随机范围**：每个注册的图片变量现在可以选择参与哪些随机背景池——全部（默认）、仅亮色、仅暗色，或不参与随机。选项收纳在一个紧凑的图标按钮上，点击弹出选择菜单。
+- **设置页面重构**：图片变量列表和笔记路径规则移入独立的子页面。调整添加按钮的位置，并增加过滤框，用于列表项目较多的时候。
 - **外观页全部重置**：每个外观页底部新增「全部重置」按钮，一键将该页显示、滤镜、布局参数恢复到对应模式的默认值。图片值本身不属于该页，不会被改动。
 
 ### ⚡ 变更
 
 - **滤镜滑块范围**：亮度、对比度、饱和度上限从 200% 降为 150%（更高的值很少实用）；模糊滑块步长改为整像素（1 px，原为 0.5 px）。已保存的超上限数值会保留，直到再次拖动滑块。
 - **图片值支持裸变量名**：背景图片值现在接受不带 var() 的变量名——输入 `--image-1` 会自动存为 `var(--image-1)`，两种写法的校验、预览和解析行为完全一致。
-- **随机不重复**：随机背景图现在会在内存中缓存最近三次的选择并避开它们，连续随机不再出现 1 2 1 2 这样来回切换的情况。候选池太小的时候会自动放宽排除范围，保证总能随机出结果。
-- **诊断面板优化**：「实时状态」面板高度上限 400 px，内部滚动，超长规则列表不再拉长设置页。整体排版更精细——分节标签与表头改为紧凑的大写字样，行距收紧、分隔线更淡，次要文字使用弱化配色。
+- **随机不重复**：随机背景图现在会在内存中缓存最近三次的选择并避开它们，连续随机不再出现来回切换的情况。
+- **诊断面板优化**：「实时状态」面板高度上限 400 px，内部滚动，超长规则列表不再拉长设置页。
 
 ### 🐛 修复
 
