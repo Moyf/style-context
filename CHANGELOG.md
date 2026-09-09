@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.4.1] - 2026-09-09
 ### 🚀 Added
 
 - **Shuffle button hint**: The image value row now shows a visible hint under the input explaining that the shuffle button picks one of the local image variables — the explanation moved out of the crowded field description.
