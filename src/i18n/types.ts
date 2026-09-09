@@ -81,7 +81,8 @@ export interface Messages {
 			publishLocalImageVariables: string;
 			liveStatus: string;
 			themePrefixBefore: string;
-			themePrefixExample: string;
+			themePrefixExampleBefore: string;
+			themePrefixExampleAfter: string;
 			themeClassCopyHint: string;
 			currentThemeClass: string;
 			publishBackgroundImage: string;

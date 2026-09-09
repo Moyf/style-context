@@ -266,6 +266,21 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 	width: 100%;
 }
 
+/* Theme-prefix input only needs to fit a short prefix like "Theme-mod-".
+   Same .setting-item selector trick as above to beat Obsidian's default
+   text-input width. */
+.setting-item.sc-theme-prefix-row input[type="text"] {
+	flex: 0 0 10em;
+	width: 10em;
+	max-width: 10em;
+}
+
+/* Breathing room between the rule/example paragraph and the live
+   current-theme preview line below it. */
+.sc-theme-prefix-row .sc-theme-prefix-preview {
+	margin-top: var(--size-4-2);
+}
+
 /* Second text input (CSS classes / variable name): compact, wraps to
    row 2 alongside the toggle and delete button. */
 .sc-path-rule-row input[type="text"]:nth-of-type(2),

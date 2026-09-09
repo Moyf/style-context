@@ -328,19 +328,25 @@ export class SettingsTab extends PluginSettingTab {
 		descEl.empty();
 		const prefix = this.plugin.settings.themeClassPrefix;
 
-		// Conversion-rule explanation
+		// Conversion rule and example flow together in one paragraph,
+		// with the class name inline as code.
 		const ruleLine = descEl.createDiv();
 		ruleLine.appendText(messages.settings.descriptions.themePrefixBefore);
-		const exampleLine = descEl.createDiv();
-		exampleLine.appendText(messages.settings.descriptions.themePrefixExample);
-		exampleLine.appendText(' ');
-		exampleLine.createEl('code', { text: `${prefix}brutal-gum` });
+		ruleLine.appendText(' ');
+		ruleLine.appendText(
+			messages.settings.descriptions.themePrefixExampleBefore,
+		);
+		ruleLine.createEl('code', { text: `${prefix}brutal-gum` });
+		ruleLine.appendText(
+			messages.settings.descriptions.themePrefixExampleAfter,
+		);
 
 		// Current preview — clickable to copy the full selector
 		const rawName = readThemeName(this.app);
 		const slug = themeSlug(rawName || DEFAULT_THEME_SLUG);
 		const selector = `body.${prefix}${slug}`;
 		const previewLine = descEl.createDiv();
+		previewLine.addClass('sc-theme-prefix-preview');
 		previewLine.appendText(messages.settings.descriptions.currentThemeClass);
 		const previewCode = previewLine.createEl('code', { text: selector });
 		previewCode.addClass('sc-clickable-code');
