@@ -44,11 +44,11 @@ const ja: Messages = {
 			backgroundRepeat: '画像をタイル表示するかどうか。',
 			backgroundAttachment: '画像をドキュメントと一緒にスクロールするかどうか。',
 		},
-		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: 'フォルダの接頭辞', keywordInPath: 'パス内のキーワード', classNames: 'class1, class2', vaultFilePath: '保管庫内のファイルパス', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)' },
+		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: 'フォルダの接頭辞', keywordInPath: 'パス内のキーワード', classNames: 'class1, class2', vaultFilePath: '保管庫内のファイルパス', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)', filterImageVariables: 'フィルタ...' },
 		buttons: { addPathRule: 'パスのルールを追加', addImageVariable: '画像変数を追加', deleteRule: 'ルールを削除', refresh: '更新', copySnapshot: 'スナップショットをコピー', randomBackgroundImageValue: '画像変数をランダムに選択', reset: 'デフォルトに戻す' },
 		tooltips: {
 			clickToCopy: (value) => `クリックしてコピー: ${value}`,
-				resourceVariableEnabled: 'この画像変数の公開を有効または無効にします', ruleDisabled: 'ルールは無効です', useForBackgroundImage: '背景画像に使用するかどうか。オンにするとランダム選択の対象になります', backgroundImageExcluded: 'ランダムな背景画像の選択対象外です', setCssVariableName: 'CSS 変数名を設定してください', variableNameInvalid: '変数名が無効です', setVaultImagePath: '保管庫内の画像パスを設定してください', imageFileNotFound: '画像ファイルが見つかりません', notAnImageFile: '画像ファイルではありません', variableNotPublished: '変数が公開されていません（モジュールの切り替えを確認してください）',
+				resourceVariableEnabled: 'この画像変数の公開を有効または無効にします', ruleDisabled: 'ルールは無効です', randomScope: 'ランダム背景画像の参加範囲。ライトのみ/ダークのみを選ぶと、対応するモードでのみ候補になります', randomScopeAll: 'すべてのモード', randomScopeLightOnly: 'ライトのみ', randomScopeDarkOnly: 'ダークのみ', randomScopeNone: 'ランダムに参加しない', setCssVariableName: 'CSS 変数名を設定してください', variableNameInvalid: '変数名が無効です', setVaultImagePath: '保管庫内の画像パスを設定してください', imageFileNotFound: '画像ファイルが見つかりません', notAnImageFile: '画像ファイルではありません', variableNotPublished: '変数が公開されていません（モジュールの切り替えを確認してください）',
 		},
 		validation: { invalidPrefix: '接頭辞が無効です', invalidClassNames: 'クラス名が無効です', invalidCssVariableName: 'CSS 変数名が無効です（-- で始める必要があります）', invalidBackgroundImageValue: 'CSS background-image の値が無効です', backgroundImageVariableRequiresVar: 'CSS 変数を var() で囲んでください（例: var(--image)）。上の画像変数プレビューをクリックしてコピーすることもできます。', duplicateVariableName: (count) => `${count} 件の他のルールがこの変数名を使用しています。後のルールが前のルールを上書きします` },
 		diagnostics: {

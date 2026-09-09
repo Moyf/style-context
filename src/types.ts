@@ -8,6 +8,13 @@ import type {
 
 export type PathMatchMode = 'folder' | 'keyword';
 
+/**
+ * Which random background pools include an image.
+ * 'all' (default): eligible everywhere. 'light' / 'dark': eligible only
+ * while randomizing for that mode. 'none': never picked by randomization.
+ */
+export type RandomImageScope = 'all' | 'light' | 'dark' | 'none';
+
 export type BackgroundBlendMode = (typeof BACKGROUND_BLEND_MODES)[number];
 export type BackgroundSize = (typeof BACKGROUND_SIZE_OPTIONS)[number];
 export type BackgroundPosition = (typeof BACKGROUND_POSITION_OPTIONS)[number];
@@ -33,7 +40,11 @@ export interface ResourceRule {
 	filePath: string;
 	variableName: string;
 	enabled: boolean;
-	/** Whether this published variable may be selected as a background image. */
+	/** Which random background pools include this image. Defaults to 'all'. */
+	randomScope?: RandomImageScope;
+	/** @deprecated Legacy on/off flag superseded by `randomScope`. Kept so
+	 * newer data files keep working after a downgrade; new code must read
+	 * `randomScope` only. */
 	useForBackgroundImage?: boolean;
 }
 

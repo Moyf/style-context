@@ -44,11 +44,11 @@ const zhCN: Messages = {
 			backgroundRepeat: '是否平铺图片。',
 			backgroundAttachment: '图片是否随文档滚动。',
 		},
-		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '文件夹前缀', keywordInPath: '路径中的关键词', classNames: '类名1, 类名2', vaultFilePath: '库内文件路径', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)' },
+		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '文件夹前缀', keywordInPath: '路径中的关键词', classNames: '类名1, 类名2', vaultFilePath: '库内文件路径', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)', filterImageVariables: '过滤...' },
 		buttons: { addPathRule: '添加路径规则', addImageVariable: '添加图片变量', deleteRule: '删除规则', refresh: '刷新', copySnapshot: '复制快照', randomBackgroundImageValue: '随机选择图片变量', reset: '恢复默认值' },
 		tooltips: {
 			clickToCopy: (value) => `点击复制：${value}`,
-				resourceVariableEnabled: '启用或禁用发布此图片变量', ruleDisabled: '规则已禁用', useForBackgroundImage: '是否用于背景图片：启用后可被随机背景图片选中', backgroundImageExcluded: '未纳入随机背景图片选择', setCssVariableName: '请设置 CSS 变量名', variableNameInvalid: '变量名无效', setVaultImagePath: '请设置库内图片路径', imageFileNotFound: '未找到图片文件', notAnImageFile: '不是图片文件', variableNotPublished: '变量尚未发布（请检查模块开关）',
+				resourceVariableEnabled: '启用或禁用发布此图片变量', ruleDisabled: '规则已禁用', randomScope: '随机背景图片参与范围：仅亮色/仅暗色时，只在对应外观模式下参与随机', randomScopeAll: '全部模式', randomScopeLightOnly: '仅亮色', randomScopeDarkOnly: '仅暗色', randomScopeNone: '不参与随机', setCssVariableName: '请设置 CSS 变量名', variableNameInvalid: '变量名无效', setVaultImagePath: '请设置库内图片路径', imageFileNotFound: '未找到图片文件', notAnImageFile: '不是图片文件', variableNotPublished: '变量尚未发布（请检查模块开关）',
 		},
 		validation: { invalidPrefix: '前缀无效', invalidClassNames: '类名无效', invalidCssVariableName: 'CSS 变量名无效（必须以 -- 开头）', invalidBackgroundImageValue: 'CSS background-image 值无效', backgroundImageVariableRequiresVar: '请用 var() 包裹 CSS 变量，例如 var(--image)。也可以点击上方图片变量的预览图快速复制。', duplicateVariableName: (count) => `另有 ${count} 条规则使用此变量名；后面的规则会覆盖前面的规则` },
 		diagnostics: {

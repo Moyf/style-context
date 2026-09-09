@@ -86,7 +86,15 @@ export default class StyleContextPlugin extends Plugin {
 		};
 		this.settings.resourceRules = this.settings.resourceRules.map((rule) => ({
 			...rule,
+			// Legacy boundary: read the pre-randomScope flag once here so the
+			// rest of the codebase only ever sees the normalized `randomScope`.
+			// eslint-disable-next-line @typescript-eslint/no-deprecated
 			useForBackgroundImage: rule.useForBackgroundImage ?? true,
+			// Legacy opt-out flag maps to 'none'; otherwise default 'all'.
+			randomScope:
+				rule.randomScope ??
+				// eslint-disable-next-line @typescript-eslint/no-deprecated
+				(rule.useForBackgroundImage === false ? 'none' : 'all'),
 		}));
 	}
 

@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+### 🚀 Added
+
+- **Per-image random scope**: Each registered image variable can now choose which random background pools include it — all modes (default), light only, dark only, or none. The choice lives on a compact icon button (`dices` / `sun` / `moon` / `circle-slash`) that opens the picker on click, and the previous per-image toggle is migrated automatically. Random picks follow the window's current light/dark mode even when separate light/dark backgrounds are disabled.
+- **Image variable filter**: The "Add image variable" button moved above the list, with a filter box on the same row that narrows variables by path or variable name as you type. New variables are inserted at the top with the caret placed in their path input, and the button is disabled while an add is in flight.
+
+### 🐛 Fixed
+
+- **Preview tile on first open**: Image preview tiles now refresh immediately after typing a vault path, including the first settings open after a plugin reload — the variable is republished into the settings document directly instead of relying on `activeDocument`, which can lag on detached settings windows.
+- **Add button overflow**: In narrow panels the button now shrinks and truncates its label with an ellipsis ("Add image...") instead of overflowing the frame.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **图片随机范围**：每个注册的图片变量现在可以选择参与哪些随机背景池——全部模式（默认）、仅亮色、仅暗色，或不参与随机。选项收纳在一个紧凑的图标按钮上（`dices` / `sun` / `moon` / `circle-slash`），点击弹出选择菜单；原有的单图开关会自动迁移。即使未开启亮暗分离背景，随机结果也会跟随当前窗口的亮色/暗色模式。
+- **图片变量过滤**：「添加图片变量」按钮移到列表上方，同一行左侧新增过滤框，输入时按路径或变量名实时筛选。新变量插入到列表顶部并自动聚焦到路径输入框；添加过程中按钮会短暂禁用。
+
+### 🐛 修复
+
+- **首次打开时预览不刷新**：输入路径后图片预览立即刷新，包括插件重载后第一次打开设置页的情况——现在直接向设置页所在文档重新发布变量，不再依赖在独立设置窗口可能滞后更新的 `activeDocument`。
+- **添加按钮溢出**：窄面板下按钮自动收缩并以省略号截断文字（"Add image..."），不再超出边框。
+
+</details>
+
+---
+
 ## [0.3.5] - 2026-08-07
 ### 🐛 Fixed
 

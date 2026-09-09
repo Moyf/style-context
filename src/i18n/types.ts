@@ -101,6 +101,7 @@ export interface Messages {
 			vaultFilePath: string;
 			cssVariable: string;
 			backgroundImageValue: string;
+			filterImageVariables: string;
 		};
 		buttons: {
 			addPathRule: string;
@@ -121,8 +122,11 @@ export interface Messages {
 			imageFileNotFound: string;
 			notAnImageFile: string;
 			variableNotPublished: string;
-			useForBackgroundImage: string;
-			backgroundImageExcluded: string;
+			randomScope: string;
+			randomScopeAll: string;
+			randomScopeLightOnly: string;
+			randomScopeDarkOnly: string;
+			randomScopeNone: string;
 		};
 		validation: {
 			invalidPrefix: string;

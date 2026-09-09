@@ -45,11 +45,11 @@ const en: Messages = {
 			backgroundAttachment: 'Whether the image moves with the document.',
 		},
 		// eslint-disable-next-line obsidianmd/ui/sentence-case-locale-module -- CSS syntax is case-sensitive.
-		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: 'Folder prefix', keywordInPath: 'Keyword in path', classNames: 'Class1, class2', vaultFilePath: 'Vault file path', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)' },
+		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: 'Folder prefix', keywordInPath: 'Keyword in path', classNames: 'Class1, class2', vaultFilePath: 'Vault file path', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)', filterImageVariables: 'Filter...' },
 		buttons: { addPathRule: 'Add path rule', addImageVariable: 'Add image variable', deleteRule: 'Delete rule', refresh: 'Refresh', copySnapshot: 'Copy snapshot', randomBackgroundImageValue: 'Choose a random image variable', reset: 'Reset to default' },
 		tooltips: {
 			clickToCopy: (value) => `Click to copy: ${value}`,
-			resourceVariableEnabled: 'Enable or disable publishing this image variable', ruleDisabled: 'Rule disabled', useForBackgroundImage: 'Whether to use this image for random background selection', backgroundImageExcluded: 'Excluded from random background selection', setCssVariableName: 'Set a CSS variable name', variableNameInvalid: 'Variable name is invalid', setVaultImagePath: 'Set a vault image path', imageFileNotFound: 'Image file not found', notAnImageFile: 'Not an image file', variableNotPublished: 'Variable not published (check module toggle)',
+			resourceVariableEnabled: 'Enable or disable publishing this image variable', ruleDisabled: 'Rule disabled', randomScope: 'Which random background pools include this image', randomScopeAll: 'All modes', randomScopeLightOnly: 'Light only', randomScopeDarkOnly: 'Dark only', randomScopeNone: 'No random', setCssVariableName: 'Set a CSS variable name', variableNameInvalid: 'Variable name is invalid', setVaultImagePath: 'Set a vault image path', imageFileNotFound: 'Image file not found', notAnImageFile: 'Not an image file', variableNotPublished: 'Variable not published (check module toggle)',
 		},
 		validation: { invalidPrefix: 'Invalid prefix', invalidClassNames: 'Invalid class names', invalidCssVariableName: 'Invalid CSS variable name (must start with --)', invalidBackgroundImageValue: 'Invalid CSS background-image value', backgroundImageVariableRequiresVar: 'Wrap the CSS variable in var(), for example var(--image). You can click an image variable preview above to copy it.', duplicateVariableName: (count) => `Used by ${count} other rule(s); later rules override earlier ones` },
 		diagnostics: {

@@ -1,5 +1,6 @@
 import {
 	App,
+	Menu,
 	Notice,
 	PluginSettingTab,
 	TFile,
@@ -7,6 +8,7 @@ import {
 	normalizePath,
 	setTooltip,
 	type ExtraButtonComponent,
+	type ButtonComponent,
 	type SliderComponent,
 	type Setting,
 	type SettingDefinition,
@@ -39,6 +41,9 @@ import {
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 	pickRandomBackgroundImageValue,
+	randomScopeIcon,
+	resolveBackgroundImageMode,
+	type RandomImageMode,
 } from '../utils/background';
 import { t } from '../i18n/i18n';
 import type { Messages } from '../i18n/types';
@@ -46,6 +51,7 @@ import {
 	DEFAULT_SETTINGS,
 	type BackgroundModeSettings,
 	type PathRule,
+	type RandomImageScope,
 	type ResourceRule,
 } from '../types';
 
@@ -141,6 +147,23 @@ export class SettingsTab extends PluginSettingTab {
 	private refreshHandle: number | null = null;
 	/** Preview tiles keyed by rule id, refreshed independently to preserve input focus. */
 	private rulePreviewTiles = new Map<string, HTMLElement>();
+	/** Resource rule rows keyed by rule id, for live filtering without a rebuild. */
+	private resourceRuleRowEls = new Map<string, HTMLElement>();
+	/** Current image-variable filter query; kept across tab re-renders. */
+	private resourceFilter = '';
+	/**
+	 * True while an add-variable click is rebuilding + saving. The rebuild
+	 * replaces the button element, so the flag — not the element — carries
+	 * the disabled state across the render.
+	 */
+	private resourceAdding = false;
+	/**
+	 * The toolbar's add button component, re-resolved on every toolbar
+	 * render. Kept as the component (not the raw element) so re-enabling
+	 * goes through Obsidian's own setDisabled, which also cleans up the
+	 * disabled state classes the component added.
+	 */
+	private resourceAddButton: ButtonComponent | null = null;
 	/** Image-value preview tiles keyed by the config they reflect. */
 	private backgroundImageValuePreviews = new Map<
 		BackgroundImageMode,
@@ -206,6 +229,9 @@ export class SettingsTab extends PluginSettingTab {
 
 	hide(): void {
 		this.stopDiagnosticsRefresh();
+		// A save may still be in flight when the tab closes; never let the
+		// flag disable the add button in the next open tab.
+		this.resourceAdding = false;
 		super.hide();
 	}
 
@@ -763,8 +789,17 @@ export class SettingsTab extends PluginSettingTab {
 						.setIcon('shuffle')
 						.setTooltip(messages.settings.buttons.randomBackgroundImageValue)
 						.onClick(async () => {
+							// Global rows resolve the mode from the row's own
+							// document, so shuffling follows the current
+							// light/dark mode even when per-mode is disabled.
+							// Light/dark rows always pick for their own mode.
 							const value = this.pickRandomBackgroundImageValue(
 								config.imageValue,
+								mode === 'global'
+									? resolveBackgroundImageMode(
+											setting.settingEl.ownerDocument,
+										)
+									: mode,
 							);
 							if (!value) {
 								new Notice(messages.notices.noImageVariables);
@@ -983,10 +1018,15 @@ export class SettingsTab extends PluginSettingTab {
 		};
 	}
 
-	private pickRandomBackgroundImageValue(currentValue: string): string | null {
+	private pickRandomBackgroundImageValue(
+		currentValue: string,
+		mode: RandomImageMode,
+	): string | null {
 		return pickRandomBackgroundImageValue(
 			this.plugin.settings.resourceRules,
 			currentValue,
+			Math.random,
+			mode,
 		);
 	}
 
@@ -1006,20 +1046,15 @@ export class SettingsTab extends PluginSettingTab {
 					this.plugin.resourceVarCtx.applyToDocument(
 						setting.settingEl.ownerDocument,
 					);
-					setting.setClass('sc-resource-toggle');
-					// Rich description: explain why this module exists + show the
-					// CSS contract. descEl is rebuilt (not setDesc) so we can embed
-					// a <pre><code> block the way Obsidian's own settings do.
-					const descEl = setting.descEl;
-					descEl.empty();
-					descEl.appendText(
-						messages.settings.descriptions.publishLocalImageVariables,
-					);
-					const pre = descEl.createEl('pre');
-					pre.createEl('code', {
-						text: '.hero {\n  background-image: var(--my-banner);\n}',
-					});
-					setting.addToggle((toggle) =>
+				setting.setClass('sc-resource-toggle');
+				// Rich description: explain why this module exists. descEl is
+				// rebuilt (not setDesc) so the copy stays plain text.
+				const descEl = setting.descEl;
+				descEl.empty();
+				descEl.appendText(
+					messages.settings.descriptions.publishLocalImageVariables,
+				);
+				setting.addToggle((toggle) =>
 						toggle
 							.setValue(this.plugin.settings.resourceVariablesEnabled)
 							.onChange(async (value) => {
@@ -1029,9 +1064,6 @@ export class SettingsTab extends PluginSettingTab {
 					);
 				},
 			},
-			...this.plugin.settings.resourceRules.map((rule) =>
-				this.buildResourceRuleRow(messages, rule),
-			),
 			{
 				name: '',
 				searchable: false,
@@ -1041,24 +1073,72 @@ export class SettingsTab extends PluginSettingTab {
 						'sc-resource-rule-row',
 						'mod-toggle',
 					);
-					setting.addButton((button) =>
+					setting.setClass('sc-resource-toolbar');
+					// Filter sits on the left of the same row; the add button
+					// stays on the right. Filter lives in-memory only.
+					setting.addText((text) => {
+						text.setPlaceholder(
+							messages.settings.placeholders.filterImageVariables,
+						)
+							.setValue(this.resourceFilter)
+							.onChange((value) => {
+								this.resourceFilter = value;
+								this.applyResourceFilter();
+							});
+						text.inputEl.addClass('sc-resource-filter-input');
+					});
+					setting.addButton((button) => {
+						this.resourceAddButton = button;
+						if (this.resourceAdding) {
+							button.setDisabled(true);
+						}
 						button
 							.setButtonText(messages.settings.buttons.addImageVariable)
 							.setCta()
 							.onClick(async () => {
-								this.plugin.settings.resourceRules.push({
+								if (this.resourceAdding) return;
+								this.resourceAdding = true;
+								button.setDisabled(true);
+								// Insert at the top so the new row appears right
+								// under the toolbar, ready to edit immediately.
+								const newRule: ResourceRule = {
 									id: generateId('rr'),
 									filePath: '',
 									variableName: this.generateDefaultVarName(),
 									enabled: true,
-									useForBackgroundImage: true,
-								});
+									randomScope: 'all',
+								};
+								this.plugin.settings.resourceRules.unshift(newRule);
+								// Reset the filter so the freshly added (empty) row
+								// is visible after the rebuild.
+								this.resourceFilter = '';
 								await this.persistAndApply();
 								this.update();
-							}),
-					);
+								this.resourceAdding = false;
+								// The rebuild swapped the component — re-enable the
+								// current one through Obsidian's own setDisabled so
+								// its disabled state classes are cleaned up too.
+								this.resourceAddButton?.setDisabled(false);
+								// Move the caret into the new row's vault file path
+								// input; the rebuild would otherwise drop focus on
+								// the toolbar filter.
+								window.setTimeout(() => {
+									const rowEl = this.resourceRuleRowEls.get(
+										newRule.id,
+									);
+									rowEl
+										?.querySelector<HTMLInputElement>(
+											'input[type="text"]',
+										)
+										?.focus();
+								}, 0);
+							});
+					});
 				},
 			},
+			...this.plugin.settings.resourceRules.map((rule) =>
+				this.buildResourceRuleRow(messages, rule),
+			),
 		];
 		return {
 			type: 'group',
@@ -1085,6 +1165,38 @@ export class SettingsTab extends PluginSettingTab {
 		return name;
 	}
 
+	/**
+	 * Applies the current filter query to every registered rule row.
+	 * Called on each keystroke in the toolbar filter input.
+	 */
+	private applyResourceFilter(): void {
+		const query = this.resourceFilter.trim().toLowerCase();
+		for (const [ruleId, rowEl] of this.resourceRuleRowEls) {
+			const rule = this.plugin.settings.resourceRules.find(
+				(r) => r.id === ruleId,
+			);
+			this.applyResourceFilterToRow(rule, rowEl, query);
+		}
+	}
+
+	/**
+	 * Shows or hides a single rule row based on the filter query. A row
+	 * matches when the query is empty or appears in the image path or
+	 * the variable name (case-insensitive).
+	 */
+	private applyResourceFilterToRow(
+		rule: ResourceRule | undefined,
+		rowEl: HTMLElement,
+		query = this.resourceFilter.trim().toLowerCase(),
+	): void {
+		const matches =
+			query.length === 0 ||
+			(rule !== undefined &&
+				(rule.filePath.toLowerCase().includes(query) ||
+					rule.variableName.toLowerCase().includes(query)));
+		rowEl.style.display = matches ? '' : 'none';
+	}
+
 	private buildResourceRuleRow(
 		messages: Messages,
 		rule: ResourceRule,
@@ -1094,6 +1206,10 @@ export class SettingsTab extends PluginSettingTab {
 			searchable: false,
 			render: (setting) => {
 				setting.setClass('sc-resource-rule-row');
+				// Register the row so the toolbar filter can toggle it live;
+				// apply the current filter immediately so a rebuild keeps it.
+				this.resourceRuleRowEls.set(rule.id, setting.settingEl);
+				this.applyResourceFilterToRow(rule, setting.settingEl);
 				setting
 					.addText((text) => {
 						text.setPlaceholder(messages.settings.placeholders.vaultFilePath)
@@ -1151,13 +1267,48 @@ export class SettingsTab extends PluginSettingTab {
 							{ placement: 'top' },
 						);
 					})
-					.addToggle((toggle) => {
-						toggle.setValue(rule.useForBackgroundImage !== false).onChange(async (value) => {
-							rule.useForBackgroundImage = value;
-							await this.persistAndApply();
-							this.refreshRuleTile(rule);
-						});
-						setTooltip(toggle.toggleEl, messages.settings.tooltips.useForBackgroundImage, { placement: 'top' });
+					.addExtraButton((button) => {
+						const currentScope = (): RandomImageScope =>
+							rule.randomScope ?? 'all';
+						const scopeOptions: readonly [
+							RandomImageScope,
+							string,
+						][] = [
+							['all', messages.settings.tooltips.randomScopeAll],
+							['light', messages.settings.tooltips.randomScopeLightOnly],
+							['dark', messages.settings.tooltips.randomScopeDarkOnly],
+							['none', messages.settings.tooltips.randomScopeNone],
+						];
+						button
+							.setIcon(randomScopeIcon(currentScope()))
+							.setTooltip(messages.settings.tooltips.randomScope, {
+								placement: 'top',
+							})
+							.onClick(() => {
+								// Compact picker: the button itself only shows the
+								// current scope's icon; choices live in this menu.
+								const menu = new Menu();
+								for (const [value, label] of scopeOptions) {
+									menu.addItem((item) =>
+										item
+											.setTitle(label)
+											.setIcon(randomScopeIcon(value))
+											.setChecked(value === currentScope())
+											.onClick(async () => {
+												rule.randomScope = value;
+												// Keep the legacy flag in sync for downgrade safety.
+												rule.useForBackgroundImage = value !== 'none';
+												button.setIcon(randomScopeIcon(value));
+												await this.persistAndApply();
+												this.refreshRuleTile(rule);
+											}),
+									);
+								}
+								// ExtraButtonComponent.onClick exposes no event, so
+								// anchor the menu to the button's own bounding box.
+								const rect = button.extraSettingsEl.getBoundingClientRect();
+								menu.showAtPosition({ x: rect.left, y: rect.bottom });
+							});
 					})
 					.addExtraButton((button) =>
 						button
@@ -1185,6 +1336,7 @@ export class SettingsTab extends PluginSettingTab {
 
 				return () => {
 					this.rulePreviewTiles.delete(rule.id);
+					this.resourceRuleRowEls.delete(rule.id);
 				};
 			},
 		};
@@ -1239,8 +1391,11 @@ export class SettingsTab extends PluginSettingTab {
 		// Final guard: confirm the variable is actually published on :root.
 		// Without this, an unset var() would resolve to nothing but still
 		// override the checkerboard via inline style — leaving the tile blank.
-		const published = activeDocument.defaultView
-			?.getComputedStyle(activeDocument.documentElement)
+		// Read the tile's OWN document: activeDocument can lag behind on the
+		// first detached-Settings open and would check the wrong window.
+		const tileDocument = tile.ownerDocument;
+		const published = tileDocument.defaultView
+			?.getComputedStyle(tileDocument.documentElement)
 			.getPropertyValue(varName);
 		if (!published) {
 			placeholder(messages.settings.tooltips.variableNotPublished);
@@ -1526,6 +1681,13 @@ export class SettingsTab extends PluginSettingTab {
 	private async persistAndApply(): Promise<void> {
 		await this.plugin.saveSettings();
 		this.plugin.applyAll();
+		// On the first detached-Settings open, getAppDocuments() can miss
+		// this tab's window (activeDocument race), so a freshly typed rule's
+		// variable would never reach the preview's document. Republish
+		// directly into the tab's own document.
+		this.plugin.resourceVarCtx.applyToDocument(
+			this.containerEl.ownerDocument,
+		);
 	}
 
 	private async persistAndApplyBackgroundImage(): Promise<void> {

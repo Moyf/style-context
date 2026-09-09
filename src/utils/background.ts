@@ -1,6 +1,7 @@
 import type {
 	BackgroundImageSettings,
 	BackgroundModeSettings,
+	RandomImageScope,
 	ResourceRule,
 	StyleContextSettings,
 } from '../types';
@@ -38,23 +39,61 @@ export function isValidBackgroundImageValue(value: unknown): boolean {
 }
 
 /**
- * Picks an enabled, valid image variable. When possible, the current choice
- * is excluded so pressing the shuffle button produces a visible change.
+ * The color mode a randomization is picking for. 'any' means the target's
+ * mode is unknown (no theme class on the body), in which case mode-scoped
+ * images stay eligible — restriction only applies to a known mode.
+ */
+export type RandomImageMode = 'light' | 'dark' | 'any';
+
+/** Effective scope of a rule; unmigrated rules default to 'all'. */
+function randomImageScope(rule: ResourceRule): RandomImageScope {
+	return rule.randomScope ?? 'all';
+}
+
+/** True when the rule may join a randomization for the given mode. */
+function isEligibleForRandomMode(
+	rule: ResourceRule,
+	mode: RandomImageMode,
+): boolean {
+	const scope = randomImageScope(rule);
+	if (scope === 'none') return false;
+	if (mode === 'any') return true;
+	return scope === 'all' || scope === mode;
+}
+
+/** Lucide icons for compact per-rule random-scope buttons. */
+const RANDOM_SCOPE_ICONS: Record<RandomImageScope, string> = {
+	all: 'dices',
+	light: 'sun',
+	dark: 'moon',
+	none: 'circle-slash',
+};
+
+/** Icon representing a random scope in the settings UI. */
+export function randomScopeIcon(scope: RandomImageScope): string {
+	return RANDOM_SCOPE_ICONS[scope];
+}
+
+/**
+ * Picks an enabled, valid image variable that is eligible for the given
+ * mode's random pool. When possible, the current choice is excluded so
+ * pressing the shuffle button produces a visible change.
  */
 export function pickRandomBackgroundImageValue(
 	rules: readonly ResourceRule[],
 	currentImageValue = '',
 	random = Math.random,
+	mode: RandomImageMode = 'any',
 ): string | null {
 	const candidates = [
 		...new Set(
-				rules
-					.filter(
-						(rule) =>
-							rule.enabled &&
-						rule.useForBackgroundImage !== false &&
-							isValidCssVarName(rule.variableName.trim()),
-					)
+			rules
+				.filter(
+					(rule) =>
+						rule.enabled &&
+						isEligibleForRandomMode(rule, mode) &&
+						isValidCssVarName(rule.variableName.trim()),
+				)
 				.map((rule) => `var(${rule.variableName.trim()})`),
 		),
 	];
@@ -97,10 +136,29 @@ export function resolveBackgroundImageConfig(
 }
 
 /**
+ * Reads the color mode a document currently displays from its body classes.
+ * Returns 'any' when neither theme class is present, so mode-scoped images
+ * remain eligible for documents without an explicit mode.
+ */
+export function resolveBackgroundImageMode(
+	targetDocument: Document,
+): RandomImageMode {
+	if (targetDocument.body.classList.contains(THEME_LIGHT_BODY_CLASS)) {
+		return 'light';
+	}
+	if (targetDocument.body.classList.contains(THEME_DARK_BODY_CLASS)) {
+		return 'dark';
+	}
+	return 'any';
+}
+
+/**
  * Randomizes the image value of the config the target document currently
  * displays — with per-mode enabled, only that document's light/dark config;
- * never the global config or the opposite mode. Returns the new value, or
- * null when no eligible variable exists (nothing is mutated then).
+ * never the global config or the opposite mode. Candidates respect each
+ * rule's random scope: mode-scoped images only join when the target
+ * document displays that mode. Returns the new value, or null when no
+ * eligible variable exists (nothing is mutated then).
  */
 export function randomizeBackgroundImageValue(
 	settings: StyleContextSettings,
@@ -115,6 +173,7 @@ export function randomizeBackgroundImageValue(
 		settings.resourceRules,
 		config.imageValue,
 		random,
+		resolveBackgroundImageMode(targetDocument),
 	);
 	if (!value) return null;
 	config.imageValue = value;

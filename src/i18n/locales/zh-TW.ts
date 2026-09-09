@@ -44,11 +44,11 @@ const zhTW: Messages = {
 			backgroundRepeat: '是否平鋪圖片。',
 			backgroundAttachment: '圖片是否隨文件捲動。',
 		},
-		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '資料夾前綴', keywordInPath: '路徑中的關鍵字', classNames: '類別1, 類別2', vaultFilePath: '庫內檔案路徑', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)' },
+		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '資料夾前綴', keywordInPath: '路徑中的關鍵字', classNames: '類別1, 類別2', vaultFilePath: '庫內檔案路徑', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)', filterImageVariables: '過濾...' },
 		buttons: { addPathRule: '新增路徑規則', addImageVariable: '新增圖片變數', deleteRule: '刪除規則', refresh: '重新整理', copySnapshot: '複製快照', randomBackgroundImageValue: '隨機選擇圖片變數', reset: '還原預設值' },
 		tooltips: {
 			clickToCopy: (value) => `按一下即可複製：${value}`,
-				resourceVariableEnabled: '啟用或停用發布此圖片變數', ruleDisabled: '規則已停用', useForBackgroundImage: '是否用於背景圖片：啟用後可被隨機背景圖片選中', backgroundImageExcluded: '未納入隨機背景圖片選擇', setCssVariableName: '請設定 CSS 變數名稱', variableNameInvalid: '變數名稱無效', setVaultImagePath: '請設定庫內圖片路徑', imageFileNotFound: '找不到圖片檔案', notAnImageFile: '不是圖片檔案', variableNotPublished: '變數尚未發布（請檢查模組開關）',
+				resourceVariableEnabled: '啟用或停用發布此圖片變數', ruleDisabled: '規則已停用', randomScope: '隨機背景圖片參與範圍：僅亮色/僅暗色時，只在對應外觀模式下參與隨機', randomScopeAll: '全部模式', randomScopeLightOnly: '僅亮色', randomScopeDarkOnly: '僅暗色', randomScopeNone: '不參與隨機', setCssVariableName: '請設定 CSS 變數名稱', variableNameInvalid: '變數名稱無效', setVaultImagePath: '請設定庫內圖片路徑', imageFileNotFound: '找不到圖片檔案', notAnImageFile: '不是圖片檔案', variableNotPublished: '變數尚未發布（請檢查模組開關）',
 		},
 		validation: { invalidPrefix: '前綴無效', invalidClassNames: '類別名稱無效', invalidCssVariableName: 'CSS 變數名稱無效（必須以 -- 開頭）', invalidBackgroundImageValue: 'CSS background-image 值無效', backgroundImageVariableRequiresVar: '請用 var() 包住 CSS 變數，例如 var(--image)。也可以點擊上方圖片變數的預覽圖快速複製。', duplicateVariableName: (count) => `另有 ${count} 條規則使用此變數名稱；後面的規則會覆寫前面的規則` },
 		diagnostics: {

@@ -234,20 +234,55 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 	max-width: 200px;
 }
 
-/* Code block inside the resource-toggle description */
-.sc-resource-toggle .setting-item-description pre {
-	background: var(--background-secondary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	padding: 8px 12px;
-	margin: 6px 0 0;
-	overflow-x: auto;
+/* ------------------------------------------------------------------ */
+/* Resource toolbar: filter input on the left, add button on the right */
+/* ------------------------------------------------------------------ */
+
+.sc-resource-toolbar .setting-item-info {
+	display: none;
 }
 
-.sc-resource-toggle .setting-item-description pre code {
-	font-family: var(--font-monospace);
-	font-size: var(--font-ui-smaller);
-	color: var(--text-normal);
+.sc-resource-toolbar .setting-item-control {
+	flex: 1 1 100%;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+
+.sc-resource-toolbar .sc-resource-filter-input {
+	flex: 1 1 auto;
+	min-width: 160px;
+	max-width: 360px;
+}
+
+/* Let the button shrink in narrow panels instead of overflowing;
+   the label truncates with an ellipsis. min-width: 0 is required —
+   flex items refuse to shrink below min-content without it.
+   display: block is required too: Obsidian renders buttons as
+   inline-flex with justify-content: center, and inside a flex
+   container neither text-align nor text-overflow have any effect. */
+.sc-resource-toolbar .setting-item-control button {
+	margin-left: auto;
+	display: block;
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* Obsidian's .vertical-tab-content button rules force width: 100% and
+   text-align: center with higher specificity than a plain plugin
+   selector. Mirror their selector shape and double the toolbar class
+   to out-rank them without !important. width: auto lets the button
+   size to its label; left alignment truncates at the end ("Add
+   image...") — centered text would clip on both sides with no
+   ellipsis. */
+.vertical-tab-content
+	.setting-item.sc-resource-toolbar.sc-resource-toolbar
+	.setting-item-control
+	button:not(.clickable-icon) {
+	width: auto;
+	text-align: left;
 }
 
 /* ------------------------------------------------------------------ */
