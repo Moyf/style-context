@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.4.0] - 2026-09-09
 ### 🚀 Added
 
 - **Per-image random scope**: Each registered image variable can now choose which random background pools include it — all (default), light only, dark only, or none. The choice lives on a compact icon button that opens the picker on click.
