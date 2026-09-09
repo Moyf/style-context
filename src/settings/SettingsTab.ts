@@ -636,7 +636,7 @@ export class SettingsTab extends PluginSettingTab {
 							labels.filterBrightness,
 							`${prefix}.filter.brightness`,
 							0,
-							2,
+							1.5,
 							formatPercent,
 							DEFAULT_SETTINGS.backgroundImage.filter.brightness,
 						),
@@ -647,13 +647,13 @@ export class SettingsTab extends PluginSettingTab {
 							20,
 							formatPixels,
 							DEFAULT_SETTINGS.backgroundImage.filter.blur,
-							0.5,
+							1,
 						),
 						this.buildFilterSlider(
 							labels.filterContrast,
 							`${prefix}.filter.contrast`,
 							0,
-							2,
+							1.5,
 							formatPercent,
 							DEFAULT_SETTINGS.backgroundImage.filter.contrast,
 						),
@@ -661,7 +661,7 @@ export class SettingsTab extends PluginSettingTab {
 							labels.filterSaturate,
 							`${prefix}.filter.saturate`,
 							0,
-							2,
+							1.5,
 							formatPercent,
 							DEFAULT_SETTINGS.backgroundImage.filter.saturate,
 						),
@@ -724,8 +724,47 @@ export class SettingsTab extends PluginSettingTab {
 						),
 					],
 				},
+				{
+					name: '',
+					searchable: false,
+					render: (setting) => {
+						setting.addButton((button) =>
+							button
+								.setButtonText(messages.settings.buttons.resetAll)
+								.onClick(async () => {
+									await this.resetBackgroundAppearance(mode);
+								}),
+						);
+					},
+				},
 			],
 		};
+	}
+
+	/**
+	 * Restores every parameter on one Appearance page (display, filter,
+	 * layout) to the defaults for its mode. The image value itself is not
+	 * part of the page and is left untouched.
+	 */
+	private async resetBackgroundAppearance(
+		mode: BackgroundImageMode,
+	): Promise<void> {
+		const defaults =
+			mode === 'light'
+				? DEFAULT_SETTINGS.backgroundImage.light
+				: mode === 'dark'
+					? DEFAULT_SETTINGS.backgroundImage.dark
+					: DEFAULT_SETTINGS.backgroundImage;
+		const config = this.backgroundImageConfig(mode);
+		config.opacity = defaults.opacity;
+		config.blendMode = defaults.blendMode;
+		config.size = defaults.size;
+		config.position = defaults.position;
+		config.repeat = defaults.repeat;
+		// Fresh filter object so the shared default never gets mutated.
+		config.filter = { ...defaults.filter };
+		await this.persistAndApplyBackgroundImage();
+		this.update();
 	}
 
 	/** Returns the config object a row or page reads from and writes to. */

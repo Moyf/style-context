@@ -111,6 +111,7 @@ export interface Messages {
 			copySnapshot: string;
 			randomBackgroundImageValue: string;
 			reset: string;
+			resetAll: string;
 		};
 		tooltips: {
 			clickToCopy: (value: string) => string;
