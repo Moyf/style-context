@@ -1103,86 +1103,110 @@ export class SettingsTab extends PluginSettingTab {
 					);
 				},
 			},
-			{
-				name: '',
-				searchable: false,
-				render: (setting) => {
-					setting.settingEl.removeClass(
-						'sc-path-rule-row',
-						'sc-resource-rule-row',
-						'mod-toggle',
-					);
-					setting.setClass('sc-resource-toolbar');
-					// Filter sits on the left of the same row; the add button
-					// stays on the right. Filter lives in-memory only.
-					setting.addText((text) => {
-						text.setPlaceholder(
-							messages.settings.placeholders.filterImageVariables,
-						)
-							.setValue(this.resourceFilter)
-							.onChange((value) => {
-								this.resourceFilter = value;
-								this.applyResourceFilter();
-							});
-						text.inputEl.addClass('sc-resource-filter-input');
-					});
-					setting.addButton((button) => {
-						this.resourceAddButton = button;
-						if (this.resourceAdding) {
-							button.setDisabled(true);
-						}
-						button
-							.setButtonText(messages.settings.buttons.addImageVariable)
-							.setCta()
-							.onClick(async () => {
-								if (this.resourceAdding) return;
-								this.resourceAdding = true;
-								button.setDisabled(true);
-								// Insert at the top so the new row appears right
-								// under the toolbar, ready to edit immediately.
-								const newRule: ResourceRule = {
-									id: generateId('rr'),
-									filePath: '',
-									variableName: this.generateDefaultVarName(),
-									enabled: true,
-									randomScope: 'all',
-								};
-								this.plugin.settings.resourceRules.unshift(newRule);
-								// Reset the filter so the freshly added (empty) row
-								// is visible after the rebuild.
-								this.resourceFilter = '';
-								await this.persistAndApply();
-								this.update();
-								this.resourceAdding = false;
-								// The rebuild swapped the component — re-enable the
-								// current one through Obsidian's own setDisabled so
-								// its disabled state classes are cleaned up too.
-								this.resourceAddButton?.setDisabled(false);
-								// Move the caret into the new row's vault file path
-								// input; the rebuild would otherwise drop focus on
-								// the toolbar filter.
-								window.setTimeout(() => {
-									const rowEl = this.resourceRuleRowEls.get(
-										newRule.id,
-									);
-									rowEl
-										?.querySelector<HTMLInputElement>(
-											'input[type="text"]',
-										)
-										?.focus();
-								}, 0);
-							});
-					});
-				},
-			},
-			...this.plugin.settings.resourceRules.map((rule) =>
-				this.buildResourceRuleRow(messages, rule),
-			),
+			this.buildResourceListPage(messages),
 		];
 		return {
 			type: 'group',
 			heading: messages.settings.groups.localImageVariable,
 			items,
+		};
+	}
+
+	/**
+	 * The variable list as its own subpage: the toolbar (filter + add) on
+	 * top, then one row per rule. A subpage keeps the main tab short no
+	 * matter how many variables are registered.
+	 */
+	private buildResourceListPage(
+		messages: Messages,
+	): SettingGroupItem<ControlKey> {
+		return {
+			type: 'page',
+			name: messages.settings.pages.manageImageVariables,
+			desc: messages.settings.pages.manageImageVariablesDesc,
+			items: [
+				{
+					name: '',
+					searchable: false,
+					render: (setting) => {
+						setting.settingEl.removeClass(
+							'sc-path-rule-row',
+							'sc-resource-rule-row',
+							'mod-toggle',
+						);
+						setting.setClass('sc-resource-toolbar');
+						// Filter sits on the left of the same row; the add button
+						// stays on the right. Filter lives in-memory only.
+						setting.addText((text) => {
+							text.setPlaceholder(
+								messages.settings.placeholders.filterImageVariables,
+							)
+								.setValue(this.resourceFilter)
+								.onChange((value) => {
+									this.resourceFilter = value;
+									this.applyResourceFilter();
+								});
+							text.inputEl.addClass('sc-resource-filter-input');
+						});
+						setting.addButton((button) => {
+							this.resourceAddButton = button;
+							if (this.resourceAdding) {
+								button.setDisabled(true);
+							}
+							button
+								.setButtonText(
+									messages.settings.buttons.addImageVariable,
+								)
+								.setCta()
+								.onClick(async () => {
+									if (this.resourceAdding) return;
+									this.resourceAdding = true;
+									button.setDisabled(true);
+									// Insert at the top so the new row appears
+									// right under the toolbar, ready to edit
+									// immediately.
+									const newRule: ResourceRule = {
+										id: generateId('rr'),
+										filePath: '',
+										variableName: this.generateDefaultVarName(),
+										enabled: true,
+										randomScope: 'all',
+									};
+									this.plugin.settings.resourceRules.unshift(
+										newRule,
+									);
+									// Reset the filter so the freshly added
+									// (empty) row is visible after the rebuild.
+									this.resourceFilter = '';
+									await this.persistAndApply();
+									this.update();
+									this.resourceAdding = false;
+									// The rebuild swapped the component —
+									// re-enable the current one through Obsidian's
+									// own setDisabled so its disabled state
+									// classes are cleaned up too.
+									this.resourceAddButton?.setDisabled(false);
+									// Move the caret into the new row's vault
+									// file path input; the rebuild would
+									// otherwise drop focus on the toolbar filter.
+									window.setTimeout(() => {
+										const rowEl = this.resourceRuleRowEls.get(
+											newRule.id,
+										);
+										rowEl
+											?.querySelector<HTMLInputElement>(
+												'input[type="text"]',
+											)
+											?.focus();
+									}, 0);
+								});
+						});
+					},
+				},
+				...this.plugin.settings.resourceRules.map((rule) =>
+					this.buildResourceRuleRow(messages, rule),
+				),
+			],
 		};
 	}
 
@@ -1509,12 +1533,14 @@ export class SettingsTab extends PluginSettingTab {
 									}),
 							);
 
-						// The live panel is not a setting row; anchor it
-						// directly after this row inside the group list.
+						// The live panel must live INSIDE the setting row: the
+						// declarative settings framework owns the group list
+						// container and silently detaches any sibling it did
+						// not create on every re-render.
+						setting.settingEl.addClass('sc-has-diagnostics');
 						const panel = setting.settingEl.createDiv({
 							cls: 'sc-settings-diagnostics',
 						});
-						setting.settingEl.insertAdjacentElement('afterend', panel);
 						this.diagnosticsEl = panel;
 						this.refreshDiagnostics();
 						this.startDiagnosticsRefresh();

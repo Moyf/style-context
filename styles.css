@@ -94,7 +94,14 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 
 /* Style Context - settings diagnostics panel */
 
+/* The panel is a child of the setting row; wrap so it gets a full-width
+   line of its own below the row's info and controls. */
+.setting-item.sc-has-diagnostics {
+	flex-wrap: wrap;
+}
+
 .sc-settings-diagnostics {
+	width: 100%;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
 	padding: 12px;

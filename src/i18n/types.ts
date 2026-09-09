@@ -34,6 +34,8 @@ export interface Messages {
 			interfaceTransparencyDesc: string;
 			backgroundRandomization: string;
 			backgroundRandomizationDesc: string;
+			manageImageVariables: string;
+			manageImageVariablesDesc: string;
 		};
 		labels: {
 			publishThemeClass: string;
