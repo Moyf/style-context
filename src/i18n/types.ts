@@ -36,6 +36,8 @@ export interface Messages {
 			backgroundRandomizationDesc: string;
 			manageImageVariables: string;
 			manageImageVariablesDesc: string;
+			managePathRules: string;
+			managePathRulesDesc: string;
 		};
 		labels: {
 			publishThemeClass: string;
@@ -103,7 +105,7 @@ export interface Messages {
 			vaultFilePath: string;
 			cssVariable: string;
 			backgroundImageValue: string;
-			filterImageVariables: string;
+			filter: string;
 		};
 		buttons: {
 			addPathRule: string;

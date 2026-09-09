@@ -18,7 +18,7 @@ const zhCN: Messages = {
 		intro: '此插件将当前主题、笔记路径规则和库内图片路径发布为 CSS 类与变量，让 CSS 片段无需 JavaScript 即可响应运行时状态。',
 		documentation: { link: 'Obsidian 官方 CSS 代码片段文档' },
 		groups: { themeContext: '主题上下文', notePathRules: '笔记路径规则', localImageVariable: '本地图片变量', backgroundImage: '背景图片', backgroundDisplay: '显示', backgroundFilter: '滤镜', backgroundLayout: '布局', diagnostics: '诊断' },
-		pages: { backgroundAppearance: '外观', backgroundAppearanceDesc: '背景图片图层的不透明度、混合、尺寸、位置与 CSS 滤镜。滤镜保持默认值即不生效。', lightBackgroundAppearance: '亮色外观', darkBackgroundAppearance: '暗色外观', interfaceTransparency: '界面透明度', interfaceTransparencyDesc: '将界面融入背景图层的透明度控制。', backgroundRandomization: '随机化图像背景', backgroundRandomizationDesc: '设置随机背景图片的执行时机和入口。', manageImageVariables: '管理图片变量', manageImageVariablesDesc: '打开变量列表，添加、筛选和编辑图片变量。' },
+		pages: { backgroundAppearance: '外观', backgroundAppearanceDesc: '背景图片图层的不透明度、混合、尺寸、位置与 CSS 滤镜。滤镜保持默认值即不生效。', lightBackgroundAppearance: '亮色外观', darkBackgroundAppearance: '暗色外观', interfaceTransparency: '界面透明度', interfaceTransparencyDesc: '将界面融入背景图层的透明度控制。', backgroundRandomization: '随机化图像背景', backgroundRandomizationDesc: '设置随机背景图片的执行时机和入口。', manageImageVariables: '管理图片变量', manageImageVariablesDesc: '打开变量列表，添加、筛选和编辑图片变量。', managePathRules: '管理路径规则', managePathRulesDesc: '打开规则列表，添加、编辑和删除笔记路径规则。' },
 			labels: { publishThemeClass: '发布主题类', themeClassPrefix: '主题类前缀', publishPathClasses: '发布路径类', publishLocalImageVariables: '发布本地图片变量', liveStatus: '实时状态', folder: '文件夹', keyword: '关键词', publishBackgroundImage: '启用背景图片', perModeBackground: '区分亮色与暗色背景', randomBackgroundOnStartup: '每次启动时自动随机背景', addRandomBackgroundRibbon: '添加 Ribbon 图标', backgroundImageValue: '图片值', lightBackgroundImageValue: '亮色图片值', darkBackgroundImageValue: '暗色图片值', backgroundOpacity: '图片不透明度', backgroundBlendMode: '混合模式', backgroundSize: '背景尺寸', backgroundPosition: '背景位置', backgroundRepeat: '重复方式', backgroundAttachment: '附着方式', filterBrightness: '亮度', filterContrast: '对比度', filterSaturate: '饱和度', filterGrayscale: '灰度', filterSepia: '褐色', filterInvert: '反色', filterHueRotate: '色相旋转', filterBlur: '模糊', mobileToolbarTransparent: '移动端工具栏透明', statusBarTransparent: '状态栏透明', ribbonTransparent: 'Ribbon 透明', titlebarTransparent: '窗口标题栏透明' },
 		descriptions: {
 			publishThemeClass: '为当前主题在 body 上添加唯一的主题类。这样可通过 CSS 片段调整特定主题，无需修改主题自身文件。',
@@ -44,7 +44,7 @@ const zhCN: Messages = {
 			backgroundRepeat: '是否平铺图片。',
 			backgroundAttachment: '图片是否随文档滚动。',
 		},
-		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '文件夹前缀', keywordInPath: '路径中的关键词', classNames: '类名1, 类名2', vaultFilePath: '库内文件路径', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)', filterImageVariables: '过滤...' },
+		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: '文件夹前缀', keywordInPath: '路径中的关键词', classNames: '类名1, 类名2', vaultFilePath: '库内文件路径', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)', filter: '过滤...' },
 		buttons: { addPathRule: '添加路径规则', addImageVariable: '添加图片变量', deleteRule: '删除规则', refresh: '刷新', copySnapshot: '复制快照', randomBackgroundImageValue: '随机选择图片变量', reset: '恢复默认值', resetAll: '全部重置' },
 		tooltips: {
 			clickToCopy: (value) => `点击复制：${value}`,

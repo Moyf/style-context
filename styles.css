@@ -101,12 +101,12 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 }
 
 /* Height is capped so long rule lists scroll inside the panel instead of
-   stretching the settings page. */
+   stretching the settings page. At either scroll edge the wheel chains
+   back to the settings page (default overscroll behavior). */
 .sc-settings-diagnostics {
 	width: 100%;
 	max-height: 400px;
 	overflow-y: auto;
-	overscroll-behavior: contain;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
 	padding: 10px 12px;
@@ -169,10 +169,6 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 }
 
 .sc-settings-diagnostics .sc-diagnostics-table th {
-	position: sticky;
-	top: 0;
-	z-index: 1;
-	background: var(--background-secondary);
 	font-size: var(--font-ui-smallest);
 	font-weight: 600;
 	letter-spacing: 0.04em;
@@ -283,17 +279,17 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 /* Resource toolbar: filter input on the left, add button on the right */
 /* ------------------------------------------------------------------ */
 
-.sc-resource-toolbar .setting-item-info {
+.sc-rule-toolbar .setting-item-info {
 	display: none;
 }
 
-.sc-resource-toolbar .setting-item-control {
+.sc-rule-toolbar .setting-item-control {
 	flex: 1 1 100%;
 	align-items: center;
 	gap: var(--size-4-2);
 }
 
-.sc-resource-toolbar .sc-resource-filter-input {
+.sc-rule-toolbar .sc-resource-filter-input {
 	flex: 1 1 auto;
 	min-width: 160px;
 	max-width: 360px;
@@ -305,7 +301,7 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
    display: block is required too: Obsidian renders buttons as
    inline-flex with justify-content: center, and inside a flex
    container neither text-align nor text-overflow have any effect. */
-.sc-resource-toolbar .setting-item-control button {
+.sc-rule-toolbar .setting-item-control button {
 	margin-left: auto;
 	display: block;
 	flex: 0 1 auto;
@@ -323,7 +319,7 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
    image...") — centered text would clip on both sides with no
    ellipsis. */
 .vertical-tab-content
-	.setting-item.sc-resource-toolbar.sc-resource-toolbar
+	.setting-item.sc-rule-toolbar.sc-rule-toolbar
 	.setting-item-control
 	button:not(.clickable-icon) {
 	width: auto;

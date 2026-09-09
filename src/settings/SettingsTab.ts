@@ -148,8 +148,20 @@ export class SettingsTab extends PluginSettingTab {
 	private rulePreviewTiles = new Map<string, HTMLElement>();
 	/** Resource rule rows keyed by rule id, for live filtering without a rebuild. */
 	private resourceRuleRowEls = new Map<string, HTMLElement>();
+	/** Path rule rows keyed by rule id, to focus a fresh row after adding. */
+	private pathRuleRowEls = new Map<string, HTMLElement>();
+	/**
+	 * True while a path-rule add click is rebuilding + saving. The rebuild
+	 * replaces the button element, so the flag — not the element — carries
+	 * the disabled state across the render.
+	 */
+	private pathRuleAdding = false;
+	/** The path toolbar's add button, re-resolved on every toolbar render. */
+	private pathAddButton: ButtonComponent | null = null;
 	/** Current image-variable filter query; kept across tab re-renders. */
 	private resourceFilter = '';
+	/** Current path-rule filter query; kept across tab re-renders. */
+	private pathFilter = '';
 	/**
 	 * True while an add-variable click is rebuilding + saving. The rebuild
 	 * replaces the button element, so the flag — not the element — carries
@@ -228,9 +240,10 @@ export class SettingsTab extends PluginSettingTab {
 
 	hide(): void {
 		this.stopDiagnosticsRefresh();
-		// A save may still be in flight when the tab closes; never let the
-		// flag disable the add button in the next open tab.
+		// Saves may still be in flight when the tab closes; never let the
+		// flags disable the add buttons in the next open tab.
 		this.resourceAdding = false;
+		this.pathRuleAdding = false;
 		super.hide();
 	}
 
@@ -352,41 +365,109 @@ export class SettingsTab extends PluginSettingTab {
 				desc: messages.settings.descriptions.publishPathClasses,
 				control: { type: 'toggle', key: 'notePathContextEnabled' },
 			},
-			...this.plugin.settings.pathRules.map((rule) =>
-				this.buildPathRuleRow(messages, rule),
-			),
-			{
-				name: '',
-				searchable: false,
-				render: (setting) => {
-					setting.settingEl.removeClass(
-						'sc-path-rule-row',
-						'sc-resource-rule-row',
-						'mod-toggle',
-					);
-					setting.addButton((button) =>
-						button
-							.setButtonText(messages.settings.buttons.addPathRule)
-							.setCta()
-							.onClick(async () => {
-								this.plugin.settings.pathRules.push({
-									id: generateId('pr'),
-									matchMode: 'folder',
-									pattern: '',
-									className: '',
-									enabled: true,
-								});
-								await this.persistAndApply();
-								this.update();
-							}),
-					);
-				},
-			},
+			this.buildPathRuleListPage(messages),
 		];
 		return {
 			type: 'group',
 			heading: messages.settings.groups.notePathRules,
 			items,
+		};
+	}
+
+	/**
+	 * The path rule list as its own subpage: the add button on top, then
+	 * one row per rule. A subpage keeps the main tab short no matter how
+	 * many rules are registered.
+	 */
+	private buildPathRuleListPage(
+		messages: Messages,
+	): SettingGroupItem<ControlKey> {
+		return {
+			type: 'page',
+			name: messages.settings.pages.managePathRules,
+			desc: messages.settings.pages.managePathRulesDesc,
+			items: [
+				{
+					name: '',
+					searchable: false,
+					render: (setting) => {
+						setting.settingEl.removeClass(
+							'sc-path-rule-row',
+							'sc-resource-rule-row',
+							'mod-toggle',
+						);
+						setting.setClass('sc-rule-toolbar');
+						// Filter sits on the left of the same row; the add
+						// button stays on the right. Filter lives in-memory
+						// only, matching the image variable toolbar.
+						setting.addText((text) => {
+							text.setPlaceholder(
+								messages.settings.placeholders.filter,
+							)
+								.setValue(this.pathFilter)
+								.onChange((value) => {
+									this.pathFilter = value;
+									this.applyPathFilter();
+								});
+							text.inputEl.addClass('sc-resource-filter-input');
+						});
+						setting.addButton((button) => {
+							this.pathAddButton = button;
+							if (this.pathRuleAdding) {
+								button.setDisabled(true);
+							}
+							button
+								.setButtonText(
+									messages.settings.buttons.addPathRule,
+								)
+								.setCta()
+								.onClick(async () => {
+									if (this.pathRuleAdding) return;
+									this.pathRuleAdding = true;
+									button.setDisabled(true);
+									// Insert at the top so the new row appears
+									// right under the toolbar, ready to edit
+									// immediately.
+									const newRule: PathRule = {
+										id: generateId('pr'),
+										matchMode: 'folder',
+										pattern: '',
+										className: '',
+										enabled: true,
+									};
+									this.plugin.settings.pathRules.unshift(newRule);
+									// Reset the filter so the freshly added
+									// (empty) row is visible after the rebuild.
+									this.pathFilter = '';
+									await this.persistAndApply();
+									this.update();
+									this.pathRuleAdding = false;
+									// The rebuild swapped the component —
+									// re-enable the current one through Obsidian's
+									// own setDisabled so its disabled state
+									// classes are cleaned up too.
+									this.pathAddButton?.setDisabled(false);
+									// Move the caret into the new row's pattern
+									// input; the rebuild would otherwise drop
+									// focus.
+									window.setTimeout(() => {
+										const rowEl = this.pathRuleRowEls.get(
+											newRule.id,
+										);
+										rowEl
+											?.querySelector<HTMLInputElement>(
+												'input[type="text"]',
+											)
+											?.focus();
+									}, 0);
+								});
+						});
+					},
+				},
+				...this.plugin.settings.pathRules.map((rule) =>
+					this.buildPathRuleRow(messages, rule),
+				),
+			],
 		};
 	}
 
@@ -399,6 +480,16 @@ export class SettingsTab extends PluginSettingTab {
 			searchable: false,
 			render: (setting) => {
 				setting.setClass('sc-path-rule-row');
+				// Register the row so the toolbar can focus a fresh row
+				// right after adding it, and apply the current filter so a
+				// rebuild keeps it.
+				this.pathRuleRowEls.set(rule.id, setting.settingEl);
+				const query = this.pathFilter.trim().toLowerCase();
+				const rowMatches =
+					query.length === 0 ||
+					rule.pattern.toLowerCase().includes(query) ||
+					rule.className.toLowerCase().includes(query);
+				setting.settingEl.style.display = rowMatches ? '' : 'none';
 				setting
 					// Match-mode dropdown (leftmost) — switches the pattern
 					// input's behavior and placeholder below. Defaults to
@@ -464,6 +555,10 @@ export class SettingsTab extends PluginSettingTab {
 								this.update();
 							}),
 					);
+
+				return () => {
+					this.pathRuleRowEls.delete(rule.id);
+				};
 			},
 		};
 	}
@@ -842,6 +937,7 @@ export class SettingsTab extends PluginSettingTab {
 								return;
 							}
 							config.imageValue = value;
+							this.plugin.recordRandomImagePick(value);
 							variableText?.setValue(value);
 							if (variableText) {
 								this.clearInputError(variableText.inputEl);
@@ -1054,6 +1150,7 @@ export class SettingsTab extends PluginSettingTab {
 			currentValue,
 			Math.random,
 			mode,
+			this.plugin.recentRandomImagePicks,
 		);
 	}
 
@@ -1122,12 +1219,12 @@ export class SettingsTab extends PluginSettingTab {
 							'sc-resource-rule-row',
 							'mod-toggle',
 						);
-						setting.setClass('sc-resource-toolbar');
+						setting.setClass('sc-rule-toolbar');
 						// Filter sits on the left of the same row; the add button
 						// stays on the right. Filter lives in-memory only.
 						setting.addText((text) => {
 							text.setPlaceholder(
-								messages.settings.placeholders.filterImageVariables,
+								messages.settings.placeholders.filter,
 							)
 								.setValue(this.resourceFilter)
 								.onChange((value) => {
@@ -1246,6 +1343,25 @@ export class SettingsTab extends PluginSettingTab {
 				(rule.filePath.toLowerCase().includes(query) ||
 					rule.variableName.toLowerCase().includes(query)));
 		rowEl.style.display = matches ? '' : 'none';
+	}
+
+	/**
+	 * Applies the current path-rule filter query to every registered rule
+	 * row. Called on each keystroke in the toolbar filter input.
+	 */
+	private applyPathFilter(): void {
+		const query = this.pathFilter.trim().toLowerCase();
+		for (const [ruleId, rowEl] of this.pathRuleRowEls) {
+			const rule = this.plugin.settings.pathRules.find(
+				(r) => r.id === ruleId,
+			);
+			const matches =
+				query.length === 0 ||
+				(rule !== undefined &&
+					(rule.pattern.toLowerCase().includes(query) ||
+						rule.className.toLowerCase().includes(query)));
+			rowEl.style.display = matches ? '' : 'none';
+		}
 	}
 
 	private buildResourceRuleRow(
