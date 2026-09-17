@@ -97,6 +97,12 @@ export interface BackgroundImageSettings extends BackgroundModeSettings {
 	enabled: boolean;
 	randomOnStartup: boolean;
 	randomBackgroundRibbon: boolean;
+	/**
+	 * Seconds for the fade in/out animation when the background image
+	 * appears or switches. 0 disables animation (instant swap). Applies
+	 * globally, not per light/dark mode.
+	 */
+	fadeDuration: number;
 	mobileToolbarTransparent: boolean;
 	statusBarTransparent: boolean;
 	ribbonTransparent: boolean;
@@ -159,6 +165,7 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 		enabled: false,
 		randomOnStartup: false,
 		randomBackgroundRibbon: true,
+		fadeDuration: 0.6,
 		imageValue: '',
 		opacity: 0.35,
 		blendMode: 'normal',

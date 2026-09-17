@@ -923,6 +923,9 @@ describe('BackgroundImageService', () => {
 				backgroundImage: {
 					...DEFAULT_SETTINGS.backgroundImage,
 					enabled: true,
+					// Synchronous image writes: these tests assert which
+					// image is selected, not the fade timing.
+					fadeDuration: 0,
 					imageValue: globalValue,
 					perModeEnabled: true,
 					light: {
@@ -1110,6 +1113,138 @@ describe('BackgroundImageService', () => {
 					'--sc-style-context-background-image-value',
 				),
 			).toBe('var(--dark-2)');
+		});
+	});
+
+	describe('fade animation', () => {
+		const fadeSettings = (fadeDuration: number): StyleContextSettings =>
+			settings({
+				backgroundImage: {
+					...DEFAULT_SETTINGS.backgroundImage,
+					enabled: true,
+					fadeDuration,
+					imageValue: 'var(--image-1)',
+					opacity: 0.6,
+				},
+			});
+
+		it('fades in from transparent on the first apply', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+
+			// The image is written immediately; opacity starts at 0 and
+			// the transition to the resolved value is left to CSS.
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--image-1)');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.6');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+		});
+
+		it('keeps opacity updates instant when the image is unchanged', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			currentSettings.backgroundImage.opacity = 0.9;
+			service.apply();
+
+			// Same image: direct write, no swap timer scheduled.
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.9');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--image-1)');
+		});
+
+		it('delays the image swap until the fade-out completes', () => {
+			vi.useFakeTimers();
+			try {
+				const currentSettings = fadeSettings(0.5);
+				const service = new BackgroundImageService(() => currentSettings);
+
+				service.enable();
+				currentSettings.backgroundImage.imageValue = 'var(--image-2)';
+				service.apply();
+
+				// Fade-out phase: old image still visible, opacity at 0.
+				expect(
+					document.body.style.getPropertyValue(
+						'--sc-style-context-background-image-value',
+					),
+				).toBe('var(--image-1)');
+				expect(
+					document.body.style.getPropertyValue(
+						'--sc-style-context-background-image-opacity',
+					),
+				).toBe('0');
+
+				vi.advanceTimersByTime(500);
+
+				// Swap committed: new image, fading back in.
+				expect(
+					document.body.style.getPropertyValue(
+						'--sc-style-context-background-image-value',
+					),
+				).toBe('var(--image-2)');
+				expect(
+					document.body.style.getPropertyValue(
+						'--sc-style-context-background-image-opacity',
+					),
+				).toBe('0.6');
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('writes immediately when fade is disabled (legacy behavior)', () => {
+			const currentSettings = fadeSettings(0);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			currentSettings.backgroundImage.imageValue = 'var(--image-2)';
+			service.apply();
+
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--image-2)');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+		});
+
+		it('clamps the persisted fade duration to at most 3 seconds', () => {
+			const currentSettings = fadeSettings(99);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('3s');
 		});
 	});
 });

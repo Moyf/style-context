@@ -37,7 +37,37 @@ const BACKGROUND_IMAGE_PROPERTIES = {
 	attachment: '--sc-style-context-background-image-attachment',
 	opacity: '--sc-style-context-background-image-opacity',
 	filter: '--sc-style-context-background-image-filter',
+	/** Layer opacity transition duration; 0s keeps the layer static. */
+	fadeDuration: '--sc-style-context-background-image-fade-duration',
 } as const;
+
+/** Upper bound for the persisted fade duration, in seconds. */
+const MAX_FADE_DURATION_SECONDS = 3;
+
+function resolveFadeDuration(value: unknown): number {
+	const number = typeof value === 'number' ? value : Number(value);
+	if (!Number.isFinite(number) || number <= 0) return 0;
+	return Math.min(MAX_FADE_DURATION_SECONDS, number);
+}
+
+/** In-flight fade bookkeeping for one document. */
+interface FadeSequenceState {
+	phase: 'fade-out' | 'fade-in';
+	targetValue: string;
+	targetOpacity: string;
+	/** Pending swap timer; set only during the fade-out phase. */
+	timeoutId?: ReturnType<typeof setTimeout>;
+}
+
+/**
+ * Writing layout flushes the pending style changes so the browser commits
+ * the intermediate (fully faded-out) state before the next transition
+ * starts. Without this, the swap and the fade-in would coalesce into one
+ * frame and the new image would flash at partial opacity.
+ */
+function forceReflow(targetDocument: Document): void {
+	void targetDocument.body.getBoundingClientRect();
+}
 
 type StringOptions = readonly string[];
 
@@ -186,6 +216,11 @@ export class BackgroundImageService {
 	private app?: App;
 	private enabled = false;
 	private touchedDocuments = new Set<Document>();
+	/**
+	 * Per-document fade state. A document absent from this map has no
+	 * fade sequence in flight and its layer sits at its resolved opacity.
+	 */
+	private fadeState = new Map<Document, FadeSequenceState>();
 
 	constructor(getSettings: () => StyleContextSettings, app?: App) {
 		this.getSettings = getSettings;
@@ -216,6 +251,7 @@ export class BackgroundImageService {
 		}
 
 		const transparency = resolveInterfaceTransparency(settings);
+		const fadeDuration = resolveFadeDuration(settings.fadeDuration);
 
 		// Include previously touched documents so an unfocused detached
 		// window still follows mode/config changes, exactly like clear().
@@ -228,7 +264,12 @@ export class BackgroundImageService {
 				this.clearDocument(targetDocument);
 				continue;
 			}
-			this.applyToDocument(targetDocument, resolved, transparency);
+			this.applyToDocument(
+				targetDocument,
+				resolved,
+				transparency,
+				fadeDuration,
+			);
 		}
 	}
 
@@ -257,6 +298,7 @@ export class BackgroundImageService {
 	}
 
 	private clearDocument(targetDocument: Document): void {
+		this.cancelFade(targetDocument);
 		targetDocument.body.classList.remove(
 			BACKGROUND_IMAGE_BODY_CLASS,
 			...Object.values(INTERFACE_TRANSPARENCY_CLASSES),
@@ -267,13 +309,76 @@ export class BackgroundImageService {
 		this.touchedDocuments.delete(targetDocument);
 	}
 
+	/**
+	 * Writes the resolved style onto one document, orchestrating the fade
+	 * sequence when the image changes and the transition duration allows.
+	 *
+	 * Sequence rules:
+	 * - No prior layer (first show after plugin load / enable): fade the
+	 *   layer in from fully transparent.
+	 * - Same image, any appearance change (opacity/filter/blend/etc.):
+	 *   write directly, the CSS transition smooths the delta in place.
+	 * - Image swap: fade out the current layer, reflow, swap the image
+	 *   value, then fade back in. A pending sequence for the same document
+	 *   is cancelled first so rapid changes converge to the latest state.
+	 * - Duration 0: everything writes instantly (legacy behavior).
+	 */
 	private applyToDocument(
 		targetDocument: Document,
 		resolved: ResolvedBackgroundImageStyle,
 		transparency: InterfaceTransparency,
+		fadeDuration: number,
 	): void {
 		const style = targetDocument.body.style;
-		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.value, resolved.imageValue);
+		const hadLayer = targetDocument.body.classList.contains(
+			BACKGROUND_IMAGE_BODY_CLASS,
+		);
+		const previousValue = hadLayer
+			? style.getPropertyValue(BACKGROUND_IMAGE_PROPERTIES.value)
+			: '';
+
+		const isFirstShow = !hadLayer || !previousValue;
+		const isSameImage = previousValue === resolved.imageValue;
+		const animate = fadeDuration > 0 && !isSameImage;
+
+		if (!animate) {
+			// Instant path: legacy behavior. Appearance tweaks on the same
+			// image (opacity slider drags, filter changes) stay perfectly
+			// live, so the transition stays disabled here.
+			this.cancelFade(targetDocument);
+			setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.fadeDuration, '0s');
+			this.writeAppearanceVariables(targetDocument, resolved);
+			setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.value, resolved.imageValue);
+			targetDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
+			applyInterfaceTransparency(targetDocument, transparency);
+			this.touchedDocuments.add(targetDocument);
+			return;
+		}
+
+		// Animated path. Cancel any prior sequence first so a superseded
+		// swap timer can never write its image later.
+		this.cancelFade(targetDocument);
+		// The transition must be neutralized while the base appearance is
+		// written, otherwise the opacity write below would animate.
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.fadeDuration, '0s');
+		this.writeAppearanceVariables(targetDocument, resolved);
+		targetDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
+		applyInterfaceTransparency(targetDocument, transparency);
+		this.touchedDocuments.add(targetDocument);
+
+		if (isFirstShow) {
+			this.startFadeIn(targetDocument, resolved, fadeDuration);
+		} else {
+			this.startSwapSequence(targetDocument, resolved, fadeDuration);
+		}
+	}
+
+	/** Writes every non-image appearance variable for the incoming state. */
+	private writeAppearanceVariables(
+		targetDocument: Document,
+		resolved: ResolvedBackgroundImageStyle,
+	): void {
+		const style = targetDocument.body.style;
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.inset, resolved.inset);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.blendMode, resolved.blendMode);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.size, resolved.size);
@@ -282,9 +387,85 @@ export class BackgroundImageService {
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.attachment, resolved.attachment);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, resolved.opacity);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.filter, resolved.filter);
-		targetDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
-		applyInterfaceTransparency(targetDocument, transparency);
-		this.touchedDocuments.add(targetDocument);
+	}
+
+	/** Fades a freshly applied layer in from fully transparent. */
+	private startFadeIn(
+		targetDocument: Document,
+		resolved: ResolvedBackgroundImageStyle,
+		fadeDuration: number,
+	): void {
+		const style = targetDocument.body.style;
+		// Jump to fully transparent while the transition is still off,
+		// commit that start state, then enable the transition and let the
+		// opacity written by writeAppearanceVariables animate in.
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, '0');
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.value, resolved.imageValue);
+		forceReflow(targetDocument);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.fadeDuration, `${fadeDuration}s`);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, resolved.opacity);
+		this.fadeState.set(targetDocument, {
+			phase: 'fade-in',
+			targetValue: resolved.imageValue,
+			targetOpacity: resolved.opacity,
+		});
+	}
+
+	/**
+	 * Fades the current layer out, swaps the image once the fade-out has
+	 * committed, then fades the new image in. The image value is only
+	 * written while the layer is fully transparent, so the user never
+	 * sees a hard cut.
+	 */
+	private startSwapSequence(
+		targetDocument: Document,
+		resolved: ResolvedBackgroundImageStyle,
+		fadeDuration: number,
+	): void {
+		const style = targetDocument.body.style;
+		// Enable the transition and fade out from wherever the layer is.
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.fadeDuration, `${fadeDuration}s`);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, '0');
+		const timeoutId = setTimeout(() => {
+			// The fade-out has committed; swap the image while the layer
+			// is fully transparent, then fade the new image in.
+			setStyleProperty(
+				style,
+				BACKGROUND_IMAGE_PROPERTIES.value,
+				resolved.imageValue,
+			);
+			setStyleProperty(
+				style,
+				BACKGROUND_IMAGE_PROPERTIES.opacity,
+				resolved.opacity,
+			);
+			const state = this.fadeState.get(targetDocument);
+			if (state?.timeoutId === timeoutId) {
+				this.fadeState.set(targetDocument, {
+					phase: 'fade-in',
+					targetValue: resolved.imageValue,
+					targetOpacity: resolved.opacity,
+				});
+			}
+		}, fadeDuration * 1000);
+		this.fadeState.set(targetDocument, {
+			phase: 'fade-out',
+			targetValue: resolved.imageValue,
+			targetOpacity: resolved.opacity,
+			timeoutId,
+		});
+	}
+
+	/**
+	 * Cancels any in-flight sequence for a document: stops the pending
+	 * swap timer so a superseded sequence can never write its image later.
+	 */
+	private cancelFade(targetDocument: Document): void {
+		const state = this.fadeState.get(targetDocument);
+		if (state?.timeoutId !== undefined) {
+			clearTimeout(state.timeoutId);
+		}
+		this.fadeState.delete(targetDocument);
 	}
 
 	/** Exposes the selected variable for diagnostics and tests. */
