@@ -74,8 +74,6 @@ export interface Messages {
 			titlebarTransparent: string;
 			randomBackgroundOnStartup: string;
 			addRandomBackgroundRibbon: string;
-			backgroundFadeDuration: string;
-			disabled: string;
 		};
 		descriptions: {
 			publishThemeClass: string;
@@ -103,7 +101,6 @@ export interface Messages {
 			titlebarTransparent: string;
 			randomBackgroundOnStartup: string;
 			addRandomBackgroundRibbon: string;
-			backgroundFadeDuration: string;
 		};
 		placeholders: {
 			themeClassPrefix: string;

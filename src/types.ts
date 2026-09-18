@@ -98,8 +98,8 @@ export interface BackgroundImageSettings extends BackgroundModeSettings {
 	randomOnStartup: boolean;
 	randomBackgroundRibbon: boolean;
 	/**
-	 * Seconds for the fade in/out animation when the background image
-	 * appears or switches. 0 disables animation (instant swap). Applies
+	 * Seconds for the fade-in animation when the background image layer
+	 * first appears. 0 keeps the legacy instant appearance. Applies
 	 * globally, not per light/dark mode.
 	 */
 	fadeDuration: number;

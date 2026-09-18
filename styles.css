@@ -20,15 +20,16 @@ body.sc-style-context-background-image::before {
 	background-attachment: var(--sc-style-context-background-image-attachment);
 	opacity: var(--sc-style-context-background-image-opacity);
 	filter: var(--sc-style-context-background-image-filter);
-	/* Fade in/out when the layer appears or the image switches. The
-	   duration variable is 0s unless the user enables the fade, so
-	   opacity slider drags stay perfectly live. */
+	/* Fades the layer in on its first show. The duration variable stays
+	   0s for every later write (appearance tweaks and image swaps), so
+	   slider drags remain perfectly live. */
 	transition: opacity var(--sc-style-context-background-image-fade-duration, 0s) ease;
 }
 
-/* While the first show waits for its deferred fade-in (plugin load happens
-   before Obsidian paints the workspace), this class pins the layer to
-   opacity 0 so nothing flashes before the transition is armed. */
+/* While the first show waits for its deferred reveal (the workspace layout
+   and this stylesheet may not be applied yet when the plugin loads), this
+   class pins the layer to opacity 0 so nothing flashes before the
+   transition is armed. */
 body.sc-style-context-background-image.sc-style-context-background-image-fade-pending::before {
 	opacity: 0;
 }

@@ -14,8 +14,6 @@ export default defineConfig([
         activeDocument: "readonly",
         navigator: "readonly",
         window: "readonly",
-        setTimeout: "readonly",
-        clearTimeout: "readonly",
       },
       parserOptions: {
         project: "./tsconfig.json",
