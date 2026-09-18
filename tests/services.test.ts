@@ -25,6 +25,7 @@ beforeEach(() => {
 	document.documentElement.removeAttribute('style');
 	document.body.removeAttribute('style');
 	document.body.classList.remove('sc-style-context-background-image');
+	document.body.classList.remove('sc-style-context-background-image-fade-pending');
 	document.body.classList.remove('sc-style-context-mobile-toolbar-transparent');
 	document.body.classList.remove('sc-style-context-status-bar-transparent');
 	document.body.classList.remove('sc-style-context-ribbon-transparent');
@@ -1117,6 +1118,9 @@ describe('BackgroundImageService', () => {
 	});
 
 	describe('fade animation', () => {
+		const FADE_PENDING_CLASS = 'sc-style-context-background-image-fade-pending';
+		let frameCallbacks: FrameRequestCallback[];
+
 		const fadeSettings = (fadeDuration: number): StyleContextSettings =>
 			settings({
 				backgroundImage: {
@@ -1128,14 +1132,32 @@ describe('BackgroundImageService', () => {
 				},
 			});
 
+		/** Runs the queued animation frames (two flush the double rAF). */
+		const flushFrames = (count = 2): void => {
+			for (let frame = 0; frame < count; frame += 1) {
+				for (const callback of frameCallbacks.splice(0)) {
+					callback(performance.now());
+				}
+			}
+		};
+
+		beforeEach(() => {
+			frameCallbacks = [];
+			vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+				frameCallbacks.push(callback);
+				return frameCallbacks.length;
+			});
+		});
+
 		it('fades in from transparent on the first apply', () => {
 			const currentSettings = fadeSettings(0.5);
 			const service = new BackgroundImageService(() => currentSettings);
 
 			service.enable();
 
-			// The image is written immediately; opacity starts at 0 and
-			// the transition to the resolved value is left to CSS.
+			// The layer is written at its final values immediately, but the
+			// fade-pending class pins it invisible and the transition stays
+			// disarmed until the document has rendered.
 			expect(
 				document.body.style.getPropertyValue(
 					'--sc-style-context-background-image-value',
@@ -1146,6 +1168,54 @@ describe('BackgroundImageService', () => {
 					'--sc-style-context-background-image-opacity',
 				),
 			).toBe('0.6');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+
+			// After the rendered frames, the transition is armed and the
+			// pending class released; CSS fades opacity 0 -> 0.6.
+			flushFrames();
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+		});
+
+		it('starts the first fade-in only after the workspace layout is ready', () => {
+			const currentSettings = fadeSettings(0.5);
+			let fireLayoutReady: (() => void) | undefined;
+			const app = {
+				workspace: {
+					layoutReady: false,
+					onLayoutReady: (callback: () => void) => {
+						fireLayoutReady = callback;
+					},
+				},
+			} as unknown as ConstructorParameters<typeof BackgroundImageService>[1];
+			const service = new BackgroundImageService(() => currentSettings, app);
+
+			service.enable();
+
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+
+			// Rendered frames alone do not start the fade while the layout
+			// is still being restored.
+			flushFrames();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+
+			fireLayoutReady?.();
+			flushFrames();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
 			expect(
 				document.body.style.getPropertyValue(
 					'--sc-style-context-background-image-fade-duration',
@@ -1161,7 +1231,7 @@ describe('BackgroundImageService', () => {
 			currentSettings.backgroundImage.opacity = 0.9;
 			service.apply();
 
-			// Same image: direct write, no swap timer scheduled.
+			// Same image: direct write, and the pending reveal is cancelled.
 			expect(
 				document.body.style.getPropertyValue(
 					'--sc-style-context-background-image-opacity',
@@ -1172,6 +1242,14 @@ describe('BackgroundImageService', () => {
 					'--sc-style-context-background-image-value',
 				),
 			).toBe('var(--image-1)');
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+
+			flushFrames();
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
 		});
 
 		it('delays nothing: an image swap writes instantly', () => {
@@ -1198,23 +1276,29 @@ describe('BackgroundImageService', () => {
 					'--sc-style-context-background-image-fade-duration',
 				),
 			).toBe('0s');
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
 		});
 
-		it('a repeat apply does not truncate the running fade-in', () => {
+		it('a repeat apply does not truncate the pending fade-in', () => {
 			const currentSettings = fadeSettings(0.5);
 			const service = new BackgroundImageService(() => currentSettings);
 
-			// First show: fade-in starts (duration variable armed).
+			// First show: the reveal is scheduled, the layer pinned invisible.
 			service.enable();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+
+			// The startup double-apply (randomize/applyAll): nothing
+			// changed, so the pending reveal must be left alone.
+			service.apply();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
 			expect(
 				document.body.style.getPropertyValue(
 					'--sc-style-context-background-image-fade-duration',
 				),
-			).toBe('0.5s');
+			).toBe('0s');
 
-			// The startup double-apply (randomize/applyAll): nothing
-			// changed, so the fade-in must be left alone.
-			service.apply();
+			flushFrames();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
 			expect(
 				document.body.style.getPropertyValue(
 					'--sc-style-context-background-image-fade-duration',
@@ -1227,24 +1311,25 @@ describe('BackgroundImageService', () => {
 			).toBe('0.6');
 		});
 
-		it('a genuine appearance change still writes instantly over a finished fade-in', () => {
+		it('disabling cancels a pending fade-in', () => {
 			const currentSettings = fadeSettings(0.5);
 			const service = new BackgroundImageService(() => currentSettings);
 
 			service.enable();
-			currentSettings.backgroundImage.opacity = 0.9;
-			service.apply();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
 
+			service.disable();
+			flushFrames();
+
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
 			expect(
-				document.body.style.getPropertyValue(
-					'--sc-style-context-background-image-opacity',
-				),
-			).toBe('0.9');
+				document.body.classList.contains('sc-style-context-background-image'),
+			).toBe(false);
 			expect(
 				document.body.style.getPropertyValue(
 					'--sc-style-context-background-image-fade-duration',
 				),
-			).toBe('0s');
+			).toBe('');
 		});
 
 		it('writes immediately when fade is disabled (legacy behavior)', () => {
@@ -1255,6 +1340,7 @@ describe('BackgroundImageService', () => {
 			currentSettings.backgroundImage.imageValue = 'var(--image-2)';
 			service.apply();
 
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
 			expect(
 				document.body.style.getPropertyValue(
 					'--sc-style-context-background-image-value',
@@ -1267,17 +1353,18 @@ describe('BackgroundImageService', () => {
 			).toBe('0s');
 		});
 
-		it('clamps the persisted fade duration to at most 3 seconds', () => {
+		it('clamps the persisted fade duration to at most 2 seconds', () => {
 			const currentSettings = fadeSettings(99);
 			const service = new BackgroundImageService(() => currentSettings);
 
 			service.enable();
+			flushFrames();
 
 			expect(
 				document.body.style.getPropertyValue(
 					'--sc-style-context-background-image-fade-duration',
 				),
-			).toBe('3s');
+			).toBe('2s');
 		});
 	});
 });

@@ -28,6 +28,15 @@ import {
 } from './InterfaceTransparency';
 
 const BACKGROUND_IMAGE_BODY_CLASS = 'sc-style-context-background-image';
+/**
+ * While this class is present, the freshly shown layer is pinned to
+ * opacity 0 by styles.css. It keeps the background invisible from the
+ * synchronous first apply until the deferred fade-in actually starts —
+ * without it, the layer would render at full opacity during the frames
+ * before the animation is armed (most visibly at app startup).
+ */
+const BACKGROUND_IMAGE_FADE_PENDING_CLASS =
+	'sc-style-context-background-image-fade-pending';
 const BACKGROUND_IMAGE_PROPERTIES = {
 	value: '--sc-style-context-background-image-value',
 	inset: '--sc-style-context-background-image-inset',
@@ -43,28 +52,12 @@ const BACKGROUND_IMAGE_PROPERTIES = {
 } as const;
 
 /** Upper bound for the persisted fade duration, in seconds. */
-const MAX_FADE_DURATION_SECONDS = 3;
+const MAX_FADE_DURATION_SECONDS = 2;
 
 function resolveFadeDuration(value: unknown): number {
 	const number = typeof value === 'number' ? value : Number(value);
 	if (!Number.isFinite(number) || number <= 0) return 0;
 	return Math.min(MAX_FADE_DURATION_SECONDS, number);
-}
-
-/** Bookkeeping for a document's running first-show fade-in. */
-interface FadeSequenceState {
-	targetValue: string;
-	targetOpacity: string;
-}
-
-/**
- * Writing layout flushes the pending style changes so the browser commits
- * the intermediate (fully faded-out) state before the next transition
- * starts. Without this, the swap and the fade-in would coalesce into one
- * frame and the new image would flash at partial opacity.
- */
-function forceReflow(targetDocument: Document): void {
-	void targetDocument.body.getBoundingClientRect();
 }
 
 type StringOptions = readonly string[];
@@ -215,10 +208,11 @@ export class BackgroundImageService {
 	private enabled = false;
 	private touchedDocuments = new Set<Document>();
 	/**
-	 * Per-document fade state. A document absent from this map has no
-	 * fade sequence in flight and its layer sits at its resolved opacity.
+	 * Per-document cancellation handles for fade-ins scheduled but not yet
+	 * started. A document absent from this map has no pending reveal; its
+	 * layer either sits at its resolved opacity or is fading.
 	 */
-	private fadeState = new Map<Document, FadeSequenceState>();
+	private pendingFadeCancels = new Map<Document, () => void>();
 
 	constructor(getSettings: () => StyleContextSettings, app?: App) {
 		this.getSettings = getSettings;
@@ -299,6 +293,7 @@ export class BackgroundImageService {
 		this.cancelFade(targetDocument);
 		targetDocument.body.classList.remove(
 			BACKGROUND_IMAGE_BODY_CLASS,
+			BACKGROUND_IMAGE_FADE_PENDING_CLASS,
 			...Object.values(INTERFACE_TRANSPARENCY_CLASSES),
 		);
 		for (const property of Object.values(BACKGROUND_IMAGE_PROPERTIES)) {
@@ -312,10 +307,12 @@ export class BackgroundImageService {
 	 * show animates (fade-in from fully transparent); every later change —
 	 * image swaps included — writes instantly, keeping slider drags live.
 	 *
-	 * The startup sequence applies twice in a row (randomize/applyAll), so a
-	 * repeat apply whose values are all already written must not touch the
-	 * duration variable: rewriting it would truncate the fade-in that is
-	 * still running.
+	 * The first-show reveal is deferred (see scheduleFadeStart): the layer
+	 * is written at its final values but pinned invisible by the
+	 * fade-pending class until the document has actually rendered. This
+	 * keeps the inline state consistent, so the startup double-apply
+	 * (randomize/applyAll) hits the no-op early return and leaves the
+	 * pending reveal untouched.
 	 */
 	private applyToDocument(
 		targetDocument: Document,
@@ -333,21 +330,27 @@ export class BackgroundImageService {
 			this.matchesWrittenState(style, resolved) &&
 			this.matchesTransparencyClasses(targetDocument, transparency)
 		) {
-			// Nothing to write; leave a possibly running fade-in alone.
+			// Nothing to write; leave a possibly pending fade-in alone.
 			return;
 		}
 
 		// Instant path for every non-first show: the transition stays
-		// disarmed so appearance tweaks and image swaps are immediate.
+		// disarmed so appearance tweaks and image swaps are immediate. Any
+		// fade-in that has not started yet is superseded by this write.
+		this.cancelFade(targetDocument);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.fadeDuration, '0s');
 		this.writeAppearanceVariables(targetDocument, resolved);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.value, resolved.imageValue);
 		targetDocument.body.classList.add(BACKGROUND_IMAGE_BODY_CLASS);
+		targetDocument.body.classList.remove(BACKGROUND_IMAGE_FADE_PENDING_CLASS);
 		applyInterfaceTransparency(targetDocument, transparency);
 		this.touchedDocuments.add(targetDocument);
 
 		if (!hadLayer && fadeDuration > 0) {
-			this.startFadeIn(targetDocument, resolved, fadeDuration);
+			// First show with a fade: pin the layer invisible now and let
+			// scheduleFadeStart reveal it once the document has rendered.
+			targetDocument.body.classList.add(BACKGROUND_IMAGE_FADE_PENDING_CLASS);
+			this.scheduleFadeStart(targetDocument, fadeDuration);
 		}
 	}
 
@@ -416,30 +419,67 @@ private matchesTransparencyClasses(
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.filter, resolved.filter);
 	}
 
-	/** Fades a freshly applied layer in from fully transparent. */
-	private startFadeIn(
+	/**
+	 * Schedules the reveal of a hidden (fade-pending) layer. The start is
+	 * deliberately deferred: at plugin load the document has not been
+	 * painted yet, so a transition armed synchronously would run (and
+	 * finish) behind Obsidian's startup work and the background would still
+	 * pop in. The reveal therefore waits for the workspace layout and then
+	 * two rendered frames — the first commits the hidden state as the
+	 * transition's before-change style, the second arms the duration and
+	 * releases the pending class so opacity animates to the resolved value.
+	 */
+	private scheduleFadeStart(
 		targetDocument: Document,
-		resolved: ResolvedBackgroundImageStyle,
 		fadeDuration: number,
 	): void {
-		const style = targetDocument.body.style;
-		// Jump to fully transparent while the transition is still off,
-		// commit that start state, then arm the transition and write the
-		// target opacity so the browser animates the delta.
-		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, '0');
-		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.value, resolved.imageValue);
-		forceReflow(targetDocument);
-		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.fadeDuration, `${fadeDuration}s`);
-		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, resolved.opacity);
-		this.fadeState.set(targetDocument, {
-			targetValue: resolved.imageValue,
-			targetOpacity: resolved.opacity,
+		const view = targetDocument.defaultView;
+		if (!view || typeof view.requestAnimationFrame !== 'function') {
+			// No renderer (e.g. detached test documents); reveal at once.
+			this.startFadeIn(targetDocument, fadeDuration);
+			return;
+		}
+		let cancelled = false;
+		this.pendingFadeCancels.set(targetDocument, () => {
+			cancelled = true;
 		});
+		const startWhenPainted = (): void => {
+			view.requestAnimationFrame(() => {
+				view.requestAnimationFrame(() => {
+					if (cancelled) return;
+					this.pendingFadeCancels.delete(targetDocument);
+					this.startFadeIn(targetDocument, fadeDuration);
+				});
+			});
+		};
+		const workspace = this.app?.workspace;
+		if (workspace && !workspace.layoutReady) {
+			workspace.onLayoutReady(() => {
+				if (!cancelled) startWhenPainted();
+			});
+			return;
+		}
+		startWhenPainted();
 	}
 
-	/** Clears in-flight fade bookkeeping for a document. */
+	/**
+	 * Reveals a fade-pending layer: arms the transition duration and
+	 * releases the pending class so opacity animates from 0 to the resolved
+	 * value. The inline appearance variables already hold the target state.
+	 */
+	private startFadeIn(targetDocument: Document, fadeDuration: number): void {
+		setStyleProperty(
+			targetDocument.body.style,
+			BACKGROUND_IMAGE_PROPERTIES.fadeDuration,
+			`${fadeDuration}s`,
+		);
+		targetDocument.body.classList.remove(BACKGROUND_IMAGE_FADE_PENDING_CLASS);
+	}
+
+	/** Cancels a scheduled (not yet started) fade-in for a document. */
 	private cancelFade(targetDocument: Document): void {
-		this.fadeState.delete(targetDocument);
+		this.pendingFadeCancels.get(targetDocument)?.();
+		this.pendingFadeCancels.delete(targetDocument);
 	}
 
 	/** Exposes the selected variable for diagnostics and tests. */

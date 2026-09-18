@@ -90,7 +90,6 @@ type ControlKey =
 	| 'backgroundImage.perModeEnabled'
 	| 'backgroundImage.randomOnStartup'
 	| 'backgroundImage.randomBackgroundRibbon'
-	| 'backgroundImage.fadeDuration'
 	| 'backgroundImage.attachment'
 	| 'backgroundImage.mobileToolbarTransparent'
 	| 'backgroundImage.statusBarTransparent'
@@ -634,7 +633,6 @@ export class SettingsTab extends PluginSettingTab {
 							desc: descriptions.addRandomBackgroundRibbon,
 							control: { type: 'toggle', key: 'backgroundImage.randomBackgroundRibbon' },
 						},
-						this.buildFadeDurationSlider(messages),
 					],
 				},
 				{
@@ -679,30 +677,6 @@ export class SettingsTab extends PluginSettingTab {
 				},
 			],
 		};
-	}
-
-	/**
-	 * The fade duration slider for the background image layer. Sits in the
-	 * randomization page because the fade is most visible when shuffling
-	 * images, but applies to every image change including startup and
-	 * manual value edits.
-	 */
-	private buildFadeDurationSlider(
-		messages: Messages,
-	): SettingDefinition<ControlKey> {
-		const formatSeconds = (value: number): string =>
-			value === 0 ? messages.settings.labels.disabled : `${value.toFixed(1)}s`;
-		return this.buildSlider(
-			messages.settings.labels.backgroundFadeDuration,
-			'backgroundImage.fadeDuration',
-			0,
-			3,
-			0.1,
-			this.plugin.settings.backgroundImage.fadeDuration,
-			formatSeconds,
-			messages.settings.descriptions.backgroundFadeDuration,
-			DEFAULT_SETTINGS.backgroundImage.fadeDuration,
-		);
 	}
 
 	/**

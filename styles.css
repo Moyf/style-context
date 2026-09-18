@@ -26,6 +26,13 @@ body.sc-style-context-background-image::before {
 	transition: opacity var(--sc-style-context-background-image-fade-duration, 0s) ease;
 }
 
+/* While the first show waits for its deferred fade-in (plugin load happens
+   before Obsidian paints the workspace), this class pins the layer to
+   opacity 0 so nothing flashes before the transition is armed. */
+body.sc-style-context-background-image.sc-style-context-background-image-fade-pending::before {
+	opacity: 0;
+}
+
 /* Let the fixed layer flow through Obsidian's standard canvas containers. */
 body.sc-style-context-background-image .app-container,
 body.sc-style-context-background-image.i-border-layout:not(.is-mobile) .app-container,
