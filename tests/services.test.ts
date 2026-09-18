@@ -1174,44 +1174,77 @@ describe('BackgroundImageService', () => {
 			).toBe('var(--image-1)');
 		});
 
-		it('delays the image swap until the fade-out completes', () => {
-			vi.useFakeTimers();
-			try {
-				const currentSettings = fadeSettings(0.5);
-				const service = new BackgroundImageService(() => currentSettings);
+		it('delays nothing: an image swap writes instantly', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
 
-				service.enable();
-				currentSettings.backgroundImage.imageValue = 'var(--image-2)';
-				service.apply();
+			service.enable();
+			currentSettings.backgroundImage.imageValue = 'var(--image-2)';
+			service.apply();
 
-				// Fade-out phase: old image still visible, opacity at 0.
-				expect(
-					document.body.style.getPropertyValue(
-						'--sc-style-context-background-image-value',
-					),
-				).toBe('var(--image-1)');
-				expect(
-					document.body.style.getPropertyValue(
-						'--sc-style-context-background-image-opacity',
-					),
-				).toBe('0');
+			// Swaps are instant: same value and opacity written at once.
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--image-2)');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.6');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+		});
 
-				vi.advanceTimersByTime(500);
+		it('a repeat apply does not truncate the running fade-in', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
 
-				// Swap committed: new image, fading back in.
-				expect(
-					document.body.style.getPropertyValue(
-						'--sc-style-context-background-image-value',
-					),
-				).toBe('var(--image-2)');
-				expect(
-					document.body.style.getPropertyValue(
-						'--sc-style-context-background-image-opacity',
-					),
-				).toBe('0.6');
-			} finally {
-				vi.useRealTimers();
-			}
+			// First show: fade-in starts (duration variable armed).
+			service.enable();
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+
+			// The startup double-apply (randomize/applyAll): nothing
+			// changed, so the fade-in must be left alone.
+			service.apply();
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.6');
+		});
+
+		it('a genuine appearance change still writes instantly over a finished fade-in', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			currentSettings.backgroundImage.opacity = 0.9;
+			service.apply();
+
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.9');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
 		});
 
 		it('writes immediately when fade is disabled (legacy behavior)', () => {
