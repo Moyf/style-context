@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.5.0] - 2026-09-18
 ### 🚀 Added
 
 - **Fade in on first show**: The background image layer now fades in from fully transparent when it first appears (plugin load, enable, or startup randomization) instead of flashing into view. Image swaps (shuffle, randomization, manual edits) and appearance tweaks still write instantly — the transition stays disarmed outside the first show.
