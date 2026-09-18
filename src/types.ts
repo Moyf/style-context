@@ -97,6 +97,12 @@ export interface BackgroundImageSettings extends BackgroundModeSettings {
 	enabled: boolean;
 	randomOnStartup: boolean;
 	randomBackgroundRibbon: boolean;
+	/**
+	 * Seconds for the fade-in animation when the background image layer
+	 * first appears. 0 keeps the legacy instant appearance. Applies
+	 * globally, not per light/dark mode.
+	 */
+	fadeDuration: number;
 	mobileToolbarTransparent: boolean;
 	statusBarTransparent: boolean;
 	ribbonTransparent: boolean;
@@ -159,6 +165,7 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 		enabled: false,
 		randomOnStartup: false,
 		randomBackgroundRibbon: true,
+		fadeDuration: 0.6,
 		imageValue: '',
 		opacity: 0.35,
 		blendMode: 'normal',
