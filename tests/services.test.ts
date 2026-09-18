@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS, type StyleContextSettings } from '../src/types';
 import { ThemeContextService } from '../src/services/ThemeContextService';
 import { ResourceVariableService } from '../src/services/ResourceVariableService';
 import { NotePathContextService } from '../src/services/NotePathContextService';
-import { BackgroundImageService } from '../src/services/BackgroundImageService';
+import { BackgroundImageService, MAX_FADE_STYLESHEET_WAIT_FRAMES } from '../src/services/BackgroundImageService';
 
 type ListenerMap = Map<string, () => void>;
 
@@ -24,6 +24,11 @@ function settings(
 beforeEach(() => {
 	document.documentElement.removeAttribute('style');
 	document.body.removeAttribute('style');
+	// jsdom cannot compute pseudo-element styles; default to "stylesheet
+	// applied" so fade reveals arm unless a test simulates otherwise.
+	vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+		content: '""',
+	} as unknown as CSSStyleDeclaration);
 	document.body.classList.remove('sc-style-context-background-image');
 	document.body.classList.remove('sc-style-context-background-image-fade-pending');
 	document.body.classList.remove('sc-style-context-mobile-toolbar-transparent');
@@ -1215,6 +1220,58 @@ describe('BackgroundImageService', () => {
 
 			fireLayoutReady?.();
 			flushFrames();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+		});
+
+		it('waits for the plugin stylesheet before arming the fade-in', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			// Right after a plugin enable, styles.css is not applied yet:
+			// the layer's pseudo-element does not render (content 'none').
+			const computed = vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+				content: 'none',
+			} as unknown as CSSStyleDeclaration);
+
+			service.enable();
+			flushFrames(5);
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+
+			// The stylesheet lands; the hidden state renders and the
+			// transition is armed, so the layer fades in instead of popping.
+			computed.mockReturnValue({ content: '""' } as unknown as CSSStyleDeclaration);
+			flushFrames(2);
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+		});
+
+		it('fails open when the plugin stylesheet never applies', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+				content: 'none',
+			} as unknown as CSSStyleDeclaration);
+
+			service.enable();
+			flushFrames(MAX_FADE_STYLESHEET_WAIT_FRAMES + 2);
+
+			// The reveal must never stay hidden forever: worst case the
+			// layer shows instantly once the wait cap is exceeded.
 			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
 			expect(
 				document.body.style.getPropertyValue(

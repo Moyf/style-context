@@ -54,6 +54,13 @@ const BACKGROUND_IMAGE_PROPERTIES = {
 /** Upper bound for the persisted fade duration, in seconds. */
 const MAX_FADE_DURATION_SECONDS = 2;
 
+/**
+ * How many frames the first-show reveal may wait for the plugin
+ * stylesheet to apply before arming the fade anyway. Failing open only
+ * risks an instant show; it can never leave the layer stuck invisible.
+ */
+export const MAX_FADE_STYLESHEET_WAIT_FRAMES = 120;
+
 function resolveFadeDuration(value: unknown): number {
 	const number = typeof value === 'number' ? value : Number(value);
 	if (!Number.isFinite(number) || number <= 0) return 0;
@@ -421,13 +428,22 @@ private matchesTransparencyClasses(
 
 	/**
 	 * Schedules the reveal of a hidden (fade-pending) layer. The start is
-	 * deliberately deferred: at plugin load the document has not been
-	 * painted yet, so a transition armed synchronously would run (and
-	 * finish) behind Obsidian's startup work and the background would still
-	 * pop in. The reveal therefore waits for the workspace layout and then
-	 * two rendered frames — the first commits the hidden state as the
-	 * transition's before-change style, the second arms the duration and
-	 * releases the pending class so opacity animates to the resolved value.
+	 * deliberately deferred for two reasons:
+	 *
+	 * 1. At app startup the workspace has not been painted yet, so a
+	 *    transition armed synchronously would run (and finish) behind
+	 *    Obsidian's startup work and the background would still pop in.
+	 * 2. Obsidian injects a plugin's styles.css asynchronously, several
+	 *    frames AFTER onload completes when the plugin is enabled. Until
+	 *    it applies, the layer's pseudo-element does not exist, so there
+	 *    is no hidden state to transition from — arming early would make
+	 *    the background pop in the moment the stylesheet lands.
+	 *
+	 * The reveal therefore waits for the workspace layout, then polls per
+	 * frame until the pseudo-element actually renders (always invisible:
+	 * the pending class pins it to opacity 0 as soon as the stylesheet
+	 * applies), then arms the duration and releases the pending class so
+	 * opacity animates to the resolved value.
 	 */
 	private scheduleFadeStart(
 		targetDocument: Document,
@@ -443,23 +459,49 @@ private matchesTransparencyClasses(
 		this.pendingFadeCancels.set(targetDocument, () => {
 			cancelled = true;
 		});
-		const startWhenPainted = (): void => {
+		let framesWaited = 0;
+		const reveal = (): void => {
+			if (cancelled) return;
+			if (
+				framesWaited <= MAX_FADE_STYLESHEET_WAIT_FRAMES &&
+				!this.layerRendered(targetDocument, view)
+			) {
+				framesWaited += 1;
+				view.requestAnimationFrame(reveal);
+				return;
+			}
+			// One more frame so the hidden state is rendered before the
+			// transition is armed, guaranteeing a visible animation.
 			view.requestAnimationFrame(() => {
-				view.requestAnimationFrame(() => {
-					if (cancelled) return;
-					this.pendingFadeCancels.delete(targetDocument);
-					this.startFadeIn(targetDocument, fadeDuration);
-				});
+				if (cancelled) return;
+				this.pendingFadeCancels.delete(targetDocument);
+				this.startFadeIn(targetDocument, fadeDuration);
 			});
 		};
 		const workspace = this.app?.workspace;
 		if (workspace && !workspace.layoutReady) {
 			workspace.onLayoutReady(() => {
-				if (!cancelled) startWhenPainted();
+				if (!cancelled) reveal();
 			});
 			return;
 		}
-		startWhenPainted();
+		reveal();
+	}
+
+	/**
+	 * True when the plugin stylesheet is applied and the background layer's
+	 * pseudo-element actually renders. Reading the computed style also
+	 * forces a style recalculation, committing the hidden state as the
+	 * transition's before-change style.
+	 */
+	private layerRendered(targetDocument: Document, view: Window): boolean {
+		try {
+			const pseudo = view.getComputedStyle(targetDocument.body, '::before');
+			return !pseudo || pseudo.content !== 'none';
+		} catch {
+			// Probe unavailable in this environment: never block the reveal.
+			return true;
+		}
 	}
 
 	/**
