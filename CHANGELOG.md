@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.5.1] - 2026-09-23
 ### 🐛 Fixed
 
 - **Gradient theme backgrounds**: Built-in background images now show through themes such as Composer that paint a gradient over the workspace. The gradient remains visible beneath the image and in its settings preview.
@@ -26,16 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.0] - 2026-09-18
 ### 🚀 Added
 
-- **Fade in on first show**: The background image layer now fades in from fully transparent when it first appears (plugin load, enable, or startup randomization) instead of flashing into view. Image swaps (shuffle, randomization, manual edits) and appearance tweaks still write instantly — the transition stays disarmed outside the first show.
-- **Deferred reveal**: The fade no longer starts behind Obsidian's back. The reveal waits for the workspace layout to be ready at startup, and for the plugin stylesheet to actually apply — Obsidian injects a plugin's `styles.css` several frames after `onload` completes, so arming any earlier made the background pop in the moment the stylesheet landed. Scheduled reveals are cancelled when the layer is cleared, disabled, or superseded by an instant write, and a frame-count cap fails open so the layer can never stay stuck invisible.
+- **Background image first-show fade**: Background images now fade in smoothly when the plugin starts or is enabled, including after the workspace finishes loading. Later image changes and appearance adjustments remain immediate.
 
 <details>
 <summary>中文说明（点击展开）</summary>
 
 ### 🚀 新增
 
-- **首次显示淡入**：背景图层首次出现时（插件加载、启用或启动时随机）现在会从完全透明淡入，而不是直接闪现。图片切换（随机、洗牌、手动修改）和外观调整仍然立即生效——过渡效果仅在首次显示时启用。
-- **延迟显示**：淡入不再在 Obsidian 不知情的情况下提前开始。显示会等待两件事：启动时工作区布局就绪，以及插件样式表真正生效——Obsidian 会在 `onload` 完成数帧之后才注入插件的 `styles.css`，更早启动会让背景在样式表落地瞬间突然弹出。当图层被清除、禁用或被即时写入取代时，计划的显示会被取消；帧数上限的兜底保证图层永远不会卡在不可见状态。
+- **背景图首次显示淡入**：插件启动或启用后，背景图会在工作区准备好时平滑淡入；之后更换图片或调整外观仍会立即生效。
 
 </details>
 
