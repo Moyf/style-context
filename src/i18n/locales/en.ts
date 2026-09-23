@@ -18,15 +18,22 @@ const en: Messages = {
 		intro: 'This plugin exposes the current theme, note path rules, and vault image paths as CSS classes and variables, so your CSS snippets can react to runtime state without JavaScript.',
 		documentation: { link: 'Obsidian CSS snippets documentation' },
 		groups: { themeContext: 'Theme context', notePathRules: 'Note path rules', localImageVariable: 'Local image variable', backgroundImage: 'Background image', backgroundDisplay: 'Display', backgroundFilter: 'Filter', backgroundLayout: 'Layout', diagnostics: 'Diagnostics' },
-		pages: { backgroundAppearance: 'Appearance', backgroundAppearanceDesc: 'Opacity, blending, sizing, placement, and CSS filters for the image layer. Filters left at their defaults are not applied.', lightBackgroundAppearance: 'Light appearance', darkBackgroundAppearance: 'Dark appearance', interfaceTransparency: 'Interface transparency', interfaceTransparencyDesc: 'Controls for blending the interface into the background layer.', backgroundRandomization: 'Randomize image background', backgroundRandomizationDesc: 'Choose when and where to randomize the background image.' },
+		pages: { backgroundAppearance: 'Appearance', backgroundAppearanceDesc: 'Opacity, blending, sizing, placement, and CSS filters for the image layer. Filters left at their defaults are not applied.', lightBackgroundAppearance: 'Light appearance', darkBackgroundAppearance: 'Dark appearance', interfaceTransparency: 'Interface transparency', interfaceTransparencyDesc: 'Controls for blending the interface into the background layer.', backgroundRandomization: 'Randomize image background', backgroundRandomizationDesc: 'Choose when and where to randomize the background image.', manageImageVariables: 'Manage image variables', manageImageVariablesDesc: 'Open the variable list to add, filter, and edit image variables.', managePathRules: 'Manage path rules', managePathRulesDesc: 'Open the rule list to add, edit, and delete note path rules.', imageVariableCount: (count) => `Current image variables: ${count}`, pathRuleCount: (count) => `Current note path rules: ${count}` },
 		labels: { publishThemeClass: 'Publish theme class', themeClassPrefix: 'Theme class prefix', publishPathClasses: 'Publish path classes', publishLocalImageVariables: 'Publish local image variables', liveStatus: 'Live status', folder: 'Folder', keyword: 'Keyword', publishBackgroundImage: 'Enable background image', perModeBackground: 'Separate light and dark backgrounds', randomBackgroundOnStartup: 'Choose a random background image on startup', addRandomBackgroundRibbon: 'Add ribbon icon', backgroundImageValue: 'Image value', lightBackgroundImageValue: 'Light image value', darkBackgroundImageValue: 'Dark image value', backgroundOpacity: 'Image opacity', backgroundBlendMode: 'Blend mode', backgroundSize: 'Background size', backgroundPosition: 'Background position', backgroundRepeat: 'Repeat', backgroundAttachment: 'Attachment', filterBrightness: 'Brightness', filterContrast: 'Contrast', filterSaturate: 'Saturation', filterGrayscale: 'Grayscale', filterSepia: 'Sepia', filterInvert: 'Invert', filterHueRotate: 'Hue rotate', filterBlur: 'Blur', mobileToolbarTransparent: 'Transparent mobile toolbar', statusBarTransparent: 'Transparent status bar', ribbonTransparent: 'Transparent ribbon', titlebarTransparent: 'Transparent title bar' },
 		descriptions: {
 			publishThemeClass: "Add a unique theme class to the body for the current theme. This lets you adjust a specific theme via CSS snippets without modifying the theme's own files.",
 			publishPathClasses: 'Add one or more CSS classes (comma-separated) to notes whose path matches a rule. This lets notes share styling without configuring cssclasses on each note.',
 			publishLocalImageVariables: 'Resource URLs are regenerated on every reload, so raw image paths are not stable CSS values. This module maps a vault image to a stable CSS variable for background-image and similar use cases.',
 			liveStatus: 'Shows the current theme class, path-class map, and resource resolution.',
-			themePrefixBefore: 'Adds a body class derived from the current theme name, for per-theme styling. The class lowercases the name and replaces non-alphanumeric characters with a hyphen.',
-			themePrefixExample: 'For example, "brutal gum" becomes',
+			themePrefixBefore: 'Adds a body class derived from the current theme name, for per-theme styling.',
+			// UI copy fragments that continue around an inline code element,
+			// plus a proper theme name, so sentence-case does not apply.
+			// eslint-disable-next-line obsidianmd/ui/sentence-case-locale-module -- "Brutal Gum" is a proper theme name.
+			themePrefixExampleBefore: 'For example, with the "Brutal Gum" theme, the class ',
+			// eslint-disable-next-line obsidianmd/ui/sentence-case-locale-module -- continues the sentence after the code element.
+			themePrefixExampleAfter: ' is registered.',
+			// eslint-disable-next-line obsidianmd/ui/sentence-case-locale-module -- parenthetical hint, not a sentence.
+			themeClassCopyHint: '(Click to copy)',
 			currentThemeClass: "Current theme's mod CSS class: ",
 				publishBackgroundImage: 'Render a CSS image value as a fixed canvas background. The layer is pointer-free, so it does not block notes or controls.',
 			perModeBackground: 'Use a different image value and appearance for light and dark modes. Each window follows the theme-light or theme-dark class on its body.',
@@ -36,7 +43,8 @@ const en: Messages = {
 			statusBarTransparent: 'Make the status bar background transparent so the canvas background shows through.',
 			ribbonTransparent: 'Make the ribbon background transparent so the canvas background shows through.',
 			titlebarTransparent: 'Make the window title bar background transparent so the canvas background shows through.',
-			backgroundImageValue: 'Enter a full CSS image value, such as var(--image-1) or url("https://example.com/image.jpg"). Remote URLs contact the image host. The shuffle button chooses a local image variable.',
+			backgroundImageValue: 'Enter a full CSS image value, such as var(--image-1) or url("https://example.com/image.jpg"). A bare variable name (--image-1) also works and is treated as var(--image-1). Remote URLs contact the image host.',
+			backgroundImageShuffleHint: 'The shuffle button chooses a local image variable.',
 			backgroundOpacity: 'Controls only the image layer opacity.',
 			backgroundBlendMode: 'Controls how the image blends with the current theme.',
 			backgroundSize: 'How the image fits the canvas.',
@@ -45,13 +53,13 @@ const en: Messages = {
 			backgroundAttachment: 'Whether the image moves with the document.',
 		},
 		// eslint-disable-next-line obsidianmd/ui/sentence-case-locale-module -- CSS syntax is case-sensitive.
-		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: 'Folder prefix', keywordInPath: 'Keyword in path', classNames: 'Class1, class2', vaultFilePath: 'Vault file path', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)' },
-		buttons: { addPathRule: 'Add path rule', addImageVariable: 'Add image variable', deleteRule: 'Delete rule', refresh: 'Refresh', copySnapshot: 'Copy snapshot', randomBackgroundImageValue: 'Choose a random image variable', reset: 'Reset to default' },
+		placeholders: { themeClassPrefix: 'Theme-mod-', folderPrefix: 'Folder prefix', keywordInPath: 'Keyword in path', classNames: 'Class1, class2', vaultFilePath: 'Vault file path', cssVariable: '--my-var', backgroundImageValue: 'var(--image-1)', filter: 'Filter...' },
+		buttons: { addPathRule: 'Add path rule', addImageVariable: 'Add image variable', deleteRule: 'Delete rule', refresh: 'Refresh', copySnapshot: 'Copy snapshot', randomBackgroundImageValue: 'Choose a random image variable', reset: 'Reset to default', resetAll: 'Reset all' },
 		tooltips: {
 			clickToCopy: (value) => `Click to copy: ${value}`,
-			resourceVariableEnabled: 'Enable or disable publishing this image variable', ruleDisabled: 'Rule disabled', useForBackgroundImage: 'Whether to use this image for random background selection', backgroundImageExcluded: 'Excluded from random background selection', setCssVariableName: 'Set a CSS variable name', variableNameInvalid: 'Variable name is invalid', setVaultImagePath: 'Set a vault image path', imageFileNotFound: 'Image file not found', notAnImageFile: 'Not an image file', variableNotPublished: 'Variable not published (check module toggle)',
+			resourceVariableEnabled: 'Enable or disable publishing this image variable', ruleDisabled: 'Rule disabled', randomScope: 'Which random background pools include this image', randomScopeAll: 'All modes', randomScopeLightOnly: 'Light only', randomScopeDarkOnly: 'Dark only', randomScopeNone: 'No random', setCssVariableName: 'Set a CSS variable name', variableNameInvalid: 'Variable name is invalid', setVaultImagePath: 'Set a vault image path', imageFileNotFound: 'Image file not found', notAnImageFile: 'Not an image file', variableNotPublished: 'Variable not published (check module toggle)',
 		},
-		validation: { invalidPrefix: 'Invalid prefix', invalidClassNames: 'Invalid class names', invalidCssVariableName: 'Invalid CSS variable name (must start with --)', invalidBackgroundImageValue: 'Invalid CSS background-image value', backgroundImageVariableRequiresVar: 'Wrap the CSS variable in var(), for example var(--image). You can click an image variable preview above to copy it.', duplicateVariableName: (count) => `Used by ${count} other rule(s); later rules override earlier ones` },
+		validation: { invalidPrefix: 'Invalid prefix', invalidClassNames: 'Invalid class names', invalidCssVariableName: 'Invalid CSS variable name (must start with --, then only letters, digits, hyphens, or underscores)', invalidBackgroundImageValue: 'Invalid CSS background-image value', duplicateVariableName: (count) => `Used by ${count} other rule(s); later rules override earlier ones` },
 		diagnostics: {
 			currentStyleContext: 'Current style context', localImageVariables: 'Local image variables', noEnabledResourceRules: 'No enabled resource rules', theme: 'Theme', notePathClasses: 'Note path classes', noOpenMarkdownViews: 'No open Markdown views', headers: { variable: 'Variable', status: 'Status', leafPath: 'Leaf path', appliedClass: 'Applied class', rule: 'Rule' }, resolved: 'Resolved', unresolved: 'Unresolved', rawTheme: (rawName, slug) => ` (raw: ${rawName || '(none)'}, slug: ${slug})`, unsaved: '(unsaved)', filePathEmpty: 'File path is empty', fileNotFound: (path) => `File not found: ${path}`,
 		},

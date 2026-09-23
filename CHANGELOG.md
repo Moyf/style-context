@@ -10,16 +10,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### 🐛 Fixed
 
-- **Gradient theme canvases**: Honor `--background-gradient` (e.g. Composer) instead of flattening the canvas to `--background-primary` — the body repaint and the image layer's blend base keep the theme's gradient, in the settings preview too. All theme canvas tokens resolve through the single `--sc-style-context-theme-canvas` fallback chain in styles.css, so new theme tokens are a one-line append.
-- **Transparency reset priority**: Repeat the marker class in every transparency reset so same-specificity theme rules (loaded after plugin CSS, such as Composer's workspace gradient) can no longer cover the background image.
+- **Gradient theme backgrounds**: Built-in background images now show through themes such as Composer that paint a gradient over the workspace. The gradient remains visible beneath the image and in its settings preview.
 
 <details>
 <summary>中文说明（点击展开）</summary>
 
 ### 🐛 修复
 
-- **渐变主题画布**：兼容通过 `--background-gradient` 表达画布的主题（如 Composer），body 重绘与图片图层的混合基底保留主题渐变，不再压平为 `--background-primary` 纯色，设置页预览同步该表现。所有主题画布 token 统一收口到 styles.css 的 `--sc-style-context-theme-canvas` 兜底链，新增主题 token 只需追加一行。
-- **透明规则优先级**：所有透明化规则重复标记 class，避免同特异性主题规则（在插件 CSS 之后加载，如 Composer 的 workspace 渐变）盖住背景图。
+- **渐变主题背景**：修复 Composer 等主题在工作区绘制渐变时遮住内置背景图的问题；主题渐变会保留在图片下方，设置预览也与画布一致。
+
+</details>
+
+---
+
+## [0.5.0] - 2026-09-18
+### 🚀 Added
+
+- **Fade in on first show**: The background image layer now fades in from fully transparent when it first appears (plugin load, enable, or startup randomization) instead of flashing into view. Image swaps (shuffle, randomization, manual edits) and appearance tweaks still write instantly — the transition stays disarmed outside the first show.
+- **Deferred reveal**: The fade no longer starts behind Obsidian's back. The reveal waits for the workspace layout to be ready at startup, and for the plugin stylesheet to actually apply — Obsidian injects a plugin's `styles.css` several frames after `onload` completes, so arming any earlier made the background pop in the moment the stylesheet landed. Scheduled reveals are cancelled when the layer is cleared, disabled, or superseded by an instant write, and a frame-count cap fails open so the layer can never stay stuck invisible.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **首次显示淡入**：背景图层首次出现时（插件加载、启用或启动时随机）现在会从完全透明淡入，而不是直接闪现。图片切换（随机、洗牌、手动修改）和外观调整仍然立即生效——过渡效果仅在首次显示时启用。
+- **延迟显示**：淡入不再在 Obsidian 不知情的情况下提前开始。显示会等待两件事：启动时工作区布局就绪，以及插件样式表真正生效——Obsidian 会在 `onload` 完成数帧之后才注入插件的 `styles.css`，更早启动会让背景在样式表落地瞬间突然弹出。当图层被清除、禁用或被即时写入取代时，计划的显示会被取消；帧数上限的兜底保证图层永远不会卡在不可见状态。
+
+</details>
+
+---
+
+## [0.4.1] - 2026-09-09
+### 🚀 Added
+
+- **Shuffle button hint**: The image value row now shows a visible hint under the input explaining that the shuffle button picks one of the local image variables — the explanation moved out of the crowded field description.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **随机按钮提示**：图片值输入框下方现在会显示一条可见提示，说明随机按钮会从本地图片变量中选择一个——说明文字从原本拥挤的字段描述中独立出来。
+
+</details>
+
+---
+
+## [0.4.0] - 2026-09-09
+### 🚀 Added
+
+- **Per-image random scope**: Each registered image variable can now choose which random background pools include it — all (default), light only, dark only, or none. The choice lives on a compact icon button that opens the picker on click.
+- **Settings page restructure**: The image variable list and the note path rules moved into their own subpages. The add button was repositioned and a filter box added for when the list grows long.
+- **Appearance reset all**: Each Appearance page now ends with a "Reset all" button that restores every parameter on the page — display, filter, and layout — to that mode's defaults. The image value itself is not part of the page and stays untouched.
+
+### ⚡ Changed
+
+- **Filter slider ranges**: Brightness, contrast, and saturate cap at 150% (down from 200%) since values beyond that are rarely useful, and the blur slider now steps in whole pixels (1 px instead of 0.5 px). Saved values above the new caps are kept until the slider is moved.
+- **Bare variable names in Image value**: The background image value now accepts a bare custom property name — typing `--image-1` is stored as `var(--image-1)` automatically, so both forms validate, preview, and resolve identically.
+- **No-repeat randomness**: Randomizing the background image now keeps an in-memory cache of the last three picks and avoids them, so consecutive randoms no longer alternate between the same images.
+- **Diagnostics panel polish**: The "Live status" panel is capped at 400 px and scrolls internally, so long rule lists no longer stretch the settings page.
+
+### 🐛 Fixed
+
+- **Preview tile on first open**: Image preview tiles now refresh immediately after typing a vault path, including the first settings open after a plugin reload — the variable is republished into the settings document directly instead of relying on `activeDocument`, which can lag on detached settings windows.
+- **Add button overflow**: In narrow panels the button now shrinks and truncates its label with an ellipsis ("Add image...") instead of overflowing the frame.
+- **Diagnostics panel visible again**: The "Live status" panel is now anchored inside its setting row. Obsidian 1.14's declarative settings re-render silently detaches extra siblings placed in the group list, which left the panel empty; wrapping the row keeps the panel on its own full-width line and preserves it across re-renders.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **图片随机范围**：每个注册的图片变量现在可以选择参与哪些随机背景池——全部（默认）、仅亮色、仅暗色，或不参与随机。选项收纳在一个紧凑的图标按钮上，点击弹出选择菜单。
+- **设置页面重构**：图片变量列表和笔记路径规则移入独立的子页面。调整添加按钮的位置，并增加过滤框，用于列表项目较多的时候。
+- **外观页全部重置**：每个外观页底部新增「全部重置」按钮，一键将该页显示、滤镜、布局参数恢复到对应模式的默认值。图片值本身不属于该页，不会被改动。
+
+### ⚡ 变更
+
+- **滤镜滑块范围**：亮度、对比度、饱和度上限从 200% 降为 150%（更高的值很少实用）；模糊滑块步长改为整像素（1 px，原为 0.5 px）。已保存的超上限数值会保留，直到再次拖动滑块。
+- **图片值支持裸变量名**：背景图片值现在接受不带 var() 的变量名——输入 `--image-1` 会自动存为 `var(--image-1)`，两种写法的校验、预览和解析行为完全一致。
+- **随机不重复**：随机背景图现在会在内存中缓存最近三次的选择并避开它们，连续随机不再出现来回切换的情况。
+- **诊断面板优化**：「实时状态」面板高度上限 400 px，内部滚动，超长规则列表不再拉长设置页。
+
+### 🐛 修复
+
+- **首次打开时预览不刷新**：输入路径后图片预览立即刷新，包括插件重载后第一次打开设置页的情况——现在直接向设置页所在文档重新发布变量，不再依赖在独立设置窗口可能滞后更新的 `activeDocument`。
+- **添加按钮溢出**：窄面板下按钮自动收缩并以省略号截断文字（"Add image..."），不再超出边框。
+- **诊断面板重新可见**：「实时状态」面板现在固定在所属设置行内部。Obsidian 1.14 的声明式设置重渲染时会静默移除挂在分组列表里的额外兄弟节点，导致面板空白；让设置行换行后，面板独占一行并在重渲染后保持可见。
 
 </details>
 

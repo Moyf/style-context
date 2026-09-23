@@ -8,6 +8,13 @@ import type {
 
 export type PathMatchMode = 'folder' | 'keyword';
 
+/**
+ * Which random background pools include an image.
+ * 'all' (default): eligible everywhere. 'light' / 'dark': eligible only
+ * while randomizing for that mode. 'none': never picked by randomization.
+ */
+export type RandomImageScope = 'all' | 'light' | 'dark' | 'none';
+
 export type BackgroundBlendMode = (typeof BACKGROUND_BLEND_MODES)[number];
 export type BackgroundSize = (typeof BACKGROUND_SIZE_OPTIONS)[number];
 export type BackgroundPosition = (typeof BACKGROUND_POSITION_OPTIONS)[number];
@@ -33,7 +40,15 @@ export interface ResourceRule {
 	filePath: string;
 	variableName: string;
 	enabled: boolean;
-	/** Whether this published variable may be selected as a background image. */
+	/** Which random background pools include this image. Defaults to 'all'. */
+	randomScope?: RandomImageScope;
+	/**
+	 * Legacy on/off flag, superseded by `randomScope`. Still written so
+	 * newer data files keep working after a downgrade; new code should
+	 * read `randomScope` only. Intentionally carries no deprecation tag:
+	 * ObsidianReviewBot forbids disabling eslint's no-deprecated rule,
+	 * and the migration boundary in loadSettings must touch this flag.
+	 */
 	useForBackgroundImage?: boolean;
 }
 
@@ -82,6 +97,12 @@ export interface BackgroundImageSettings extends BackgroundModeSettings {
 	enabled: boolean;
 	randomOnStartup: boolean;
 	randomBackgroundRibbon: boolean;
+	/**
+	 * Seconds for the fade-in animation when the background image layer
+	 * first appears. 0 keeps the legacy instant appearance. Applies
+	 * globally, not per light/dark mode.
+	 */
+	fadeDuration: number;
 	mobileToolbarTransparent: boolean;
 	statusBarTransparent: boolean;
 	ribbonTransparent: boolean;
@@ -144,6 +165,7 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 		enabled: false,
 		randomOnStartup: false,
 		randomBackgroundRibbon: true,
+		fadeDuration: 0.6,
 		imageValue: '',
 		opacity: 0.35,
 		blendMode: 'normal',

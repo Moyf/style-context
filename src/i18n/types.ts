@@ -34,6 +34,12 @@ export interface Messages {
 			interfaceTransparencyDesc: string;
 			backgroundRandomization: string;
 			backgroundRandomizationDesc: string;
+			manageImageVariables: string;
+			manageImageVariablesDesc: string;
+			managePathRules: string;
+			managePathRulesDesc: string;
+			imageVariableCount: (count: number) => string;
+			pathRuleCount: (count: number) => string;
 		};
 		labels: {
 			publishThemeClass: string;
@@ -75,11 +81,14 @@ export interface Messages {
 			publishLocalImageVariables: string;
 			liveStatus: string;
 			themePrefixBefore: string;
-			themePrefixExample: string;
+			themePrefixExampleBefore: string;
+			themePrefixExampleAfter: string;
+			themeClassCopyHint: string;
 			currentThemeClass: string;
 			publishBackgroundImage: string;
 			perModeBackground: string;
 			backgroundImageValue: string;
+			backgroundImageShuffleHint: string;
 			backgroundOpacity: string;
 			backgroundBlendMode: string;
 			backgroundSize: string;
@@ -101,6 +110,7 @@ export interface Messages {
 			vaultFilePath: string;
 			cssVariable: string;
 			backgroundImageValue: string;
+			filter: string;
 		};
 		buttons: {
 			addPathRule: string;
@@ -110,6 +120,7 @@ export interface Messages {
 			copySnapshot: string;
 			randomBackgroundImageValue: string;
 			reset: string;
+			resetAll: string;
 		};
 		tooltips: {
 			clickToCopy: (value: string) => string;
@@ -121,15 +132,17 @@ export interface Messages {
 			imageFileNotFound: string;
 			notAnImageFile: string;
 			variableNotPublished: string;
-			useForBackgroundImage: string;
-			backgroundImageExcluded: string;
+			randomScope: string;
+			randomScopeAll: string;
+			randomScopeLightOnly: string;
+			randomScopeDarkOnly: string;
+			randomScopeNone: string;
 		};
 		validation: {
 			invalidPrefix: string;
 			invalidClassNames: string;
 			invalidCssVariableName: string;
 			invalidBackgroundImageValue: string;
-			backgroundImageVariableRequiresVar: string;
 			duplicateVariableName: (count: number) => string;
 		};
 		diagnostics: {

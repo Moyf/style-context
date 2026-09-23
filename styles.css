@@ -1,27 +1,16 @@
 /* Style Context - built-in background image */
 
-/* ------------------------------------------------------------------
-   Theme compatibility layer
-   ------------------------------------------------------------------
-   The background image repaints the canvas, so themes that deviate from
-   Obsidian's default canvas model are absorbed here. Compatibility has
-   exactly two extension points — supporting a new theme touches these
-   and nothing else:
-
-   1. Canvas token chain (below): how a theme expresses its canvas.
-      Solid --background-primary themes need no entry; a theme with its
-      own token (Composer: --background-gradient) appends to the chain.
-   2. Surface resets (further down): which elements cover the canvas —
-      the canvas container list, plus the opt-out ribbon / titlebar /
-      status-bar / mobile-toolbar lists. A theme painting extra opaque
-      surfaces adds its selectors to the matching list.
-
-   Every reset repeats the marker class: theme.css loads after plugin CSS
-   and would otherwise win equal-specificity ties (!important is banned by
-   the stylelint config). Theme behavior beyond CSS reach — JS-injected
-   styles, !important rules — is out of scope. */
+/* Theme compatibility: map theme canvas images here, and add opaque theme
+   surfaces to the reset lists below. The solid fallback is an image layer so
+   every user image layer can share one blend mode above the canvas. */
 body {
-	--sc-style-context-theme-canvas: var(--background-gradient, none);
+	--sc-style-context-theme-canvas: var(--background-gradient, linear-gradient(var(--background-primary), var(--background-primary)));
+}
+
+/* Composer paints its gradient only on non-phone workspaces. Preserve the
+   existing solid blend base on phones, where that canvas rule does not apply. */
+body.is-phone {
+	--sc-style-context-theme-canvas: linear-gradient(var(--background-primary), var(--background-primary));
 }
 
 body.sc-style-context-background-image.sc-style-context-background-image {
@@ -35,17 +24,29 @@ body.sc-style-context-background-image::before {
 	inset: var(--sc-style-context-background-image-inset);
 	pointer-events: none;
 	z-index: -1;
-	/* The theme canvas rides below the image as the blend base; its blend mode
-	   stays `normal` so the configured mode only affects the image itself. */
+	/* The bottom image is the blend base. A single mode repeats for every
+	   user image layer, including comma-separated background-image values. */
 	background-image: var(--sc-style-context-background-image-value), var(--sc-style-context-theme-canvas);
-	background-color: var(--background-primary);
-	background-blend-mode: var(--sc-style-context-background-image-blend-mode), normal;
+	background-color: transparent;
+	background-blend-mode: var(--sc-style-context-background-image-blend-mode);
 	background-size: var(--sc-style-context-background-image-size);
 	background-position: var(--sc-style-context-background-image-position);
 	background-repeat: var(--sc-style-context-background-image-repeat);
 	background-attachment: var(--sc-style-context-background-image-attachment);
 	opacity: var(--sc-style-context-background-image-opacity);
 	filter: var(--sc-style-context-background-image-filter);
+	/* Fades the layer in on its first show. The duration variable stays
+	   0s for every later write (appearance tweaks and image swaps), so
+	   slider drags remain perfectly live. */
+	transition: opacity var(--sc-style-context-background-image-fade-duration, 0s) ease;
+}
+
+/* While the first show waits for its deferred reveal (the workspace layout
+   and this stylesheet may not be applied yet when the plugin loads), this
+   class pins the layer to opacity 0 so nothing flashes before the
+   transition is armed. */
+body.sc-style-context-background-image.sc-style-context-background-image-fade-pending::before {
+	opacity: 0;
 }
 
 /* Surface resets — let the fixed layer flow through Obsidian's standard
@@ -121,32 +122,51 @@ body.sc-style-context-background-image.sc-style-context-background-image.sc-styl
 
 /* Style Context - settings diagnostics panel */
 
+/* The panel is a child of the setting row; wrap so it gets a full-width
+   line of its own below the row's info and controls. */
+.setting-item.sc-has-diagnostics {
+	flex-wrap: wrap;
+}
+
+/* Height is capped so long rule lists scroll inside the panel instead of
+   stretching the settings page. At either scroll edge the wheel chains
+   back to the settings page (default overscroll behavior). */
 .sc-settings-diagnostics {
+	width: 100%;
+	max-height: 400px;
+	overflow-y: auto;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 6px;
-	padding: 12px;
+	padding: 10px 12px;
 	margin-top: 12px;
 	background: var(--background-secondary);
 	font-size: var(--font-ui-smaller);
+	line-height: 1.5;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-title {
+	font-size: var(--font-ui-small);
 	font-weight: 600;
-	margin-bottom: 8px;
 	color: var(--text-normal);
+	margin-bottom: 8px;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-section {
-	margin-bottom: 10px;
+	padding-top: 8px;
 }
 
-.sc-settings-diagnostics .sc-diagnostics-section:last-child {
-	margin-bottom: 0;
+.sc-settings-diagnostics .sc-diagnostics-section + .sc-diagnostics-section {
+	border-top: 1px solid var(--background-modifier-border-hover);
+	margin-top: 8px;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-label {
+	font-size: var(--font-ui-smallest);
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 	color: var(--text-muted);
-	margin-bottom: 4px;
+	margin-bottom: 6px;
 }
 
 .sc-settings-diagnostics code,
@@ -154,21 +174,43 @@ body.sc-style-context-background-image.sc-style-context-background-image.sc-styl
 	font-family: var(--font-monospace);
 }
 
+.sc-settings-diagnostics code {
+	font-size: var(--font-ui-smaller);
+}
+
+.sc-settings-diagnostics .sc-diagnostics-mono {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	word-break: break-word;
+}
+
 .sc-settings-diagnostics .sc-diagnostics-table {
 	width: 100%;
 	border-collapse: collapse;
+	font-size: var(--font-ui-smaller);
 }
 
 .sc-settings-diagnostics .sc-diagnostics-table th,
 .sc-settings-diagnostics .sc-diagnostics-table td {
 	text-align: left;
-	padding: 3px 8px 3px 0;
-	border-bottom: 1px solid var(--background-modifier-border);
+	padding: 4px 12px 4px 0;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-table th {
+	font-size: var(--font-ui-smallest);
 	font-weight: 600;
-	color: var(--text-muted);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--text-faint);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.sc-settings-diagnostics .sc-diagnostics-table td {
+	border-bottom: 1px solid var(--background-modifier-border-hover);
+}
+
+.sc-settings-diagnostics .sc-diagnostics-table tr:last-child td {
+	border-bottom: none;
 }
 
 .sc-settings-diagnostics .sc-diagnostics-error {
@@ -252,6 +294,26 @@ body.sc-style-context-background-image.sc-style-context-background-image.sc-styl
 	width: 100%;
 }
 
+/* Theme-prefix input only needs to fit a short prefix like "Theme-mod-".
+   Same .setting-item selector trick as above to beat Obsidian's default
+   text-input width. */
+.setting-item.sc-theme-prefix-row input[type="text"] {
+	flex: 0 0 10em;
+	width: 10em;
+	max-width: 10em;
+}
+
+/* Breathing room between the rule/example paragraph and the live
+   current-theme preview line below it. */
+.sc-theme-prefix-row .sc-theme-prefix-preview {
+	margin-top: var(--size-4-2);
+}
+
+/* Gap between the image-value usage paragraph and the shuffle hint. */
+.sc-background-image-value-row .sc-background-image-shuffle-hint {
+	margin-top: var(--size-4-2);
+}
+
 /* Second text input (CSS classes / variable name): compact, wraps to
    row 2 alongside the toggle and delete button. */
 .sc-path-rule-row input[type="text"]:nth-of-type(2),
@@ -261,20 +323,55 @@ body.sc-style-context-background-image.sc-style-context-background-image.sc-styl
 	max-width: 200px;
 }
 
-/* Code block inside the resource-toggle description */
-.sc-resource-toggle .setting-item-description pre {
-	background: var(--background-secondary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	padding: 8px 12px;
-	margin: 6px 0 0;
-	overflow-x: auto;
+/* ------------------------------------------------------------------ */
+/* Resource toolbar: filter input on the left, add button on the right */
+/* ------------------------------------------------------------------ */
+
+.sc-rule-toolbar .setting-item-info {
+	display: none;
 }
 
-.sc-resource-toggle .setting-item-description pre code {
-	font-family: var(--font-monospace);
-	font-size: var(--font-ui-smaller);
-	color: var(--text-normal);
+.sc-rule-toolbar .setting-item-control {
+	flex: 1 1 100%;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+
+.sc-rule-toolbar .sc-resource-filter-input {
+	flex: 1 1 auto;
+	min-width: 160px;
+	max-width: 360px;
+}
+
+/* Let the button shrink in narrow panels instead of overflowing;
+   the label truncates with an ellipsis. min-width: 0 is required —
+   flex items refuse to shrink below min-content without it.
+   display: block is required too: Obsidian renders buttons as
+   inline-flex with justify-content: center, and inside a flex
+   container neither text-align nor text-overflow have any effect. */
+.sc-rule-toolbar .setting-item-control button {
+	margin-left: auto;
+	display: block;
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* Obsidian's .vertical-tab-content button rules force width: 100% and
+   text-align: center with higher specificity than a plain plugin
+   selector. Mirror their selector shape and double the toolbar class
+   to out-rank them without !important. width: auto lets the button
+   size to its label; left alignment truncates at the end ("Add
+   image...") — centered text would clip on both sides with no
+   ellipsis. */
+.vertical-tab-content
+	.setting-item.sc-rule-toolbar.sc-rule-toolbar
+	.setting-item-control
+	button:not(.clickable-icon) {
+	width: auto;
+	text-align: left;
 }
 
 /* ------------------------------------------------------------------ */
@@ -390,9 +487,9 @@ body.sc-style-context-background-image.sc-style-context-background-image.sc-styl
 	position: absolute;
 	inset: var(--sc-background-image-preview-inset);
 	pointer-events: none;
-	background-color: var(--background-primary);
+	background-color: transparent;
 	background-image: var(--sc-background-image-preview-value), var(--sc-style-context-theme-canvas);
-	background-blend-mode: var(--sc-background-image-preview-blend-mode), normal;
+	background-blend-mode: var(--sc-background-image-preview-blend-mode);
 	background-size: var(--sc-background-image-preview-size);
 	background-position: var(--sc-background-image-preview-position);
 	background-repeat: var(--sc-background-image-preview-repeat);
