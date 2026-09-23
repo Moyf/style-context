@@ -1,8 +1,21 @@
 /* Style Context - built-in background image */
 
-body.sc-style-context-background-image {
+/* Theme compatibility: map theme canvas images here, and add opaque theme
+   surfaces to the reset lists below. The solid fallback is an image layer so
+   every user image layer can share one blend mode above the canvas. */
+body {
+	--sc-style-context-theme-canvas: var(--background-gradient, linear-gradient(var(--background-primary), var(--background-primary)));
+}
+
+/* Composer paints its gradient only on non-phone workspaces. Preserve the
+   existing solid blend base on phones, where that canvas rule does not apply. */
+body.is-phone {
+	--sc-style-context-theme-canvas: linear-gradient(var(--background-primary), var(--background-primary));
+}
+
+body.sc-style-context-background-image.sc-style-context-background-image {
 	background-color: var(--background-primary);
-	background-image: none;
+	background-image: var(--sc-style-context-theme-canvas);
 }
 
 body.sc-style-context-background-image::before {
@@ -11,8 +24,10 @@ body.sc-style-context-background-image::before {
 	inset: var(--sc-style-context-background-image-inset);
 	pointer-events: none;
 	z-index: -1;
-	background-image: var(--sc-style-context-background-image-value);
-	background-color: var(--background-primary);
+	/* The bottom image is the blend base. A single mode repeats for every
+	   user image layer, including comma-separated background-image values. */
+	background-image: var(--sc-style-context-background-image-value), var(--sc-style-context-theme-canvas);
+	background-color: transparent;
 	background-blend-mode: var(--sc-style-context-background-image-blend-mode);
 	background-size: var(--sc-style-context-background-image-size);
 	background-position: var(--sc-style-context-background-image-position);
@@ -34,38 +49,39 @@ body.sc-style-context-background-image.sc-style-context-background-image-fade-pe
 	opacity: 0;
 }
 
-/* Let the fixed layer flow through Obsidian's standard canvas containers. */
-body.sc-style-context-background-image .app-container,
-body.sc-style-context-background-image.i-border-layout:not(.is-mobile) .app-container,
-body.sc-style-context-background-image .workspace,
-body.sc-style-context-background-image.theme-dark .workspace,
-body.sc-style-context-background-image .workspace-split,
-body.sc-style-context-background-image.theme-dark .workspace-split.mod-root,
-body.sc-style-context-background-image.is-mobile .workspace > .mod-root,
-body.sc-style-context-background-image .workspace-tab-container,
-body.sc-style-context-background-image .workspace-leaf,
-body.sc-style-context-background-image .workspace-tabs .workspace-leaf,
-body.sc-style-context-background-image.theme-dark .workspace-tabs .workspace-leaf,
-body.sc-style-context-background-image .mod-root .workspace-tabs .workspace-leaf,
-body.sc-style-context-background-image .workspace-fake-target-overlay:not(.is-in-sidebar) .workspace-tabs .workspace-leaf,
-body.sc-style-context-background-image .workspace-leaf-content,
-body.sc-style-context-background-image .view-content,
-body.sc-style-context-background-image .workspace-split.mod-root .view-content,
-body.sc-style-context-background-image .view-header,
-body.sc-style-context-background-image.is-focused .workspace-leaf.mod-active .view-header,
-body.sc-style-context-background-image .workspace-tab-header-container,
-body.sc-style-context-background-image .workspace-tabs,
-body.sc-style-context-background-image .sidebar-toggle-button,
-body.sc-style-context-background-image .nav-files-container,
-body.sc-style-context-background-image:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile {
+/* Surface resets — let the fixed layer flow through Obsidian's standard
+   canvas containers; theme-specific surfaces join this list. */
+body.sc-style-context-background-image.sc-style-context-background-image .app-container,
+body.sc-style-context-background-image.sc-style-context-background-image.i-border-layout:not(.is-mobile) .app-container,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace,
+body.sc-style-context-background-image.sc-style-context-background-image.theme-dark .workspace,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace-split,
+body.sc-style-context-background-image.sc-style-context-background-image.theme-dark .workspace-split.mod-root,
+body.sc-style-context-background-image.sc-style-context-background-image.is-mobile .workspace > .mod-root,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace-tab-container,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace-leaf,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace-tabs .workspace-leaf,
+body.sc-style-context-background-image.sc-style-context-background-image.theme-dark .workspace-tabs .workspace-leaf,
+body.sc-style-context-background-image.sc-style-context-background-image .mod-root .workspace-tabs .workspace-leaf,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace-fake-target-overlay:not(.is-in-sidebar) .workspace-tabs .workspace-leaf,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace-leaf-content,
+body.sc-style-context-background-image.sc-style-context-background-image .view-content,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace-split.mod-root .view-content,
+body.sc-style-context-background-image.sc-style-context-background-image .view-header,
+body.sc-style-context-background-image.sc-style-context-background-image.is-focused .workspace-leaf.mod-active .view-header,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace-tab-header-container,
+body.sc-style-context-background-image.sc-style-context-background-image .workspace-tabs,
+body.sc-style-context-background-image.sc-style-context-background-image .sidebar-toggle-button,
+body.sc-style-context-background-image.sc-style-context-background-image .nav-files-container,
+body.sc-style-context-background-image.sc-style-context-background-image:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile {
 	background-color: transparent;
 	background-image: none;
 }
 
 /* Style Context - ribbon transparency (opt-out) */
 
-body.sc-style-context-background-image.sc-style-context-ribbon-transparent .workspace-ribbon,
-body.sc-style-context-background-image.sc-style-context-ribbon-transparent .workspace-ribbon.mod-left::before {
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-ribbon-transparent .workspace-ribbon,
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-ribbon-transparent .workspace-ribbon.mod-left::before {
 	background-color: transparent;
 	background-image: none;
 }
@@ -74,9 +90,9 @@ body.sc-style-context-background-image.sc-style-context-ribbon-transparent .work
    `.sidebar-toggle-button` stays in the unconditional list above because it
    also renders inside mobile view headers, not just the title bar. */
 
-body.sc-style-context-background-image.sc-style-context-titlebar-transparent .titlebar,
-body.sc-style-context-background-image.sc-style-context-titlebar-transparent .titlebar-inner,
-body.sc-style-context-background-image.sc-style-context-titlebar-transparent .titlebar-button-container {
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-titlebar-transparent .titlebar,
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-titlebar-transparent .titlebar-inner,
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-titlebar-transparent .titlebar-button-container {
 	background-color: transparent;
 	background-image: none;
 }
@@ -87,19 +103,19 @@ body.sc-style-context-background-image.sc-style-context-titlebar-transparent .ti
 
 /* Style Context - mobile toolbar transparency (opt-in) */
 
-body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent .mobile-toolbar-spacer {
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent .mobile-toolbar-spacer {
 	background-color: transparent;
 	background-image: none;
 }
 
-body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent.is-floating-nav .mobile-toolbar,
-body.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent .is-floating-nav .mobile-toolbar {
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent.is-floating-nav .mobile-toolbar,
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent .is-floating-nav .mobile-toolbar {
 	box-shadow: none;
 }
 
 /* Style Context - status bar transparency (opt-out) */
 
-body.sc-style-context-background-image.sc-style-context-status-bar-transparent .status-bar {
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-status-bar-transparent .status-bar {
 	background-color: transparent;
 	background-image: none;
 }
@@ -462,7 +478,8 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 
 .sc-background-image-preview.is-valid {
 	background-color: var(--background-primary);
-	background-image: none;
+	/* Mirror the canvas repaint so gradient themes preview their gradient. */
+	background-image: var(--sc-style-context-theme-canvas);
 }
 
 .sc-background-image-preview.is-valid::before {
@@ -470,8 +487,8 @@ body.sc-style-context-background-image.sc-style-context-status-bar-transparent .
 	position: absolute;
 	inset: var(--sc-background-image-preview-inset);
 	pointer-events: none;
-	background-color: var(--background-primary);
-	background-image: var(--sc-background-image-preview-value);
+	background-color: transparent;
+	background-image: var(--sc-background-image-preview-value), var(--sc-style-context-theme-canvas);
 	background-blend-mode: var(--sc-background-image-preview-blend-mode);
 	background-size: var(--sc-background-image-preview-size);
 	background-position: var(--sc-background-image-preview-position);

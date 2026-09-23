@@ -202,12 +202,12 @@ export function resolveBackgroundImageStyle(
  * Applies a published image variable to the Obsidian canvas. The image is
  * rendered in a fixed, pointer-free pseudo-element so opacity and blend mode
  * do not also reduce the opacity of notes and controls. The layer carries the
- * theme canvas color and uses background-blend-mode: mix-blend-mode would
+ * theme canvas and uses background-blend-mode: mix-blend-mode would
  * blend against the (fully transparent) backdrop below this rearmost layer,
  * which is a no-op for every mode. The body itself is repainted with the same
- * canvas color, so a faded layer cross-fades toward the theme color — at zero
- * opacity the canvas falls back to the theme's canvas color instead of the
- * bare app backdrop.
+ * canvas, so a faded layer cross-fades toward the theme canvas instead of
+ * the bare app backdrop. Theme canvas tokens and surface resets live in
+ * styles.css.
  */
 export class BackgroundImageService {
 	private getSettings: () => StyleContextSettings;

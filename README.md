@@ -108,6 +108,10 @@ you can run `npm run build:local` to build and auto-copy into your vault.
 
 `npm run build:local:set` does the same and then opens the plugin's settings page in your running Obsidian (requires the Obsidian CLI on PATH), so settings changes are immediately visible after Hot Reload.
 
+### Theme compatibility
+
+The built-in background image supports theme canvas gradients such as Composer's `--background-gradient`. To support another theme, add its canvas image token to the `--sc-style-context-theme-canvas` fallback in `styles.css`. If the theme paints an opaque workspace surface, add that surface to the transparency reset selectors in the same file.
+
 ## Release
 
 After writing complete notes under `## [Unreleased]`, run `npm run release -- <version>`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- <version>` to validate without changing anything.
@@ -228,6 +232,10 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 那么你就可以直接使用 `npm run build:local` 来构建并自动拷贝到你的仓库内 `;)`
 
 另外，`npm run build:local:set` 会在构建拷贝之后自动打开运行中 Obsidian 的本插件设置页（需要 PATH 中有 Obsidian CLI），Hot Reload 重载完即可立即看到设置页改动。
+
+### 主题兼容
+
+内置背景图支持 Composer 等主题的渐变画布。兼容其他主题时，可在 `styles.css` 中将画布图片变量加入 `--sc-style-context-theme-canvas` 的兜底链；如果主题还在工作区元素上绘制不透明背景，将对应选择器加入同文件的透明化规则。
 
 ## 发布
 

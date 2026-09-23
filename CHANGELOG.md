@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+### 🐛 Fixed
+
+- **Gradient theme backgrounds**: Built-in background images now show through themes such as Composer that paint a gradient over the workspace. The gradient remains visible beneath the image and in its settings preview.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **渐变主题背景**：修复 Composer 等主题在工作区绘制渐变时遮住内置背景图的问题；主题渐变会保留在图片下方，设置预览也与画布一致。
+
+</details>
+
+---
+
 ## [0.5.0] - 2026-09-18
 ### 🚀 Added
 
