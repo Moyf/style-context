@@ -120,7 +120,7 @@ If a version was already committed and annotated locally, but has not reached Gi
 
 ## Support
 
-Nah, this is a small utility. No sponsorship needed, enjoy it <3
+If you like Style Context, consider [buying me a coffee on Ko-fi](https://ko-fi.com/moy) ☕
 
 If you like my plugin design, you can check my other plugins here:
 
@@ -244,7 +244,7 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 若版本已在本地提交并创建注释 tag，但尚未到达 GitHub，使用 `npm run release:resume -- 0.3.0`。它会校验本地 tag 中不可变的版本元数据与更新日志、执行完整检查，再原子插入默认分支并推送 tag，之后执行同样的 CI 和资产验证。可用 `npm run release:resume:dry-run -- 0.3.0` 不改动任何内容地校验此恢复路径。这只用于恢复中断的发布；正常发应始终使用 `release`。
 
 ## 赞助
-Nah，我不觉得这种小工具有什么值得赞助的，用得愉快！ <3
+如果 Style Context 对你有帮助，欢迎[请我喝杯咖啡（Ko-fi）](https://ko-fi.com/moy) ☕
 
 如果你认可我的插件设计，可以查看我的其他插件：
 
