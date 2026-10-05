@@ -35,6 +35,7 @@ beforeEach(() => {
 	document.body.classList.remove('sc-style-context-status-bar-transparent');
 	document.body.classList.remove('sc-style-context-ribbon-transparent');
 	document.body.classList.remove('sc-style-context-titlebar-transparent');
+	document.body.classList.remove('sc-style-context-active-tab-transparent');
 	document.body.classList.remove('theme-light');
 	document.body.classList.remove('theme-dark');
 	Object.defineProperty(globalThis, 'activeDocument', {
@@ -44,6 +45,23 @@ beforeEach(() => {
 });
 
 describe('BackgroundImageService', () => {
+	it('defaults legacy active tabs to transparent and supports live opt-out and cleanup', () => {
+		const { activeTabTransparent, ...legacy } = DEFAULT_SETTINGS.backgroundImage;
+		const currentSettings = settings({ backgroundImage: { ...legacy, enabled: true,
+			imageValue: 'var(--image-1)', fadeDuration: 0,
+		} as typeof DEFAULT_SETTINGS.backgroundImage });
+		const service = new BackgroundImageService(() => currentSettings);
+		service.enable();
+		expect(document.body.classList.contains('sc-style-context-active-tab-transparent')).toBe(true);
+		currentSettings.backgroundImage.activeTabTransparent = false;
+		service.apply();
+		expect(document.body.classList.contains('sc-style-context-active-tab-transparent')).toBe(false);
+		expect(document.body.classList.contains('sc-style-context-ribbon-transparent')).toBe(true);
+		currentSettings.backgroundImage.activeTabTransparent = true;
+		service.apply();
+		service.disable();
+		expect(document.body.classList.contains('sc-style-context-active-tab-transparent')).toBe(false);
+	});
 	it('synchronizes background styles across the main and detached Settings documents', () => {
 		const settingsDocument = document.implementation.createHTMLDocument('Settings');
 		Object.defineProperty(globalThis, 'activeDocument', {
@@ -56,6 +74,9 @@ describe('BackgroundImageService', () => {
 				enabled: true,
 				imageValue: 'var(--image-1)',
 				opacity: 0.6,
+				overlayEnabled: true,
+				overlayColor: '#123456',
+				overlayOpacity: 0.4,
 			},
 		});
 		const service = new BackgroundImageService(() => currentSettings);
@@ -68,12 +89,33 @@ describe('BackgroundImageService', () => {
 					'--sc-style-context-background-image-opacity',
 				),
 			).toBe('0.6');
+			expect(targetDocument.body.style.getPropertyValue('--sc-style-context-background-overlay-color')).toBe('#123456');
+			expect(targetDocument.body.style.getPropertyValue('--sc-style-context-background-overlay-opacity')).toBe('0.4');
 			expect(
 				targetDocument.body.classList.contains(
 					'sc-style-context-background-image',
 				),
 			).toBe(true);
 		}
+	});
+
+	it('removes the overlay immediately when switched off and cleans up on disable', () => {
+		const currentSettings = settings({ backgroundImage: { ...DEFAULT_SETTINGS.backgroundImage,
+			enabled: true, fadeDuration: 0, imageValue: 'var(--image-1)',
+			overlayEnabled: true, overlayColor: '#123456', overlayOpacity: 0.4,
+		} });
+		const service = new BackgroundImageService(() => currentSettings);
+		service.enable();
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-opacity')).toBe('0.4');
+		currentSettings.backgroundImage.overlayBlendMode = 'screen';
+		service.apply();
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-blend-mode')).toBe('screen');
+		currentSettings.backgroundImage.overlayEnabled = false;
+		service.apply();
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-opacity')).toBe('0');
+		service.disable();
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-color')).toBe('');
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-opacity')).toBe('');
 	});
 
 	it('keeps background styles inactive when the setting is disabled', () => {

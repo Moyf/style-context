@@ -5,6 +5,7 @@ export const INTERFACE_TRANSPARENCY_CLASSES = {
 	statusBar: 'sc-style-context-status-bar-transparent',
 	ribbon: 'sc-style-context-ribbon-transparent',
 	titlebar: 'sc-style-context-titlebar-transparent',
+	activeTab: 'sc-style-context-active-tab-transparent',
 } as const;
 
 export type InterfaceTransparencySurface =
@@ -26,6 +27,7 @@ export function resolveInterfaceTransparency(
 		statusBar: settings.statusBarTransparent !== false,
 		ribbon: settings.ribbonTransparent !== false,
 		titlebar: settings.titlebarTransparent !== false,
+		activeTab: settings.activeTabTransparent !== false,
 	};
 }
 

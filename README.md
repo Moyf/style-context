@@ -1,4 +1,4 @@
-# Style Context - Obsidian CSS variable helper
+# Style Context
 
 English | [中文文档](#样式上下文)
 

@@ -85,6 +85,10 @@ export interface BackgroundModeSettings {
 	/** A complete CSS background-image value. */
 	imageValue: string;
 	opacity: number;
+	overlayEnabled: boolean;
+	overlayColor: string;
+	overlayOpacity: number;
+	overlayBlendMode: BackgroundBlendMode;
 	blendMode: BackgroundBlendMode;
 	size: BackgroundSize;
 	position: BackgroundPosition;
@@ -107,6 +111,7 @@ export interface BackgroundImageSettings extends BackgroundModeSettings {
 	statusBarTransparent: boolean;
 	ribbonTransparent: boolean;
 	titlebarTransparent: boolean;
+	activeTabTransparent: boolean;
 	/**
 	 * When true, documents whose body carries Obsidian's `theme-light` /
 	 * `theme-dark` class use the matching per-mode config instead of the
@@ -144,6 +149,10 @@ function defaultBackgroundModeSettings(): BackgroundModeSettings {
 	return {
 		imageValue: '',
 		opacity: 0.35,
+		overlayEnabled: false,
+		overlayColor: '#000000',
+		overlayOpacity: 0.3,
+		overlayBlendMode: 'normal',
 		blendMode: 'normal',
 		size: 'cover',
 		position: 'center',
@@ -168,6 +177,10 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 		fadeDuration: 0.6,
 		imageValue: '',
 		opacity: 0.35,
+		overlayEnabled: false,
+		overlayColor: '#000000',
+		overlayOpacity: 0.3,
+		overlayBlendMode: 'normal',
 		blendMode: 'normal',
 		size: 'cover',
 		position: 'center',
@@ -177,6 +190,7 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 		statusBarTransparent: true,
 		ribbonTransparent: true,
 		titlebarTransparent: true,
+		activeTabTransparent: true,
 		filter: { ...DEFAULT_BACKGROUND_FILTER },
 		perModeEnabled: false,
 		light: defaultBackgroundModeSettings(),

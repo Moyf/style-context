@@ -95,6 +95,11 @@ type ControlKey =
 	| 'backgroundImage.statusBarTransparent'
 	| 'backgroundImage.ribbonTransparent'
 	| 'backgroundImage.titlebarTransparent'
+	| 'backgroundImage.activeTabTransparent'
+	| `${BackgroundAppearancePrefix}.overlayEnabled`
+	| `${BackgroundAppearancePrefix}.overlayColor`
+	| `${BackgroundAppearancePrefix}.overlayOpacity`
+	| `${BackgroundAppearancePrefix}.overlayBlendMode`
 	| `${BackgroundAppearancePrefix}.opacity`
 	| `${BackgroundAppearancePrefix}.blendMode`
 	| `${BackgroundAppearancePrefix}.size`
@@ -666,6 +671,11 @@ export class SettingsTab extends PluginSettingTab {
 							},
 						},
 						{
+							name: labels.activeTabTransparent,
+							desc: descriptions.activeTabTransparent,
+							control: { type: 'toggle', key: 'backgroundImage.activeTabTransparent' },
+						},
+						{
 							name: labels.titlebarTransparent,
 							desc: descriptions.titlebarTransparent,
 							control: {
@@ -731,6 +741,33 @@ export class SettingsTab extends PluginSettingTab {
 							BACKGROUND_BLEND_MODES,
 							`${prefix}.blendMode`,
 						),
+					],
+				},
+				{
+					type: 'group',
+					heading: groups.backgroundOverlay,
+					items: [
+						{
+							name: labels.backgroundOverlayEnabled,
+							desc: descriptions.backgroundOverlay,
+							control: { type: 'toggle', key: `${prefix}.overlayEnabled` },
+						},
+						{
+							name: labels.backgroundOverlayColor,
+							visible: () => this.backgroundImageConfig(mode).overlayEnabled,
+							control: { type: 'color', key: `${prefix}.overlayColor` },
+						},
+						{
+							...this.buildBackgroundDropdown(labels.backgroundOverlayBlendMode,
+								descriptions.backgroundOverlayBlendMode, BACKGROUND_BLEND_MODES, `${prefix}.overlayBlendMode`),
+							visible: () => this.backgroundImageConfig(mode).overlayEnabled,
+						},
+						{
+							...this.buildSlider(labels.backgroundOverlayOpacity, `${prefix}.overlayOpacity`,
+								0, 1, 0.01, config.overlayOpacity, formatPercent, undefined,
+								DEFAULT_SETTINGS.backgroundImage.overlayOpacity),
+							visible: () => this.backgroundImageConfig(mode).overlayEnabled,
+						},
 					],
 				},
 				{
@@ -862,6 +899,10 @@ export class SettingsTab extends PluginSettingTab {
 					: DEFAULT_SETTINGS.backgroundImage;
 		const config = this.backgroundImageConfig(mode);
 		config.opacity = defaults.opacity;
+		config.overlayEnabled = defaults.overlayEnabled;
+		config.overlayColor = defaults.overlayColor;
+		config.overlayOpacity = defaults.overlayOpacity;
+		config.overlayBlendMode = defaults.overlayBlendMode;
 		config.blendMode = defaults.blendMode;
 		config.size = defaults.size;
 		config.position = defaults.position;
@@ -1056,6 +1097,9 @@ export class SettingsTab extends PluginSettingTab {
 			repeat: '--sc-background-image-preview-repeat',
 			opacity: '--sc-background-image-preview-opacity',
 			filter: '--sc-background-image-preview-filter',
+			overlayColor: '--sc-background-image-preview-overlay-color',
+			overlayOpacity: '--sc-background-image-preview-overlay-opacity',
+			overlayBlendMode: '--sc-background-image-preview-overlay-blend-mode',
 		} as const;
 		for (const property of Object.values(properties)) {
 			preview.style.removeProperty(property);
@@ -1081,6 +1125,9 @@ export class SettingsTab extends PluginSettingTab {
 		preview.style.setProperty(properties.repeat, resolved.repeat);
 		preview.style.setProperty(properties.opacity, resolved.opacity);
 		preview.style.setProperty(properties.filter, resolved.filter);
+		preview.style.setProperty(properties.overlayColor, resolved.overlayColor);
+		preview.style.setProperty(properties.overlayOpacity, resolved.overlayOpacity);
+		preview.style.setProperty(properties.overlayBlendMode, resolved.overlayBlendMode);
 		preview.addClass('is-valid');
 		setTooltip(preview, resolved.imageValue, { placement: 'top' });
 	}

@@ -47,6 +47,9 @@ const BACKGROUND_IMAGE_PROPERTIES = {
 	attachment: '--sc-style-context-background-image-attachment',
 	opacity: '--sc-style-context-background-image-opacity',
 	filter: '--sc-style-context-background-image-filter',
+	overlayColor: '--sc-style-context-background-overlay-color',
+	overlayOpacity: '--sc-style-context-background-overlay-opacity',
+	overlayBlendMode: '--sc-style-context-background-overlay-blend-mode',
 	/** Layer opacity transition duration; 0s keeps the layer static. */
 	fadeDuration: '--sc-style-context-background-image-fade-duration',
 } as const;
@@ -89,6 +92,9 @@ export interface ResolvedBackgroundImageStyle {
 	attachment: string;
 	opacity: string;
 	filter: string;
+	overlayColor: string;
+	overlayOpacity: string;
+	overlayBlendMode: string;
 }
 
 function optionOrDefault(
@@ -195,6 +201,12 @@ export function resolveBackgroundImageStyle(
 		attachment,
 		opacity: String(safeOpacity(settings.opacity)),
 		filter: filterCss || 'none',
+		overlayColor: typeof settings.overlayColor === 'string' && /^#[\da-f]{6}$/i.test(settings.overlayColor)
+			? settings.overlayColor : DEFAULT_SETTINGS.backgroundImage.overlayColor,
+		overlayBlendMode: optionOrDefault(settings.overlayBlendMode, BACKGROUND_BLEND_MODES, 'normal'),
+		overlayOpacity: settings.overlayEnabled === true
+			? String(clampFinite(settings.overlayOpacity, 0, 1, DEFAULT_SETTINGS.backgroundImage.overlayOpacity))
+			: '0',
 	};
 }
 
@@ -386,7 +398,10 @@ export class BackgroundImageService {
 				resolved.repeat &&
 			style.getPropertyValue(BACKGROUND_IMAGE_PROPERTIES.attachment) ===
 				resolved.attachment &&
-			style.getPropertyValue(BACKGROUND_IMAGE_PROPERTIES.filter) === resolved.filter
+			style.getPropertyValue(BACKGROUND_IMAGE_PROPERTIES.filter) === resolved.filter &&
+			style.getPropertyValue(BACKGROUND_IMAGE_PROPERTIES.overlayColor) === resolved.overlayColor &&
+			style.getPropertyValue(BACKGROUND_IMAGE_PROPERTIES.overlayBlendMode) === resolved.overlayBlendMode &&
+			style.getPropertyValue(BACKGROUND_IMAGE_PROPERTIES.overlayOpacity) === resolved.overlayOpacity
 		);
 	}
 
@@ -424,6 +439,9 @@ private matchesTransparencyClasses(
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.attachment, resolved.attachment);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.opacity, resolved.opacity);
 		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.filter, resolved.filter);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.overlayColor, resolved.overlayColor);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.overlayOpacity, resolved.overlayOpacity);
+		setStyleProperty(style, BACKGROUND_IMAGE_PROPERTIES.overlayBlendMode, resolved.overlayBlendMode);
 	}
 
 	/**
