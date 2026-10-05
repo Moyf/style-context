@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🚀 Added
+
+- Active tab transparency (enabled by default) with a 2px outline and no curved shadows; ribbon transparency now also clears the primary ribbon pseudo-element.
+- Optional background color overlay with a color picker, blend modes, opacity slider, live preview, and separate light/dark settings.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **活动标签透明**：默认启用，移除两侧曲线阴影，使用 2px 边框；Ribbon 透明也会清除主侧边栏伪元素背景。
+- **背景图叠加颜色层**：可开启独立颜色层，选择颜色、混合模式并调节不透明度；支持实时预览和亮色／暗色分别配置，默认关闭。
+
+</details>
+
+---
+
 ## [0.5.1] - 2026-09-23
 ### 🐛 Fixed
 

@@ -21,6 +21,7 @@ export interface Messages {
 			localImageVariable: string;
 			backgroundImage: string;
 			backgroundDisplay: string;
+			backgroundOverlay: string;
 			backgroundFilter: string;
 			backgroundLayout: string;
 			diagnostics: string;
@@ -55,6 +56,10 @@ export interface Messages {
 			lightBackgroundImageValue: string;
 			darkBackgroundImageValue: string;
 			backgroundOpacity: string;
+			backgroundOverlayEnabled: string;
+			backgroundOverlayColor: string;
+			backgroundOverlayOpacity: string;
+			backgroundOverlayBlendMode: string;
 			backgroundBlendMode: string;
 			backgroundSize: string;
 			backgroundPosition: string;
@@ -72,10 +77,13 @@ export interface Messages {
 			statusBarTransparent: string;
 			ribbonTransparent: string;
 			titlebarTransparent: string;
+			activeTabTransparent: string;
 			randomBackgroundOnStartup: string;
 			addRandomBackgroundRibbon: string;
 		};
 		descriptions: {
+			backgroundOverlay: string;
+			backgroundOverlayBlendMode: string;
 			publishThemeClass: string;
 			publishPathClasses: string;
 			publishLocalImageVariables: string;
@@ -99,6 +107,7 @@ export interface Messages {
 			statusBarTransparent: string;
 			ribbonTransparent: string;
 			titlebarTransparent: string;
+			activeTabTransparent: string;
 			randomBackgroundOnStartup: string;
 			addRandomBackgroundRibbon: string;
 		};
