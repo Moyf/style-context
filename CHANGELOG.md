@@ -7,8 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
+## [0.6.0] - 2026-10-05
 ### 🚀 Added
 
 - Active tab transparency (enabled by default) with a 2px outline and no curved shadows; ribbon transparency now also clears the primary ribbon pseudo-element.
