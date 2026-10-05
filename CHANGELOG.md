@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Rename the active tab transparency control to match the other transparent interface controls in all supported languages.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 修复
+
+- 将活动标签透明开关的名称与其他透明度选项统一，同步所有支持的语言。
+
+</details>
+
+---
+
 ## [0.6.0] - 2026-10-05
 ### 🚀 Added
 
