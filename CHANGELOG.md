@@ -7,8 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
+## [0.6.1] - 2026-10-05
 ### Fixed
 
 - Rename the active tab transparency control to match the other transparent interface controls in all supported languages.
