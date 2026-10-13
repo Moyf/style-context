@@ -2,7 +2,7 @@
 
 English | [中文文档](#样式上下文)
 
-![Obsidian Download](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=Downloads&query=%24%5B%22style-context%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)  ![Total Downloads](https://img.shields.io/github/downloads/Moyf/style-context/total?style=flat&label=Total%20Downloads) ![GitHub Issues](https://img.shields.io/github/issues/Moyf/style-context?style=flat&label=Issues) ![GitHub Last Commit](https://img.shields.io/github/last-commit/Moyf/style-context?style=flat&label=Last%20Commit)
+[![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=Downloads&query=%24%5B%22style-context%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=style-context) [![Release](https://img.shields.io/github/v/release/Moyf/style-context?label=Release)](https://github.com/Moyf/style-context/releases) [![GitHub Issues](https://img.shields.io/github/issues/Moyf/style-context?label=Issues)](https://github.com/Moyf/style-context/issues) [![Stars](https://img.shields.io/github/stars/Moyf/style-context?logo=github&label=Stars)](https://github.com/Moyf/style-context/stargazers)
 
 An Obsidian plugin that publishes runtime context as CSS classes and variables. It turns things like your current theme and vault image paths into predictable hooks for your own custom CSS snippets, and can optionally apply a vault image variable as a canvas background.
 
@@ -118,6 +118,23 @@ After writing complete notes under `## [Unreleased]`, run `npm run release -- <v
 
 If a version was already committed and annotated locally, but has not reached GitHub, use `npm run release:resume -- <version>`. It validates the local tag's immutable metadata and changelog, runs the full check, fast-forwards the default branch and tag atomically, then performs the same CI and asset verification. Use `npm run release:resume:dry-run -- <version>` to check this recovery path without changes. This is recovery only; ordinary releases must use `release`.
 
+## More from Moy
+
+If you appreciate my plugin design and quality, check out my other Obsidian plugins:
+
+| Plugin | Description | Stats |
+| --- | --- | --- |
+| [Yearly Glance](https://github.com/Moyf/yearly-glance) | See your whole year's key events at a glance. | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22yearly-glance%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=yearly-glance) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/yearly-glance?logo=github&label=Stars)](https://github.com/Moyf/yearly-glance/stargazers) |
+| [Easy Copy](https://github.com/Moyf/easy-copy) | Easily copy formatted text, or quickly generate elegant links. | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22easy-copy%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=easy-copy) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/easy-copy?logo=github&label=Stars)](https://github.com/Moyf/easy-copy/stargazers) |
+| [Better Links](https://github.com/Moyf/better-links) | The link popover editor you absolutely need. | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22better-links%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=better-links) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/better-links?logo=github&label=Stars)](https://github.com/Moyf/better-links/stargazers) |
+| [Colorful Highlights](https://github.com/Moyf/colorful-highlights) | Enhanced colorful highlights with multiple styles, or define your own color schemes. | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22colorful-highlights%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=colorful-highlights) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/colorful-highlights?logo=github&label=Stars)](https://github.com/Moyf/colorful-highlights/stargazers) |
+| [Harbor Tab](https://github.com/Moyf/harbor-tab) | A beautiful new tab page with quick file search and creation. | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22harbor-tab%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=harbor-tab) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/harbor-tab?logo=github&label=Stars)](https://github.com/Moyf/harbor-tab/stargazers) |
+| [Single Choice Property](https://github.com/Moyf/single-choice-property) | Keep selected list properties to only one value. | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22single-choice-property%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=single-choice-property) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/single-choice-property?logo=github&label=Stars)](https://github.com/Moyf/single-choice-property/stargazers) |
+
+> See all my plugins on my [Obsidian Community page](https://community.obsidian.md/users/moyf).
+
+Friend plugins I contributed to: [Note Toolbar](https://github.com/chrisgurney/obsidian-note-toolbar) & [Typify](https://github.com/leike-dev/Obsidian-Typify) ❤️
+
 ## Support
 
 If you like Style Context, consider [buying me a coffee on Ko-fi](https://ko-fi.com/moy) ☕
@@ -129,6 +146,8 @@ If you like my plugin design, you can check my other plugins here:
 
 
 # 样式上下文
+
+[![Obsidian 下载量](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=%E4%B8%8B%E8%BD%BD%E9%87%8F&query=%24%5B%22style-context%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=style-context) [![版本发布](https://img.shields.io/github/v/release/Moyf/style-context?label=Release)](https://github.com/Moyf/style-context/releases) [![议题](https://img.shields.io/github/issues/Moyf/style-context?label=%E8%AE%AE%E9%A2%98)](https://github.com/Moyf/style-context/issues) [![星标](https://img.shields.io/github/stars/Moyf/style-context?logo=github&label=%E6%98%9F%E6%A0%87)](https://github.com/Moyf/style-context/stargazers)
 
 一个面向 Obsidian 的 CSS 变量辅助插件。它会把 Obsidian 的特定上下文（当前主题、库内图片路径）转换为 CSS 类名与变量，也可以把图片变量直接应用为画布背景。
 
@@ -242,6 +261,23 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 在 `## [Unreleased]` 下写完完整更新说明后，运行 `npm run release -- 0.3.0`。该命令要求默认分支干净且已和远端同步；它会同步所有版本元数据、将 Changelog 条目提升为正式版本、执行检查、提交、创建并原子推送 tag，最后等待 GitHub Actions 验证正式 Release 与三个插件资产。使用 `npm run release:dry-run -- 0.3.0` 可只做校验，不修改任何内容。
 
 若版本已在本地提交并创建注释 tag，但尚未到达 GitHub，使用 `npm run release:resume -- 0.3.0`。它会校验本地 tag 中不可变的版本元数据与更新日志、执行完整检查，再原子插入默认分支并推送 tag，之后执行同样的 CI 和资产验证。可用 `npm run release:resume:dry-run -- 0.3.0` 不改动任何内容地校验此恢复路径。这只用于恢复中断的发布；正常发应始终使用 `release`。
+
+## 来自 Moy 的更多插件
+
+如果你欣赏我的插件设计和质量，可以看看我的其他 Obsidian 插件：
+
+| 插件 | 简介 | 数据 |
+| --- | --- | --- |
+| [Yearly Glance](https://github.com/Moyf/yearly-glance) | 年度一览，一眼纵览你全年的关键事件。 | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22yearly-glance%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=yearly-glance) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/yearly-glance?logo=github&label=Stars)](https://github.com/Moyf/yearly-glance/stargazers) |
+| [Easy Copy](https://github.com/Moyf/easy-copy) | 轻松复制格式文本，或快速生成优雅的链接。 | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22easy-copy%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=easy-copy) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/easy-copy?logo=github&label=Stars)](https://github.com/Moyf/easy-copy/stargazers) |
+| [Better Links](https://github.com/Moyf/better-links) | 悬浮式弹窗，提升你的链接编辑体验。 | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22better-links%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=better-links) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/better-links?logo=github&label=Stars)](https://github.com/Moyf/better-links/stargazers) |
+| [Colorful Highlights](https://github.com/Moyf/colorful-highlights) | 彩色高亮效果增强，提供多种样式，或自定义新配色。 | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22colorful-highlights%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=colorful-highlights) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/colorful-highlights?logo=github&label=Stars)](https://github.com/Moyf/colorful-highlights/stargazers) |
+| [Harbor Tab](https://github.com/Moyf/harbor-tab) | 非常好看的新标签页，快速搜索和创建文件。 | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22harbor-tab%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=harbor-tab) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/harbor-tab?logo=github&label=Stars)](https://github.com/Moyf/harbor-tab/stargazers) |
+| [Single Choice Property](https://github.com/Moyf/single-choice-property) | 让选定的列表属性始终只保留一个值。 | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22single-choice-property%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=single-choice-property) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/single-choice-property?logo=github&label=Stars)](https://github.com/Moyf/single-choice-property/stargazers) |
+
+> 全部插件见 [Moy 的 Obsidian Community 页面](https://community.obsidian.md/users/moyf)。
+
+参与开发的友情插件：[Note Toolbar](https://github.com/chrisgurney/obsidian-note-toolbar) & [Typify](https://github.com/leike-dev/Obsidian-Typify) ❤️
 
 ## 赞助
 如果 Style Context 对你有帮助，欢迎[请我喝杯咖啡（Ko-fi）](https://ko-fi.com/moy) ☕
