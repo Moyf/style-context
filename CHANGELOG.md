@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.6.2] - 2026-10-14
 ### 🐛 Fixed
 
 - **Theme canvas compatibility (AnuPpuccin, Underwater, Terminal Workbench)**: Solid-canvas themes no longer hide built-in background images. All three paint an opaque canvas on `.horizontal-main-container` — via `--tab-container-background`, `--uw-background`, or a body-level `--background-primary` — so that surface now joins the transparency reset list. AnuPpuccin's card layout re-paints the tab containers, side-split leaves and card surfaces, Terminal Workbench paints the note views (`.markdown-source-view` / `.markdown-reading-view` / `.markdown-preview-view`), and Maple's app-layout-card tints the splits; those surfaces join the reset list too, repeated with an html-prefixed, theme-class-qualified form that stays strictly above theme rules without `!important`. Themes painting with `!important` (Border's card-layout tab strips) cannot be overridden.
