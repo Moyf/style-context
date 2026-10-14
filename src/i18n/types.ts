@@ -33,6 +33,7 @@ export interface Messages {
 			darkBackgroundAppearance: string;
 			interfaceTransparency: string;
 			interfaceTransparencyDesc: string;
+			interfaceTransparencyImportantNote: string;
 			backgroundRandomization: string;
 			backgroundRandomizationDesc: string;
 			manageImageVariables: string;

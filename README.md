@@ -112,6 +112,10 @@ you can run `npm run build:local` to build and auto-copy into your vault.
 
 The built-in background image supports theme canvas gradients such as Composer's `--background-gradient`. To support another theme, add its canvas image token to the `--sc-style-context-theme-canvas` fallback in `styles.css`. If the theme paints an opaque workspace surface, add that surface to the transparency reset selectors in the same file.
 
+Solid-canvas themes need no gradient mapping and go through the same reset list: AnuPpuccin (`--tab-container-background` on the workspace containers, including card-layout and colorful-frame modes), Underwater (`--uw-background` on the tab containers), and Terminal Workbench (a body-level `--background-primary`). All three paint an opaque canvas on `.horizontal-main-container`, which is why that surface joins the reset selectors. AnuPpuccin's card layout re-paints the tab containers, side-split leaves and card surfaces, Terminal Workbench paints the note views (`.markdown-source-view`, `.markdown-reading-view`, `.markdown-preview-view`), and Maple's app-layout-card tints the splits; those surfaces are reset again with an html-prefixed, theme-class-qualified form that stays strictly above theme rules — without `!important`, so themes painting with `!important` (Border's card-layout tab strips) remain out of reach.
+
+Some themes ship their own background-image feature (Fancy-a-Story's Style Settings toggle, for example). Both implement the same canvas idea; when the plugin's module is enabled, its reset supersedes the theme's surfaces, so use one or the other. If you prefer the theme's native rendering (textures, per-note cssclasses), turn off the plugin's Background image group and the theme's feature works untouched.
+
 ## Release
 
 After writing complete notes under `## [Unreleased]`, run `npm run release -- <version>`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- <version>` to validate without changing anything.
@@ -236,6 +240,10 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 ### 主题兼容
 
 内置背景图支持 Composer 等主题的渐变画布。兼容其他主题时，可在 `styles.css` 中将画布图片变量加入 `--sc-style-context-theme-canvas` 的兜底链；如果主题还在工作区元素上绘制不透明背景，将对应选择器加入同文件的透明化规则。
+
+纯色画布主题无需映射渐变，走同一套透明化规则：AnuPpuccin（工作区容器上的 `--tab-container-background`，含 card-layout 与 colorful-frame 模式）、Underwater（标签容器上的 `--uw-background`）和 Terminal Workbench（body 级重定义的 `--background-primary`）。三者都会在 `.horizontal-main-container` 上绘制不透明画布，因此该表面已加入透明化选择器。AnuPpuccin 的 card-layout 会重绘标签容器、侧栏 leaf 和卡片表面，Terminal Workbench 会绘制笔记视图（`.markdown-source-view`、`.markdown-reading-view`、`.markdown-preview-view`），Maple 的 app-layout-card 会给分栏加色调；这些表面以 `html` 前缀 + 主题类限定的形式二次重置，在同量级 class 下严格压过主题规则 —— 不使用 `!important`，因此用 `!important` 绘制的主题（Border 的 card-layout 标签条）无法覆盖。
+
+部分主题自带背景图功能（如 Fancy-a-Story 的 Style Settings 开关）。两者是同一画布理念的两种实现；插件背景图模块开启时，其重置规则会接管相应表面，因此二选一使用。若更偏好主题原生渲染（纹理、单篇 cssclass），关闭插件的「背景图」分组即可，主题功能不受影响。
 
 ## 发布
 
