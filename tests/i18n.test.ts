@@ -15,10 +15,10 @@ describe('i18n', () => {
 
 	describe('pages.interfaceTransparency', () => {
 		it.each([
-			['en', 'Interface transparency'],
-			['zh', '界面透明度'],
-			['zh-TW', '介面透明度'],
-			['ja', 'インターフェースの透明度'],
+			['en', 'Interface blending'],
+			['zh', '界面融合'],
+			['zh-TW', '介面融合'],
+			['ja', 'インターフェースの融合'],
 		])('has the correct title for locale %s', (language, expected) => {
 			expect(getMessages(language).settings.pages.interfaceTransparency).toBe(expected);
 		});

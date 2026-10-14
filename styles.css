@@ -302,7 +302,7 @@ body.sc-style-context-background-image.sc-style-context-background-image.sc-styl
 	text-decoration: underline;
 }
 
-/* Interface transparency page — theme !important caveat note */
+/* Interface blending page — theme !important caveat note */
 .sc-interface-transparency-note {
 	border-bottom: 1px solid var(--background-modifier-border);
 	padding-bottom: 8px;
