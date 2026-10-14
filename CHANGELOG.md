@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.6.3] - 2026-10-14
 ### 🚀 Added
 
 - **Modal background (opt-in)**: A new `Modal background` toggle in Interface blending paints modal dialogs and the command palette with the same canvas background as the note panes — image, blend, sizing, opacity, and filters all follow the background image settings. Default off; the card keeps its own size and opening animation.
