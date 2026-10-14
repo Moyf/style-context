@@ -126,6 +126,37 @@ body.sc-style-context-background-image.sc-style-context-background-image.sc-styl
 	background-color: transparent;
 }
 
+/* Style Context - modal background (opt-in).
+   `contain: layout` gives the static card an anchoring and stacking
+   context for the ::before image layer without touching its position.
+   No background-attachment here: the modal's transform-based open
+   animation degrades fixed attachment and snaps the image at the end.
+   `.prompt` covers the command palette and quick switcher. */
+
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-modal-transparent .modal,
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-modal-transparent .prompt {
+	contain: layout;
+	background-color: var(--background-primary);
+	background-image: var(--sc-style-context-theme-canvas);
+}
+
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-modal-transparent .modal::before,
+body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-modal-transparent .prompt::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background-image: var(--sc-style-context-background-image-value), var(--sc-style-context-theme-canvas);
+	background-color: transparent;
+	background-blend-mode: var(--sc-style-context-background-image-blend-mode);
+	background-size: var(--sc-style-context-background-image-size);
+	background-position: var(--sc-style-context-background-image-position);
+	background-repeat: var(--sc-style-context-background-image-repeat);
+	opacity: var(--sc-style-context-background-image-opacity);
+	filter: var(--sc-style-context-background-image-filter);
+}
+
 /* Style Context - mobile toolbar transparency (opt-in) */
 
 body.sc-style-context-background-image.sc-style-context-background-image.sc-style-context-mobile-toolbar-transparent .mobile-toolbar-spacer {

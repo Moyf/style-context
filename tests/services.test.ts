@@ -661,6 +661,41 @@ describe('BackgroundImageService', () => {
 		).toBe(true);
 	});
 
+	it('omits the modal background class by default (opt-in)', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-modal-transparent'),
+		).toBe(false);
+	});
+
+	it('publishes the modal background class when opted in', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				modalTransparent: true,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-modal-transparent'),
+		).toBe(true);
+	});
+
 	it('resolves ribbon and title bar transparency independently of each other and of the other surfaces', () => {
 		const currentSettings = settings({
 			backgroundImage: {

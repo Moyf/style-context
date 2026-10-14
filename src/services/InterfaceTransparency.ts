@@ -6,6 +6,7 @@ export const INTERFACE_TRANSPARENCY_CLASSES = {
 	ribbon: 'sc-style-context-ribbon-transparent',
 	titlebar: 'sc-style-context-titlebar-transparent',
 	activeTab: 'sc-style-context-active-tab-transparent',
+	modal: 'sc-style-context-modal-transparent',
 } as const;
 
 export type InterfaceTransparencySurface =
@@ -28,6 +29,9 @@ export function resolveInterfaceTransparency(
 		ribbon: settings.ribbonTransparent !== false,
 		titlebar: settings.titlebarTransparent !== false,
 		activeTab: settings.activeTabTransparent !== false,
+		// Opt-in: painting whole dialogs with the canvas is a bigger visual
+		// change than fading chrome strips, so the default is off.
+		modal: settings.modalTransparent === true,
 	};
 }
 

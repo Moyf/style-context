@@ -79,6 +79,7 @@ export interface Messages {
 			ribbonTransparent: string;
 			titlebarTransparent: string;
 			activeTabTransparent: string;
+			modalTransparent: string;
 			randomBackgroundOnStartup: string;
 			addRandomBackgroundRibbon: string;
 		};
@@ -109,6 +110,7 @@ export interface Messages {
 			ribbonTransparent: string;
 			titlebarTransparent: string;
 			activeTabTransparent: string;
+			modalTransparent: string;
 			randomBackgroundOnStartup: string;
 			addRandomBackgroundRibbon: string;
 		};

@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+### 🚀 Added
+
+- **Modal background (opt-in)**: A new `Modal background` toggle in Interface transparency paints modal dialogs and the command palette with the same canvas background as the note panes — image, blend, sizing, opacity, and filters all follow the background image settings. Default off; the card keeps its own size and opening animation.
+
+### 🐛 Fixed
+
+- **Detached Settings window missed published variables**: On its first open, the detached Settings window could be missed by the document scan, leaving the image-variable chain (and therefore the background layer, and any modal background) unresolved there. The settings tab now publishes its own document directly before rendering.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **弹窗背景（默认关闭）**：界面透明度中新增「弹窗背景」开关，为弹窗与命令面板应用与笔记窗体一致的画布背景——图片、混合、尺寸、不透明度、滤镜全部跟随背景图设置。默认关闭；弹窗保持自身尺寸与打开动画。
+
+### 🐛 修复
+
+- **分离设置窗漏收已发布变量**：分离设置窗首次打开时可能被文档扫描遗漏，导致图片变量链（进而背景图层与弹窗背景）在该窗口内无法解析。设置页现在会在渲染前向自己的文档直接发布。
+
+</details>
+
+---
+
 ## [0.6.2] - 2026-10-14
 ### 🐛 Fixed
 
