@@ -112,6 +112,8 @@ you can run `npm run build:local` to build and auto-copy into your vault.
 
 The built-in background image supports theme canvas gradients such as Composer's `--background-gradient`. To support another theme, add its canvas image token to the `--sc-style-context-theme-canvas` fallback in `styles.css`. If the theme paints an opaque workspace surface, add that surface to the transparency reset selectors in the same file.
 
+Solid-canvas themes need no gradient mapping and go through the same reset list: AnuPpuccin (`--tab-container-background` on the workspace containers, including card-layout and colorful-frame modes), Underwater (`--uw-background` on the tab containers), and Terminal Workbench (a body-level `--background-primary`). All three paint an opaque canvas on `.horizontal-main-container`, which is why that surface joins the reset selectors.
+
 ## Release
 
 After writing complete notes under `## [Unreleased]`, run `npm run release -- <version>`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- <version>` to validate without changing anything.
@@ -236,6 +238,8 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 ### 主题兼容
 
 内置背景图支持 Composer 等主题的渐变画布。兼容其他主题时，可在 `styles.css` 中将画布图片变量加入 `--sc-style-context-theme-canvas` 的兜底链；如果主题还在工作区元素上绘制不透明背景，将对应选择器加入同文件的透明化规则。
+
+纯色画布主题无需映射渐变，走同一套透明化规则：AnuPpuccin（工作区容器上的 `--tab-container-background`，含 card-layout 与 colorful-frame 模式）、Underwater（标签容器上的 `--uw-background`）和 Terminal Workbench（body 级重定义的 `--background-primary`）。三者都会在 `.horizontal-main-container` 上绘制不透明画布，因此该表面已加入透明化选择器。
 
 ## 发布
 

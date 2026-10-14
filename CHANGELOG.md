@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+### 🐛 Fixed
+
+- **Theme canvas compatibility (AnuPpuccin, Underwater, Terminal Workbench)**: Solid-canvas themes no longer hide built-in background images. All three paint an opaque canvas on `.horizontal-main-container` — via `--tab-container-background`, `--uw-background`, or a body-level `--background-primary` — so that surface now joins the transparency reset list.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **主题画布兼容（AnuPpuccin、Underwater、Terminal Workbench）**：纯色画布主题不再遮住内置背景图。三者都会在 `.horizontal-main-container` 上绘制不透明画布（分别为 `--tab-container-background`、`--uw-background` 和 body 级重定义的 `--background-primary`），该表面现已加入透明化重置列表。
+
+</details>
+
+---
+
 ## [0.6.1] - 2026-10-05
 ### Fixed
 

@@ -52,9 +52,13 @@ body.sc-style-context-background-image.sc-style-context-background-image-fade-pe
 }
 
 /* Surface resets — let the fixed layer flow through Obsidian's standard
-   canvas containers; theme-specific surfaces join this list. */
+   canvas containers; theme-specific surfaces join this list.
+   .horizontal-main-container paints an opaque canvas in solid-canvas
+   themes (AnuPpuccin's --tab-container-background, Underwater's
+   --uw-background, Terminal Workbench's body-level --background-primary). */
 body.sc-style-context-background-image.sc-style-context-background-image .app-container,
 body.sc-style-context-background-image.sc-style-context-background-image.i-border-layout:not(.is-mobile) .app-container,
+body.sc-style-context-background-image.sc-style-context-background-image .horizontal-main-container,
 body.sc-style-context-background-image.sc-style-context-background-image .workspace,
 body.sc-style-context-background-image.sc-style-context-background-image.theme-dark .workspace,
 body.sc-style-context-background-image.sc-style-context-background-image .workspace-split,
