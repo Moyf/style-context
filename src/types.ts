@@ -111,6 +111,7 @@ export interface BackgroundImageSettings extends BackgroundModeSettings {
 	statusBarTransparent: boolean;
 	ribbonTransparent: boolean;
 	titlebarTransparent: boolean;
+	modalTransparent: boolean;
 	activeTabTransparent: boolean;
 	/**
 	 * When true, documents whose body carries Obsidian's `theme-light` /
@@ -190,6 +191,7 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 		statusBarTransparent: true,
 		ribbonTransparent: true,
 		titlebarTransparent: true,
+		modalTransparent: false,
 		activeTabTransparent: true,
 		filter: { ...DEFAULT_BACKGROUND_FILTER },
 		perModeEnabled: false,

@@ -95,6 +95,7 @@ type ControlKey =
 	| 'backgroundImage.statusBarTransparent'
 	| 'backgroundImage.ribbonTransparent'
 	| 'backgroundImage.titlebarTransparent'
+	| 'backgroundImage.modalTransparent'
 	| 'backgroundImage.activeTabTransparent'
 	| `${BackgroundAppearancePrefix}.overlayEnabled`
 	| `${BackgroundAppearancePrefix}.overlayColor`
@@ -202,6 +203,13 @@ export class SettingsTab extends PluginSettingTab {
 		// rendering so image variables and live previews are immediately
 		// available there without forcing the user to reselect an image.
 		this.plugin.applyAll();
+		// applyAll() resolves documents through activeDocument, which can
+		// still miss a freshly opened detached window; publish this tab's
+		// own document directly so resource variables and the background
+		// layer are never stale there.
+		const tabDocument = this.containerEl.ownerDocument;
+		this.plugin.resourceVarCtx.applyToDocument(tabDocument);
+		this.plugin.backgroundImageCtx.applyToDocumentNow(tabDocument);
 		const messages = t();
 		return [
 			this.buildIntroDefinition(messages),
@@ -689,6 +697,14 @@ export class SettingsTab extends PluginSettingTab {
 							control: {
 								type: 'toggle',
 								key: 'backgroundImage.titlebarTransparent',
+							},
+						},
+						{
+							name: labels.modalTransparent,
+							desc: descriptions.modalTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.modalTransparent',
 							},
 						},
 					],

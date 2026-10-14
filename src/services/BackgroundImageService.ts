@@ -308,6 +308,32 @@ export class BackgroundImageService {
 		this.touchedDocuments.clear();
 	}
 
+	/**
+	 * Publishes the current layer into one document directly. The settings
+	 * tab uses this for its own detached window: apply() resolves documents
+	 * through activeDocument, which can miss a freshly opened detached
+	 * Settings window, leaving its variable chain (image value → resource
+	 * variables) broken until some later apply happens to run focused there.
+	 */
+	applyToDocumentNow(targetDocument: Document): void {
+		const settings = this.getSettings().backgroundImage;
+		if (!settings?.enabled) {
+			this.clearDocument(targetDocument);
+			return;
+		}
+		const resolved = this.resolveForDocument(settings, targetDocument);
+		if (!resolved) {
+			this.clearDocument(targetDocument);
+			return;
+		}
+		this.applyToDocument(
+			targetDocument,
+			resolved,
+			resolveInterfaceTransparency(settings),
+			resolveFadeDuration(settings.fadeDuration),
+		);
+	}
+
 	private clearDocument(targetDocument: Document): void {
 		this.cancelFade(targetDocument);
 		targetDocument.body.classList.remove(
