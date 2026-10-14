@@ -55,8 +55,7 @@ body.sc-style-context-background-image.sc-style-context-background-image-fade-pe
    canvas containers; theme-specific surfaces join this list.
    .horizontal-main-container paints an opaque canvas in solid-canvas
    themes (AnuPpuccin's --tab-container-background, Underwater's
-   --uw-background, Terminal Workbench's body-level --background-primary). */
-body.sc-style-context-background-image.sc-style-context-background-image .app-container,
+   --uw-background, Terminal Workbench's body-level --background-primary). */body.sc-style-context-background-image.sc-style-context-background-image .app-container,
 body.sc-style-context-background-image.sc-style-context-background-image.i-border-layout:not(.is-mobile) .app-container,
 body.sc-style-context-background-image.sc-style-context-background-image .horizontal-main-container,
 body.sc-style-context-background-image.sc-style-context-background-image .workspace,
@@ -80,6 +79,25 @@ body.sc-style-context-background-image.sc-style-context-background-image .worksp
 body.sc-style-context-background-image.sc-style-context-background-image .sidebar-toggle-button,
 body.sc-style-context-background-image.sc-style-context-background-image .nav-files-container,
 body.sc-style-context-background-image.sc-style-context-background-image:not(.is-mobile) .workspace-split.mod-left-split .workspace-sidedock-vault-profile {
+	background-color: transparent;
+	background-image: none;
+}
+
+/* Theme-fighting variants — solid-canvas themes re-paint these surfaces
+   with body-level mode classes (AnuPpuccin card-layout, Maple
+   app-layout-card, Terminal Workbench note views). The html prefix plus
+   the theme-class :is() keeps the reset strictly above theme rules at
+   equal class counts, regardless of stylesheet order — no !important
+   (this codebase deliberately avoids it). Themes that paint with
+   !important (Border's card-layout tab strips) stay out of reach. */
+html body.sc-style-context-background-image.sc-style-context-background-image:is(.theme-light, .theme-dark) .workspace .workspace-split,
+html body.sc-style-context-background-image.sc-style-context-background-image:is(.theme-light, .theme-dark) .workspace-split .workspace-tab-container,
+html body.sc-style-context-background-image.sc-style-context-background-image:is(.theme-light, .theme-dark) .workspace-split .workspace-tabs .workspace-leaf,
+html body.sc-style-context-background-image.sc-style-context-background-image:is(.theme-light, .theme-dark) .workspace-split .workspace-leaf-content,
+html body.sc-style-context-background-image.sc-style-context-background-image:is(.theme-light, .theme-dark) .workspace-split.mod-root .workspace-leaf-content,
+html body.sc-style-context-background-image.sc-style-context-background-image:is(.theme-light, .theme-dark) .markdown-source-view,
+html body.sc-style-context-background-image.sc-style-context-background-image:is(.theme-light, .theme-dark) .markdown-reading-view,
+html body.sc-style-context-background-image.sc-style-context-background-image:is(.theme-light, .theme-dark) .markdown-preview-view {
 	background-color: transparent;
 	background-image: none;
 }
@@ -251,6 +269,16 @@ body.sc-style-context-background-image.sc-style-context-background-image.sc-styl
 .sc-general-intro .setting-item-description a {
 	color: var(--text-accent);
 	text-decoration: underline;
+}
+
+/* Interface transparency page — theme !important caveat note */
+.sc-interface-transparency-note {
+	border-bottom: 1px solid var(--background-modifier-border);
+	padding-bottom: 8px;
+}
+
+.sc-interface-transparency-note .setting-item-description {
+	color: var(--text-muted);
 }
 
 /* Per-rule validation warning text (non-blocking) */

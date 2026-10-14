@@ -10,14 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### 🐛 Fixed
 
-- **Theme canvas compatibility (AnuPpuccin, Underwater, Terminal Workbench)**: Solid-canvas themes no longer hide built-in background images. All three paint an opaque canvas on `.horizontal-main-container` — via `--tab-container-background`, `--uw-background`, or a body-level `--background-primary` — so that surface now joins the transparency reset list.
+- **Theme canvas compatibility (AnuPpuccin, Underwater, Terminal Workbench)**: Solid-canvas themes no longer hide built-in background images. All three paint an opaque canvas on `.horizontal-main-container` — via `--tab-container-background`, `--uw-background`, or a body-level `--background-primary` — so that surface now joins the transparency reset list. AnuPpuccin's card layout re-paints the tab containers, side-split leaves and card surfaces, Terminal Workbench paints the note views (`.markdown-source-view` / `.markdown-reading-view` / `.markdown-preview-view`), and Maple's app-layout-card tints the splits; those surfaces join the reset list too, repeated with an html-prefixed, theme-class-qualified form that stays strictly above theme rules without `!important`. Themes painting with `!important` (Border's card-layout tab strips) cannot be overridden.
 
 <details>
 <summary>中文说明（点击展开）</summary>
 
 ### 🐛 修复
 
-- **主题画布兼容（AnuPpuccin、Underwater、Terminal Workbench）**：纯色画布主题不再遮住内置背景图。三者都会在 `.horizontal-main-container` 上绘制不透明画布（分别为 `--tab-container-background`、`--uw-background` 和 body 级重定义的 `--background-primary`），该表面现已加入透明化重置列表。
+- **主题画布兼容（AnuPpuccin、Underwater、Terminal Workbench）**：纯色画布主题不再遮住内置背景图。三者都会在 `.horizontal-main-container` 上绘制不透明画布（分别为 `--tab-container-background`、`--uw-background` 和 body 级重定义的 `--background-primary`），该表面现已加入透明化重置列表。AnuPpuccin 的 card-layout 会重绘标签容器、侧栏 leaf 和卡片表面，Terminal Workbench 会绘制笔记视图（`.markdown-source-view` / `.markdown-reading-view` / `.markdown-preview-view`），Maple 的 app-layout-card 会给分栏加色调；这些表面同样加入重置列表，并以 `html` 前缀 + 主题类限定的形式二次声明，在不使用 `!important` 的前提下严格压过主题规则。使用 `!important` 绘制的主题（Border 的 card-layout 标签条）无法覆盖。
 
 </details>
 

@@ -647,6 +647,14 @@ export class SettingsTab extends PluginSettingTab {
 					visible: () => this.plugin.settings.backgroundImage.enabled,
 					items: [
 						{
+							name: '',
+							searchable: false,
+							render: (setting) => {
+								setting.setClass('sc-interface-transparency-note');
+								setting.setDesc(pages.interfaceTransparencyImportantNote);
+							},
+						},
+						{
 							name: labels.mobileToolbarTransparent,
 							desc: descriptions.mobileToolbarTransparent,
 							control: {
