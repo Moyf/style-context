@@ -10,6 +10,18 @@ import { t } from '../i18n/i18n';
 export function registerCommands(plugin: StyleContextPlugin): void {
 	const messages = t();
 	plugin.addCommand({
+		id: 'random-background-image',
+		name: messages.commands.randomBackgroundImage,
+		callback: async () => {
+			if (await plugin.randomizeBackgroundImage()) {
+				new Notice(messages.notices.backgroundImageRandomized);
+			} else {
+				new Notice(messages.notices.noImageVariables);
+			}
+		},
+	});
+
+	plugin.addCommand({
 		id: 'copy-current-context',
 		name: messages.commands.copyCurrentContext,
 		callback: async () => {

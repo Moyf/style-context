@@ -12,4 +12,59 @@ describe('i18n', () => {
 	])('selects the expected locale for %s', (language, commandName) => {
 		expect(getMessages(language).commands.copyCurrentContext).toBe(commandName);
 	});
+
+	describe('pages.interfaceTransparency', () => {
+		it.each([
+			['en', 'Interface blending'],
+			['zh', '界面融合'],
+			['zh-TW', '介面融合'],
+			['ja', 'インターフェースの融合'],
+		])('has the correct title for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.pages.interfaceTransparency).toBe(expected);
+		});
+	});
+
+	describe('labels.mobileToolbarTransparent', () => {
+		it.each([
+			['en', 'Transparent mobile toolbar'],
+			['zh', '移动端工具栏透明'],
+			['zh-TW', '行動端工具列透明'],
+			['ja', 'モバイルツールバーを透明化'],
+		])('has the correct label for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.labels.mobileToolbarTransparent).toBe(expected);
+		});
+	});
+
+	describe('labels.statusBarTransparent', () => {
+		it.each([
+			['en', 'Transparent status bar'],
+			['zh', '状态栏透明'],
+			['zh-TW', '狀態列透明'],
+			['ja', 'ステータスバーを透明化'],
+		])('has the correct label for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.labels.statusBarTransparent).toBe(expected);
+		});
+	});
+
+	describe('labels.ribbonTransparent', () => {
+		it.each([
+			['en', 'Transparent ribbon'],
+			['zh', 'Ribbon 透明'],
+			['zh-TW', 'Ribbon 透明'],
+			['ja', 'Ribbon を透明化'],
+		])('has the correct label for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.labels.ribbonTransparent).toBe(expected);
+		});
+	});
+
+	describe('labels.titlebarTransparent', () => {
+		it.each([
+			['en', 'Transparent title bar'],
+			['zh', '窗口标题栏透明'],
+			['zh-TW', '視窗標題列透明'],
+			['ja', 'ウィンドウタイトルバーを透明化'],
+		])('has the correct label for locale %s', (language, expected) => {
+			expect(getMessages(language).settings.labels.titlebarTransparent).toBe(expected);
+		});
+	});
 });

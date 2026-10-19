@@ -1,12 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import { isImageFile } from '../src/utils/media';
 import {
-	isBareBackgroundImageVariable,
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 	pickRandomBackgroundImageValue,
+	randomScopeIcon,
+	randomizeBackgroundImageValue,
 	referencesImageVariable,
+	resolveBackgroundImageMode,
 } from '../src/utils/background';
+import { DEFAULT_SETTINGS, type ResourceRule, type StyleContextSettings } from '../src/types';
 import { themeSlug } from '../src/utils/slug';
 import {
 	areValidClassNames,
@@ -57,12 +60,38 @@ describe('isImageFile', () => {
 	});
 });
 
+describe('randomScopeIcon', () => {
+	it('maps each scope to its Lucide icon', () => {
+		expect(randomScopeIcon('all')).toBe('dices');
+		expect(randomScopeIcon('light')).toBe('sun');
+		expect(randomScopeIcon('dark')).toBe('moon');
+		expect(randomScopeIcon('none')).toBe('circle-slash');
+	});
+});
+
+describe('resolveBackgroundImageMode', () => {
+	it.each([
+		['theme-light', 'light'],
+		['theme-dark', 'dark'],
+	])('reads %j as the document mode', (bodyClass, expected) => {
+		document.body.classList.remove('theme-light', 'theme-dark');
+		document.body.classList.add(bodyClass);
+		expect(resolveBackgroundImageMode(document)).toBe(expected);
+	});
+
+	it('returns "any" for a document without a theme class', () => {
+		document.body.classList.remove('theme-light', 'theme-dark');
+		expect(resolveBackgroundImageMode(document)).toBe('any');
+	});
+});
+
 describe('pickRandomBackgroundImageValue', () => {
-	const rules = [
-		{ id: 'one', filePath: 'one.png', variableName: '--one', enabled: true },
-		{ id: 'two', filePath: 'two.png', variableName: '--two', enabled: true },
-		{ id: 'disabled', filePath: 'off.png', variableName: '--off', enabled: false },
-		{ id: 'invalid', filePath: 'bad.png', variableName: 'bad', enabled: true },
+	const rules: ResourceRule[] = [
+			{ id: 'one', filePath: 'one.png', variableName: '--one', enabled: true, useForBackgroundImage: true },
+			{ id: 'two', filePath: 'two.png', variableName: '--two', enabled: true, useForBackgroundImage: true },
+			{ id: 'disabled', filePath: 'off.png', variableName: '--off', enabled: false, useForBackgroundImage: true },
+			{ id: 'excluded', filePath: 'excluded.png', variableName: '--excluded', enabled: true, randomScope: 'none' },
+			{ id: 'invalid', filePath: 'bad.png', variableName: 'bad', enabled: true, useForBackgroundImage: true },
 	];
 
 	it('chooses from enabled valid variables and avoids the current value', () => {
@@ -74,9 +103,147 @@ describe('pickRandomBackgroundImageValue', () => {
 	it('returns null when no usable image variables exist', () => {
 		expect(
 			pickRandomBackgroundImageValue([
-				{ id: 'off', filePath: 'off.png', variableName: '--off', enabled: false },
+					{ id: 'off', filePath: 'off.png', variableName: '--off', enabled: false, useForBackgroundImage: true },
 			]),
 		).toBeNull();
+	});
+
+	describe('random scope filtering', () => {
+		const scoped: ResourceRule[] = [
+				{ id: 'all', filePath: 'all.png', variableName: '--all', enabled: true, randomScope: 'all' },
+				{ id: 'light', filePath: 'light.png', variableName: '--light-only', enabled: true, randomScope: 'light' },
+				{ id: 'dark', filePath: 'dark.png', variableName: '--dark-only', enabled: true, randomScope: 'dark' },
+				{ id: 'none', filePath: 'none.png', variableName: '--never', enabled: true, randomScope: 'none' },
+		];
+
+		it('mode any keeps mode-scoped images eligible but drops "none"', () => {
+			// Pool (rules order): --all, --light-only, --dark-only.
+			expect(pickRandomBackgroundImageValue(scoped, '', () => 0)).toBe('var(--all)');
+			// Current value excluded, index 0 of remaining two.
+			expect(pickRandomBackgroundImageValue(scoped, 'var(--all)', () => 0)).toBe('var(--light-only)');
+			// Last slot of the full pool.
+			expect(pickRandomBackgroundImageValue(scoped, '', () => 0.999)).toBe('var(--dark-only)');
+		});
+
+		it('light mode pools only "all" and "light" images', () => {
+			expect(pickRandomBackgroundImageValue(scoped, '', () => 0, 'light')).toBe('var(--all)');
+			expect(pickRandomBackgroundImageValue(scoped, 'var(--all)', () => 0, 'light')).toBe('var(--light-only)');
+		});
+
+		it('dark mode pools only "all" and "dark" images', () => {
+			expect(pickRandomBackgroundImageValue(scoped, '', () => 0, 'dark')).toBe('var(--all)');
+			expect(pickRandomBackgroundImageValue(scoped, 'var(--all)', () => 0, 'dark')).toBe('var(--dark-only)');
+		});
+
+		it('returns null when no candidate matches the mode', () => {
+			expect(
+				pickRandomBackgroundImageValue(
+					[{ id: 'l', filePath: 'l.png', variableName: '--light-only', enabled: true, randomScope: 'light' }],
+					'',
+					() => 0,
+					'dark',
+				),
+			).toBeNull();
+		});
+
+		it('defaults rules without randomScope to "all" (legacy flag is migrated in loadSettings)', () => {
+			expect(
+				pickRandomBackgroundImageValue(
+					[{ id: 'old', filePath: 'old.png', variableName: '--old', enabled: true, useForBackgroundImage: false }],
+					'',
+					() => 0,
+				),
+			).toBe('var(--old)');
+		});
+
+		describe('recent-pick avoidance', () => {
+			const pool: ResourceRule[] = [
+				{ id: '1', filePath: '1.png', variableName: '--one', enabled: true },
+				{ id: '2', filePath: '2.png', variableName: '--two', enabled: true },
+				{ id: '3', filePath: '3.png', variableName: '--three', enabled: true },
+				{ id: '4', filePath: '4.png', variableName: '--four', enabled: true },
+			];
+
+			it('skips everything in the recent history when the pool allows', () => {
+				const recent = ['var(--one)', 'var(--two)', 'var(--three)'];
+				expect(pickRandomBackgroundImageValue(pool, '', () => 0, 'any', recent)).toBe('var(--four)');
+			});
+
+			it('relaxes the history exclusion when it would empty the pool', () => {
+				const recent = ['var(--one)', 'var(--two)', 'var(--three)'];
+				// Tier 1 (recent + current) leaves nothing; tier 2 (current only,
+				// and current is empty) falls back to the full pool.
+				expect(pickRandomBackgroundImageValue(pool, '', () => 0, 'any', [...recent, 'var(--four)'])).toBe('var(--one)');
+			});
+
+			it('still avoids the current value like before', () => {
+				expect(pickRandomBackgroundImageValue(pool, 'var(--one)', () => 0, 'any', ['var(--one)'])).toBe('var(--two)');
+			});
+
+			it('returns the current value when it is the only candidate', () => {
+				expect(
+					pickRandomBackgroundImageValue(
+						[{ id: '1', filePath: '1.png', variableName: '--one', enabled: true }],
+						'var(--one)',
+						() => 0,
+						'any',
+						['var(--one)'],
+					),
+				).toBe('var(--one)');
+			});
+
+			it('alternates with a two-image pool (never repeats consecutively)', () => {
+				const two: ResourceRule[] = [pool[0], pool[1]];
+				// History covers the whole pool, tier 2 kicks in and only
+				// excludes the current value — leaving exactly one pick.
+				expect(pickRandomBackgroundImageValue(two, 'var(--one)', () => 0, 'any', ['var(--one)', 'var(--two)'])).toBe('var(--two)');
+				expect(pickRandomBackgroundImageValue(two, 'var(--two)', () => 0, 'any', ['var(--two)', 'var(--one)'])).toBe('var(--one)');
+			});
+
+			it('never repeats the current value with a three-image pool', () => {
+				const three: ResourceRule[] = [pool[0], pool[1], pool[2]];
+				// History covers all three, so tier 2 excludes only the current
+				// value and the pick is random among the other two.
+				expect(pickRandomBackgroundImageValue(three, 'var(--two)', () => 0, 'any', ['var(--one)', 'var(--two)', 'var(--three)'])).toBe('var(--one)');
+				expect(pickRandomBackgroundImageValue(three, 'var(--two)', () => 0.999, 'any', ['var(--one)', 'var(--two)', 'var(--three)'])).toBe('var(--three)');
+			});
+
+			it('randomizeBackgroundImageValue forwards the recent history', () => {
+				const settings: StyleContextSettings = {
+					...DEFAULT_SETTINGS,
+					resourceRules: pool,
+					backgroundImage: {
+						...DEFAULT_SETTINGS.backgroundImage,
+						enabled: true,
+						imageValue: 'var(--one)',
+					},
+				};
+				const recent = ['var(--two)', 'var(--three)'];
+				expect(randomizeBackgroundImageValue(settings, document, () => 0, recent)).toBe('var(--four)');
+			});
+		});
+
+		it('randomizeBackgroundImageValue applies the document mode to the pool', () => {
+			const settings: StyleContextSettings = {
+				...DEFAULT_SETTINGS,
+				resourceRules: [
+					{ id: 'l', filePath: 'l.png', variableName: '--light-only', enabled: true, randomScope: 'light' },
+					{ id: 'd', filePath: 'd.png', variableName: '--dark-only', enabled: true, randomScope: 'dark' },
+				],
+			};
+			document.body.classList.add('theme-dark');
+			expect(randomizeBackgroundImageValue(settings, document, () => 0)).toBe('var(--dark-only)');
+
+			document.body.classList.remove('theme-dark');
+			document.body.classList.add('theme-light');
+			expect(randomizeBackgroundImageValue(settings, document, () => 0)).toBe('var(--light-only)');
+
+			// Unknown mode: both scoped images stay eligible. The previous pick
+			// is stored as the current value, so each call flips to the other.
+			document.body.classList.remove('theme-light');
+			expect(randomizeBackgroundImageValue(settings, document, () => 0)).toBe('var(--dark-only)');
+			expect(randomizeBackgroundImageValue(settings, document, () => 0)).toBe('var(--light-only)');
+		});
 	});
 });
 
@@ -90,22 +257,121 @@ describe('background image values', () => {
 		).toBe('url("https://example.com/hero.jpg")');
 	});
 
-	it('accepts image expressions and rejects plain invalid tokens', () => {
+	it('wraps a bare custom property name into var()', () => {
+		expect(normalizeBackgroundImageValue('--hero-image')).toBe(
+			'var(--hero-image)',
+		);
+		expect(normalizeBackgroundImageValue(' --hero-image ')).toBe(
+			'var(--hero-image)',
+		);
+		// Already-wrapped values pass through untouched.
+		expect(normalizeBackgroundImageValue('var(--hero-image)')).toBe(
+			'var(--hero-image)',
+		);
+		// Non-variable tokens are left alone.
+		expect(normalizeBackgroundImageValue('hero-image')).toBe('hero-image');
+	});
+
+	it('accepts image expressions, bare variables, and rejects plain tokens', () => {
 		expect(isValidBackgroundImageValue('var(--hero-image)')).toBe(true);
 		expect(
 			isValidBackgroundImageValue('url("https://example.com/hero.jpg")'),
 		).toBe(true);
-		expect(isValidBackgroundImageValue('--hero-image')).toBe(false);
+		expect(isValidBackgroundImageValue('--hero-image')).toBe(true);
 		expect(isValidBackgroundImageValue('hero-image')).toBe(false);
 	});
+});
 
-	it('recognizes bare custom properties that need var()', () => {
-		expect(isBareBackgroundImageVariable(' --hero-image ')).toBe(true);
-		expect(isBareBackgroundImageVariable('var(--hero-image)')).toBe(false);
-		expect(isBareBackgroundImageVariable('hero-image')).toBe(false);
+describe('randomizeBackgroundImageValue', () => {
+	function perModeSettings(): StyleContextSettings {
+		return {
+			...DEFAULT_SETTINGS,
+			resourceRules: [
+				{ id: 'one', filePath: 'one.png', variableName: '--one', enabled: true, useForBackgroundImage: true },
+				{ id: 'two', filePath: 'two.png', variableName: '--two', enabled: true, useForBackgroundImage: true },
+			],
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--global)',
+				perModeEnabled: true,
+				light: {
+					...DEFAULT_SETTINGS.backgroundImage.light,
+					imageValue: 'var(--one)',
+				},
+				dark: {
+					...DEFAULT_SETTINGS.backgroundImage.dark,
+					imageValue: 'var(--one)',
+				},
+			},
+		};
+	}
+
+	beforeEach(() => {
+		document.body.classList.remove('theme-light', 'theme-dark');
 	});
 
-	it('detects only bare matching background var() values', () => {
+	it('updates only the light config for a theme-light document', () => {
+		const current = perModeSettings();
+		document.body.classList.add('theme-light');
+
+		// The light config's current value is excluded, leaving one candidate.
+		const value = randomizeBackgroundImageValue(current, document, () => 0);
+
+		expect(value).toBe('var(--two)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--two)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.imageValue).toBe('var(--global)');
+	});
+
+	it('updates only the dark config for a theme-dark document', () => {
+		const current = perModeSettings();
+		document.body.classList.add('theme-dark');
+
+		const value = randomizeBackgroundImageValue(current, document, () => 0);
+
+		expect(value).toBe('var(--two)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--two)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.imageValue).toBe('var(--global)');
+	});
+
+	it('falls back to the global config for a document with neither theme class', () => {
+		const current = perModeSettings();
+
+		const value = randomizeBackgroundImageValue(current, document, () => 0.999);
+
+		expect(value).toBe('var(--two)');
+		expect(current.backgroundImage.imageValue).toBe('var(--two)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--one)');
+	});
+
+	it('targets the global config while per-mode is disabled, even with a theme class', () => {
+		const current = perModeSettings();
+		current.backgroundImage.perModeEnabled = false;
+		document.body.classList.add('theme-light');
+
+		const value = randomizeBackgroundImageValue(current, document, () => 0.999);
+
+		expect(value).toBe('var(--two)');
+		expect(current.backgroundImage.imageValue).toBe('var(--two)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--one)');
+	});
+
+	it('returns null and mutates nothing when no image variable is eligible', () => {
+		const current = perModeSettings();
+		current.resourceRules = [];
+		document.body.classList.add('theme-dark');
+
+		expect(randomizeBackgroundImageValue(current, document, () => 0)).toBeNull();
+		expect(current.backgroundImage.imageValue).toBe('var(--global)');
+		expect(current.backgroundImage.light.imageValue).toBe('var(--one)');
+		expect(current.backgroundImage.dark.imageValue).toBe('var(--one)');
+	});
+
+	it('detects matching var() values, including bare custom property names', () => {
 		const variables = ['--hero-image', '--cover-image'];
 
 		expect(referencesImageVariable(' var( --hero-image ) ', variables)).toBe(true);
@@ -115,7 +381,9 @@ describe('background image values', () => {
 		expect(referencesImageVariable('linear-gradient(red, blue)', variables)).toBe(false);
 		expect(referencesImageVariable('none', variables)).toBe(false);
 		expect(referencesImageVariable('var(--other-image)', variables)).toBe(false);
-		expect(referencesImageVariable('--hero-image', variables)).toBe(false);
+		// Bare custom property names normalize to var(--name) (0.4.0), so a
+		// bare matching name references the variable just like var(--name).
+		expect(referencesImageVariable('--hero-image', variables)).toBe(true);
 		expect(referencesImageVariable(null, variables)).toBe(false);
 	});
 });

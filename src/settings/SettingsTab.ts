@@ -1,5 +1,6 @@
 import {
 	App,
+	Menu,
 	Notice,
 	PluginSettingTab,
 	TFile,
@@ -7,6 +8,7 @@ import {
 	normalizePath,
 	setTooltip,
 	type ExtraButtonComponent,
+	type ButtonComponent,
 	type SliderComponent,
 	type Setting,
 	type SettingDefinition,
@@ -35,16 +37,46 @@ import { isImageFile } from '../utils/media';
 import { readThemeName } from '../utils/internals';
 import { themeSlug } from '../utils/slug';
 import {
-	isBareBackgroundImageVariable,
 	isValidBackgroundImageValue,
 	normalizeBackgroundImageValue,
 	pickRandomBackgroundImageValue,
+	randomScopeIcon,
+	resolveBackgroundImageMode,
+	type RandomImageMode,
 } from '../utils/background';
 import { t } from '../i18n/i18n';
 import type { Messages } from '../i18n/types';
-import { DEFAULT_SETTINGS, type PathRule, type ResourceRule } from '../types';
+import {
+	DEFAULT_SETTINGS,
+	type BackgroundModeSettings,
+	type PathRule,
+	type RandomImageScope,
+	type ResourceRule,
+} from '../types';
 
 const DIAG_REFRESH_MS = 2000;
+
+/**
+ * Dot-path prefixes that own a full set of appearance controls: the global
+ * background fields plus each per-mode config.
+ */
+type BackgroundAppearancePrefix =
+	| 'backgroundImage'
+	| 'backgroundImage.light'
+	| 'backgroundImage.dark';
+
+type BackgroundFilterControlKey =
+	| 'brightness'
+	| 'contrast'
+	| 'saturate'
+	| 'grayscale'
+	| 'sepia'
+	| 'invert'
+	| 'hueRotate'
+	| 'blur';
+
+/** Which background config a row or page targets. */
+type BackgroundImageMode = 'global' | 'light' | 'dark';
 
 /**
  * Dot-paths into StyleContextSettings that declarative controls bind to.
@@ -55,20 +87,26 @@ type ControlKey =
 	| 'themeContextEnabled'
 	| 'notePathContextEnabled'
 	| 'backgroundImage.enabled'
-	| 'backgroundImage.opacity'
-	| 'backgroundImage.blendMode'
-	| 'backgroundImage.size'
-	| 'backgroundImage.position'
-	| 'backgroundImage.repeat'
+	| 'backgroundImage.perModeEnabled'
+	| 'backgroundImage.randomOnStartup'
+	| 'backgroundImage.randomBackgroundRibbon'
 	| 'backgroundImage.attachment'
-	| 'backgroundImage.filter.brightness'
-	| 'backgroundImage.filter.contrast'
-	| 'backgroundImage.filter.saturate'
-	| 'backgroundImage.filter.grayscale'
-	| 'backgroundImage.filter.sepia'
-	| 'backgroundImage.filter.invert'
-	| 'backgroundImage.filter.hueRotate'
-	| 'backgroundImage.filter.blur';
+	| 'backgroundImage.mobileToolbarTransparent'
+	| 'backgroundImage.statusBarTransparent'
+	| 'backgroundImage.ribbonTransparent'
+	| 'backgroundImage.titlebarTransparent'
+	| 'backgroundImage.modalTransparent'
+	| 'backgroundImage.activeTabTransparent'
+	| `${BackgroundAppearancePrefix}.overlayEnabled`
+	| `${BackgroundAppearancePrefix}.overlayColor`
+	| `${BackgroundAppearancePrefix}.overlayOpacity`
+	| `${BackgroundAppearancePrefix}.overlayBlendMode`
+	| `${BackgroundAppearancePrefix}.opacity`
+	| `${BackgroundAppearancePrefix}.blendMode`
+	| `${BackgroundAppearancePrefix}.size`
+	| `${BackgroundAppearancePrefix}.position`
+	| `${BackgroundAppearancePrefix}.repeat`
+	| `${BackgroundAppearancePrefix}.filter.${BackgroundFilterControlKey}`;
 
 function getPath(source: unknown, path: string): unknown {
 	let cursor = source;
@@ -114,8 +152,43 @@ export class SettingsTab extends PluginSettingTab {
 	private refreshHandle: number | null = null;
 	/** Preview tiles keyed by rule id, refreshed independently to preserve input focus. */
 	private rulePreviewTiles = new Map<string, HTMLElement>();
-	private backgroundImageValuePreview: HTMLElement | null = null;
-	private backgroundImagePreview: HTMLElement | null = null;
+	/** Resource rule rows keyed by rule id, for live filtering without a rebuild. */
+	private resourceRuleRowEls = new Map<string, HTMLElement>();
+	/** Path rule rows keyed by rule id, to focus a fresh row after adding. */
+	private pathRuleRowEls = new Map<string, HTMLElement>();
+	/**
+	 * True while a path-rule add click is rebuilding + saving. The rebuild
+	 * replaces the button element, so the flag — not the element — carries
+	 * the disabled state across the render.
+	 */
+	private pathRuleAdding = false;
+	/** The path toolbar's add button, re-resolved on every toolbar render. */
+	private pathAddButton: ButtonComponent | null = null;
+	/** Current image-variable filter query; kept across tab re-renders. */
+	private resourceFilter = '';
+	/** Current path-rule filter query; kept across tab re-renders. */
+	private pathFilter = '';
+	/**
+	 * True while an add-variable click is rebuilding + saving. The rebuild
+	 * replaces the button element, so the flag — not the element — carries
+	 * the disabled state across the render.
+	 */
+	private resourceAdding = false;
+	/**
+	 * The toolbar's add button component, re-resolved on every toolbar
+	 * render. Kept as the component (not the raw element) so re-enabling
+	 * goes through Obsidian's own setDisabled, which also cleans up the
+	 * disabled state classes the component added.
+	 */
+	private resourceAddButton: ButtonComponent | null = null;
+	/** Image-value preview tiles keyed by the config they reflect. */
+	private backgroundImageValuePreviews = new Map<
+		BackgroundImageMode,
+		HTMLElement
+	>();
+	/** Appearance-page previews keyed by the config they reflect. */
+	private backgroundImagePreviews = new Map<BackgroundImageMode, HTMLElement>();
+	/** True while the settings UI has rendered definitions and not yet hidden. */
 	private isRendered = false;
 
 	constructor(app: App, plugin: StyleContextPlugin) {
@@ -133,6 +206,13 @@ export class SettingsTab extends PluginSettingTab {
 		// rendering so image variables and live previews are immediately
 		// available there without forcing the user to reselect an image.
 		this.plugin.applyAll();
+		// applyAll() resolves documents through activeDocument, which can
+		// still miss a freshly opened detached window; publish this tab's
+		// own document directly so resource variables and the background
+		// layer are never stale there.
+		const tabDocument = this.containerEl.ownerDocument;
+		this.plugin.resourceVarCtx.applyToDocument(tabDocument);
+		this.plugin.backgroundImageCtx.applyToDocumentNow(tabDocument);
 		const messages = t();
 		return [
 			this.buildIntroDefinition(messages),
@@ -161,15 +241,14 @@ export class SettingsTab extends PluginSettingTab {
 		);
 		if (key.startsWith('backgroundImage.')) {
 			await this.persistAndApplyBackgroundImage();
+			if (key === 'backgroundImage.randomBackgroundRibbon') {
+				this.plugin.syncRandomBackgroundRibbon();
+			}
 			const messages = t();
-			this.refreshBackgroundImageValuePreview(
-				this.backgroundImageValuePreview,
-				messages,
-			);
-			this.refreshBackgroundImagePreview(
-				this.backgroundImagePreview,
-				messages,
-			);
+			for (const mode of ['global', 'light', 'dark'] as const) {
+				this.refreshBackgroundImageValuePreview(mode, messages);
+				this.refreshBackgroundImagePreview(mode, messages);
+			}
 			return;
 		}
 		await this.persistAndApply();
@@ -178,6 +257,10 @@ export class SettingsTab extends PluginSettingTab {
 	hide(): void {
 		this.isRendered = false;
 		this.stopDiagnosticsRefresh();
+		// Saves may still be in flight when the tab closes; never let the
+		// flags disable the add buttons in the next open tab.
+		this.resourceAdding = false;
+		this.pathRuleAdding = false;
 		super.hide();
 	}
 
@@ -229,6 +312,7 @@ export class SettingsTab extends PluginSettingTab {
 				{
 					name: messages.settings.labels.themeClassPrefix,
 					render: (setting) => {
+						setting.setClass('sc-theme-prefix-row');
 						this.renderThemePrefixDesc(setting);
 						setting.addText((text) => {
 							text.setPlaceholder(messages.settings.placeholders.themeClassPrefix)
@@ -265,22 +349,32 @@ export class SettingsTab extends PluginSettingTab {
 		descEl.empty();
 		const prefix = this.plugin.settings.themeClassPrefix;
 
-		// Conversion-rule explanation
+		// Conversion rule and example flow together in one paragraph,
+		// with the class name inline as code.
 		const ruleLine = descEl.createDiv();
 		ruleLine.appendText(messages.settings.descriptions.themePrefixBefore);
-		const exampleLine = descEl.createDiv();
-		exampleLine.appendText(messages.settings.descriptions.themePrefixExample);
-		exampleLine.appendText(' ');
-		exampleLine.createEl('code', { text: `.${prefix}brutal-gum` });
+		ruleLine.appendText(' ');
+		ruleLine.appendText(
+			messages.settings.descriptions.themePrefixExampleBefore,
+		);
+		ruleLine.createEl('code', { text: `${prefix}brutal-gum` });
+		ruleLine.appendText(
+			messages.settings.descriptions.themePrefixExampleAfter,
+		);
 
 		// Current preview — clickable to copy the full selector
 		const rawName = readThemeName(this.app);
 		const slug = themeSlug(rawName || DEFAULT_THEME_SLUG);
 		const selector = `body.${prefix}${slug}`;
 		const previewLine = descEl.createDiv();
+		previewLine.addClass('sc-theme-prefix-preview');
 		previewLine.appendText(messages.settings.descriptions.currentThemeClass);
 		const previewCode = previewLine.createEl('code', { text: selector });
 		previewCode.addClass('sc-clickable-code');
+		previewLine.appendText(' ');
+		previewLine.appendText(
+			messages.settings.descriptions.themeClassCopyHint,
+		);
 		setTooltip(previewCode, messages.settings.tooltips.clickToCopy(selector), {
 			placement: 'top',
 		});
@@ -303,36 +397,109 @@ export class SettingsTab extends PluginSettingTab {
 				desc: messages.settings.descriptions.publishPathClasses,
 				control: { type: 'toggle', key: 'notePathContextEnabled' },
 			},
-			...this.plugin.settings.pathRules.map((rule) =>
-				this.buildPathRuleRow(messages, rule),
-			),
-			{
-				name: '',
-				searchable: false,
-				render: (setting) => {
-					setting.addButton((button) =>
-						button
-							.setButtonText(messages.settings.buttons.addPathRule)
-							.setCta()
-							.onClick(async () => {
-								this.plugin.settings.pathRules.push({
-									id: generateId('pr'),
-									matchMode: 'folder',
-									pattern: '',
-									className: '',
-									enabled: true,
-								});
-								await this.persistAndApply();
-								this.update();
-							}),
-					);
-				},
-			},
+			this.buildPathRuleListPage(messages),
 		];
 		return {
 			type: 'group',
 			heading: messages.settings.groups.notePathRules,
 			items,
+		};
+	}
+
+	/**
+	 * The path rule list as its own subpage: the add button on top, then
+	 * one row per rule. A subpage keeps the main tab short no matter how
+	 * many rules are registered.
+	 */
+	private buildPathRuleListPage(
+		messages: Messages,
+	): SettingGroupItem<ControlKey> {
+		return {
+			type: 'page',
+			name: messages.settings.pages.managePathRules,
+			desc: `${messages.settings.pages.managePathRulesDesc} ${messages.settings.pages.pathRuleCount(this.plugin.settings.pathRules.length)}`,
+			items: [
+				{
+					name: '',
+					searchable: false,
+					render: (setting) => {
+						setting.settingEl.removeClass(
+							'sc-path-rule-row',
+							'sc-resource-rule-row',
+							'mod-toggle',
+						);
+						setting.setClass('sc-rule-toolbar');
+						// Filter sits on the left of the same row; the add
+						// button stays on the right. Filter lives in-memory
+						// only, matching the image variable toolbar.
+						setting.addText((text) => {
+							text.setPlaceholder(
+								messages.settings.placeholders.filter,
+							)
+								.setValue(this.pathFilter)
+								.onChange((value) => {
+									this.pathFilter = value;
+									this.applyPathFilter();
+								});
+							text.inputEl.addClass('sc-resource-filter-input');
+						});
+						setting.addButton((button) => {
+							this.pathAddButton = button;
+							if (this.pathRuleAdding) {
+								button.setDisabled(true);
+							}
+							button
+								.setButtonText(
+									messages.settings.buttons.addPathRule,
+								)
+								.setCta()
+								.onClick(async () => {
+									if (this.pathRuleAdding) return;
+									this.pathRuleAdding = true;
+									button.setDisabled(true);
+									// Insert at the top so the new row appears
+									// right under the toolbar, ready to edit
+									// immediately.
+									const newRule: PathRule = {
+										id: generateId('pr'),
+										matchMode: 'folder',
+										pattern: '',
+										className: '',
+										enabled: true,
+									};
+									this.plugin.settings.pathRules.unshift(newRule);
+									// Reset the filter so the freshly added
+									// (empty) row is visible after the rebuild.
+									this.pathFilter = '';
+									await this.persistAndApply();
+									this.update();
+									this.pathRuleAdding = false;
+									// The rebuild swapped the component —
+									// re-enable the current one through Obsidian's
+									// own setDisabled so its disabled state
+									// classes are cleaned up too.
+									this.pathAddButton?.setDisabled(false);
+									// Move the caret into the new row's pattern
+									// input; the rebuild would otherwise drop
+									// focus.
+									window.setTimeout(() => {
+										const rowEl = this.pathRuleRowEls.get(
+											newRule.id,
+										);
+										rowEl
+											?.querySelector<HTMLInputElement>(
+												'input[type="text"]',
+											)
+											?.focus();
+									}, 0);
+								});
+						});
+					},
+				},
+				...this.plugin.settings.pathRules.map((rule) =>
+					this.buildPathRuleRow(messages, rule),
+				),
+			],
 		};
 	}
 
@@ -345,6 +512,16 @@ export class SettingsTab extends PluginSettingTab {
 			searchable: false,
 			render: (setting) => {
 				setting.setClass('sc-path-rule-row');
+				// Register the row so the toolbar can focus a fresh row
+				// right after adding it, and apply the current filter so a
+				// rebuild keeps it.
+				this.pathRuleRowEls.set(rule.id, setting.settingEl);
+				const query = this.pathFilter.trim().toLowerCase();
+				const rowMatches =
+					query.length === 0 ||
+					rule.pattern.toLowerCase().includes(query) ||
+					rule.className.toLowerCase().includes(query);
+				setting.settingEl.style.display = rowMatches ? '' : 'none';
 				setting
 					// Match-mode dropdown (leftmost) — switches the pattern
 					// input's behavior and placeholder below. Defaults to
@@ -410,6 +587,10 @@ export class SettingsTab extends PluginSettingTab {
 								this.update();
 							}),
 					);
+
+				return () => {
+					this.pathRuleRowEls.delete(rule.id);
+				};
 			},
 		};
 	}
@@ -424,7 +605,6 @@ export class SettingsTab extends PluginSettingTab {
 		const labels = messages.settings.labels;
 		const descriptions = messages.settings.descriptions;
 		const pages = messages.settings.pages;
-		const groups = messages.settings.groups;
 		return {
 			type: 'group',
 			heading: messages.settings.groups.backgroundImage,
@@ -434,131 +614,106 @@ export class SettingsTab extends PluginSettingTab {
 					desc: descriptions.publishBackgroundImage,
 					control: { type: 'toggle', key: 'backgroundImage.enabled' },
 				},
-				this.buildBackgroundImageValueRow(messages),
+				{
+					name: labels.perModeBackground,
+					desc: descriptions.perModeBackground,
+					visible: () => this.plugin.settings.backgroundImage.enabled,
+					control: { type: 'toggle', key: 'backgroundImage.perModeEnabled' },
+				},
+				this.buildBackgroundImageValueRow(
+					messages,
+					'global',
+					labels.backgroundImageValue,
+				),
+				this.buildBackgroundAppearancePage(messages, 'global'),
+				this.buildBackgroundImageValueRow(
+					messages,
+					'light',
+					labels.lightBackgroundImageValue,
+				),
+				this.buildBackgroundAppearancePage(messages, 'light'),
+				this.buildBackgroundImageValueRow(
+					messages,
+					'dark',
+					labels.darkBackgroundImageValue,
+				),
+				this.buildBackgroundAppearancePage(messages, 'dark'),
 				{
 					type: 'page',
-					name: pages.backgroundAppearance,
-					desc: pages.backgroundAppearanceDesc,
+					name: pages.backgroundRandomization,
+					desc: pages.backgroundRandomizationDesc,
+					visible: () => this.plugin.settings.backgroundImage.enabled,
 					items: [
-						this.buildBackgroundImagePreview(messages),
 						{
-							type: 'group',
-							heading: groups.backgroundDisplay,
-							items: [
-								this.buildSlider(
-									labels.backgroundOpacity,
-									'backgroundImage.opacity',
-									0,
-									1,
-									0.05,
-									this.plugin.settings.backgroundImage.opacity,
-									formatPercent,
-									descriptions.backgroundOpacity,
-									DEFAULT_SETTINGS.backgroundImage.opacity,
-								),
-								this.buildBackgroundDropdown(
-									labels.backgroundBlendMode,
-									descriptions.backgroundBlendMode,
-									BACKGROUND_BLEND_MODES,
-									'backgroundImage.blendMode',
-								),
-							],
+							name: labels.randomBackgroundOnStartup,
+							desc: descriptions.randomBackgroundOnStartup,
+							control: { type: 'toggle', key: 'backgroundImage.randomOnStartup' },
 						},
 						{
-							type: 'group',
-							heading: groups.backgroundFilter,
-							items: [
-								this.buildFilterSlider(
-									labels.filterBrightness,
-									'backgroundImage.filter.brightness',
-									0,
-									2,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.brightness,
-								),
-								this.buildFilterSlider(
-									labels.filterBlur,
-									'backgroundImage.filter.blur',
-									0,
-									20,
-									formatPixels,
-									DEFAULT_SETTINGS.backgroundImage.filter.blur,
-									0.5,
-								),
-								this.buildFilterSlider(
-									labels.filterContrast,
-									'backgroundImage.filter.contrast',
-									0,
-									2,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.contrast,
-								),
-								this.buildFilterSlider(
-									labels.filterSaturate,
-									'backgroundImage.filter.saturate',
-									0,
-									2,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.saturate,
-								),
-								this.buildFilterSlider(
-									labels.filterGrayscale,
-									'backgroundImage.filter.grayscale',
-									0,
-									1,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.grayscale,
-								),
-								this.buildFilterSlider(
-									labels.filterHueRotate,
-									'backgroundImage.filter.hueRotate',
-									0,
-									360,
-									formatDegrees,
-									DEFAULT_SETTINGS.backgroundImage.filter.hueRotate,
-									5,
-								),
-								this.buildFilterSlider(
-									labels.filterSepia,
-									'backgroundImage.filter.sepia',
-									0,
-									1,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.sepia,
-								),
-								this.buildFilterSlider(
-									labels.filterInvert,
-									'backgroundImage.filter.invert',
-									0,
-									1,
-									formatPercent,
-									DEFAULT_SETTINGS.backgroundImage.filter.invert,
-								),
-							],
+							name: labels.addRandomBackgroundRibbon,
+							desc: descriptions.addRandomBackgroundRibbon,
+							control: { type: 'toggle', key: 'backgroundImage.randomBackgroundRibbon' },
+						},
+					],
+				},
+				{
+					type: 'page',
+					name: pages.interfaceTransparency,
+					desc: pages.interfaceTransparencyDesc,
+					visible: () => this.plugin.settings.backgroundImage.enabled,
+					items: [
+						{
+							name: '',
+							searchable: false,
+							render: (setting) => {
+								setting.setClass('sc-interface-transparency-note');
+								setting.setDesc(pages.interfaceTransparencyImportantNote);
+							},
 						},
 						{
-							type: 'group',
-							heading: groups.backgroundLayout,
-							items: [
-								this.buildBackgroundDropdown(
-									labels.backgroundSize,
-									descriptions.backgroundSize,
-									BACKGROUND_SIZE_OPTIONS,
-									'backgroundImage.size',
-								),
-								this.buildBackgroundDropdown(
-									labels.backgroundPosition,
-									descriptions.backgroundPosition,
-									BACKGROUND_POSITION_OPTIONS,
-									'backgroundImage.position',
-								),
-								this.buildBackgroundDropdown(
-									labels.backgroundRepeat,
-									descriptions.backgroundRepeat,
-									BACKGROUND_REPEAT_OPTIONS,
-									'backgroundImage.repeat',
-								),
-							],
+							name: labels.mobileToolbarTransparent,
+							desc: descriptions.mobileToolbarTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.mobileToolbarTransparent',
+							},
+						},
+						{
+							name: labels.statusBarTransparent,
+							desc: descriptions.statusBarTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.statusBarTransparent',
+							},
+						},
+						{
+							name: labels.ribbonTransparent,
+							desc: descriptions.ribbonTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.ribbonTransparent',
+							},
+						},
+						{
+							name: labels.activeTabTransparent,
+							desc: descriptions.activeTabTransparent,
+							control: { type: 'toggle', key: 'backgroundImage.activeTabTransparent' },
+						},
+						{
+							name: labels.titlebarTransparent,
+							desc: descriptions.titlebarTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.titlebarTransparent',
+							},
+						},
+						{
+							name: labels.modalTransparent,
+							desc: descriptions.modalTransparent,
+							control: {
+								type: 'toggle',
+								key: 'backgroundImage.modalTransparent',
+							},
 						},
 					],
 				},
@@ -566,20 +721,281 @@ export class SettingsTab extends PluginSettingTab {
 		};
 	}
 
+	/**
+	 * The Appearance page for one config target. The global page mirrors the
+	 * historical layout; the per-mode pages bind the same controls to the
+	 * `light` / `dark` config objects instead of the global fields.
+	 */
+	private buildBackgroundAppearancePage(
+		messages: Messages,
+		mode: BackgroundImageMode,
+	): SettingGroupItem<ControlKey> {
+		const labels = messages.settings.labels;
+		const descriptions = messages.settings.descriptions;
+		const pages = messages.settings.pages;
+		const groups = messages.settings.groups;
+		const prefix: BackgroundAppearancePrefix =
+			mode === 'global' ? 'backgroundImage' : `backgroundImage.${mode}`;
+		let name = pages.backgroundAppearance;
+		if (mode === 'light') name = pages.lightBackgroundAppearance;
+		if (mode === 'dark') name = pages.darkBackgroundAppearance;
+		const config = this.backgroundImageConfig(mode);
+		return {
+			type: 'page',
+			name,
+			desc: pages.backgroundAppearanceDesc,
+			visible: () => {
+				const background = this.plugin.settings.backgroundImage;
+				return mode === 'global'
+					? !background.perModeEnabled
+					: background.enabled && background.perModeEnabled;
+			},
+			items: [
+				this.buildBackgroundImagePreview(messages, mode),
+				{
+					type: 'group',
+					heading: groups.backgroundDisplay,
+					items: [
+						this.buildSlider(
+							labels.backgroundOpacity,
+							`${prefix}.opacity`,
+							0,
+							1,
+							0.05,
+							config.opacity,
+							formatPercent,
+							descriptions.backgroundOpacity,
+							DEFAULT_SETTINGS.backgroundImage.opacity,
+						),
+						this.buildBackgroundDropdown(
+							labels.backgroundBlendMode,
+							descriptions.backgroundBlendMode,
+							BACKGROUND_BLEND_MODES,
+							`${prefix}.blendMode`,
+						),
+					],
+				},
+				{
+					type: 'group',
+					heading: groups.backgroundOverlay,
+					items: [
+						{
+							name: labels.backgroundOverlayEnabled,
+							desc: descriptions.backgroundOverlay,
+							control: { type: 'toggle', key: `${prefix}.overlayEnabled` },
+						},
+						{
+							name: labels.backgroundOverlayColor,
+							visible: () => this.backgroundImageConfig(mode).overlayEnabled,
+							control: { type: 'color', key: `${prefix}.overlayColor` },
+						},
+						{
+							...this.buildBackgroundDropdown(labels.backgroundOverlayBlendMode,
+								descriptions.backgroundOverlayBlendMode, BACKGROUND_BLEND_MODES, `${prefix}.overlayBlendMode`),
+							visible: () => this.backgroundImageConfig(mode).overlayEnabled,
+						},
+						{
+							...this.buildSlider(labels.backgroundOverlayOpacity, `${prefix}.overlayOpacity`,
+								0, 1, 0.01, config.overlayOpacity, formatPercent, undefined,
+								DEFAULT_SETTINGS.backgroundImage.overlayOpacity),
+							visible: () => this.backgroundImageConfig(mode).overlayEnabled,
+						},
+					],
+				},
+				{
+					type: 'group',
+					heading: groups.backgroundFilter,
+					items: [
+						this.buildFilterSlider(
+							labels.filterBrightness,
+							`${prefix}.filter.brightness`,
+							0,
+							1.5,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.brightness,
+						),
+						this.buildFilterSlider(
+							labels.filterBlur,
+							`${prefix}.filter.blur`,
+							0,
+							20,
+							formatPixels,
+							DEFAULT_SETTINGS.backgroundImage.filter.blur,
+							1,
+						),
+						this.buildFilterSlider(
+							labels.filterContrast,
+							`${prefix}.filter.contrast`,
+							0,
+							1.5,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.contrast,
+						),
+						this.buildFilterSlider(
+							labels.filterSaturate,
+							`${prefix}.filter.saturate`,
+							0,
+							1.5,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.saturate,
+						),
+						this.buildFilterSlider(
+							labels.filterGrayscale,
+							`${prefix}.filter.grayscale`,
+							0,
+							1,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.grayscale,
+						),
+						this.buildFilterSlider(
+							labels.filterHueRotate,
+							`${prefix}.filter.hueRotate`,
+							0,
+							360,
+							formatDegrees,
+							DEFAULT_SETTINGS.backgroundImage.filter.hueRotate,
+							5,
+						),
+						this.buildFilterSlider(
+							labels.filterSepia,
+							`${prefix}.filter.sepia`,
+							0,
+							1,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.sepia,
+						),
+						this.buildFilterSlider(
+							labels.filterInvert,
+							`${prefix}.filter.invert`,
+							0,
+							1,
+							formatPercent,
+							DEFAULT_SETTINGS.backgroundImage.filter.invert,
+						),
+					],
+				},
+				{
+					type: 'group',
+					heading: groups.backgroundLayout,
+					items: [
+						this.buildBackgroundDropdown(
+							labels.backgroundSize,
+							descriptions.backgroundSize,
+							BACKGROUND_SIZE_OPTIONS,
+							`${prefix}.size`,
+						),
+						this.buildBackgroundDropdown(
+							labels.backgroundPosition,
+							descriptions.backgroundPosition,
+							BACKGROUND_POSITION_OPTIONS,
+							`${prefix}.position`,
+						),
+						this.buildBackgroundDropdown(
+							labels.backgroundRepeat,
+							descriptions.backgroundRepeat,
+							BACKGROUND_REPEAT_OPTIONS,
+							`${prefix}.repeat`,
+						),
+					],
+				},
+				{
+					name: '',
+					searchable: false,
+					render: (setting) => {
+						setting.addButton((button) =>
+							button
+								.setButtonText(messages.settings.buttons.resetAll)
+								.onClick(async () => {
+									await this.resetBackgroundAppearance(mode);
+								}),
+						);
+					},
+				},
+			],
+		};
+	}
+
+	/**
+	 * Restores every parameter on one Appearance page (display, filter,
+	 * layout) to the defaults for its mode. The image value itself is not
+	 * part of the page and is left untouched.
+	 */
+	private async resetBackgroundAppearance(
+		mode: BackgroundImageMode,
+	): Promise<void> {
+		const defaults =
+			mode === 'light'
+				? DEFAULT_SETTINGS.backgroundImage.light
+				: mode === 'dark'
+					? DEFAULT_SETTINGS.backgroundImage.dark
+					: DEFAULT_SETTINGS.backgroundImage;
+		const config = this.backgroundImageConfig(mode);
+		config.opacity = defaults.opacity;
+		config.overlayEnabled = defaults.overlayEnabled;
+		config.overlayColor = defaults.overlayColor;
+		config.overlayOpacity = defaults.overlayOpacity;
+		config.overlayBlendMode = defaults.overlayBlendMode;
+		config.blendMode = defaults.blendMode;
+		config.size = defaults.size;
+		config.position = defaults.position;
+		config.repeat = defaults.repeat;
+		// Fresh filter object so the shared default never gets mutated.
+		config.filter = { ...defaults.filter };
+		await this.persistAndApplyBackgroundImage();
+		this.update();
+	}
+
+	/** Returns the config object a row or page reads from and writes to. */
+	private backgroundImageConfig(
+		mode: BackgroundImageMode,
+	): BackgroundModeSettings {
+		const background = this.plugin.settings.backgroundImage;
+		if (mode === 'light') return background.light;
+		if (mode === 'dark') return background.dark;
+		return background;
+	}
+
+	/**
+	 * Two-paragraph description: usage rules first, then the shuffle hint
+	 * as its own visually separated line.
+	 */
+	private renderBackgroundImageValueDesc(
+		setting: Setting,
+		messages: Messages,
+	): void {
+		const descEl = setting.descEl;
+		descEl.empty();
+		descEl.appendText(messages.settings.descriptions.backgroundImageValue);
+		const shuffleLine = descEl.createDiv();
+		shuffleLine.addClass('sc-background-image-shuffle-hint');
+		shuffleLine.appendText(
+			messages.settings.descriptions.backgroundImageShuffleHint,
+		);
+	}
+
 	private buildBackgroundImageValueRow(
 		messages: Messages,
+		mode: BackgroundImageMode,
+		label: string,
 	): SettingGroupItem<ControlKey> {
 		return {
-			name: messages.settings.labels.backgroundImageValue,
-			desc: messages.settings.descriptions.backgroundImageValue,
-			render: (setting) => {
+			name: label,
+			visible: () => {
 				const background = this.plugin.settings.backgroundImage;
+				if (!background.enabled) return false;
+				return mode === 'global'
+					? !background.perModeEnabled
+					: background.perModeEnabled;
+			},
+			render: (setting) => {
+				this.renderBackgroundImageValueDesc(setting, messages);
+				const config = this.backgroundImageConfig(mode);
 				let variableText: TextComponent | null = null;
 				setting.setClass('sc-background-image-value-row');
 				setting.addText((text) => {
 					variableText = text;
 					text.setPlaceholder(messages.settings.placeholders.backgroundImageValue)
-						.setValue(normalizeBackgroundImageValue(background.imageValue))
+						.setValue(normalizeBackgroundImageValue(config.imageValue))
 						.onChange(async (value) => {
 							const normalized = normalizeBackgroundImageValue(value);
 							if (
@@ -588,23 +1004,15 @@ export class SettingsTab extends PluginSettingTab {
 							) {
 								this.showInputError(
 									text.inputEl,
-									this.backgroundImageValidationMessage(
-										normalized,
-										messages,
-									),
+									messages.settings.validation
+										.invalidBackgroundImageValue,
 								);
 								return;
 							}
 							this.clearInputError(text.inputEl);
-							background.imageValue = normalized;
-							this.refreshBackgroundImageValuePreview(
-								this.backgroundImageValuePreview,
-								messages,
-							);
-							this.refreshBackgroundImagePreview(
-								this.backgroundImagePreview,
-								messages,
-							);
+							config.imageValue = normalized;
+							this.refreshBackgroundImageValuePreview(mode, messages);
+							this.refreshBackgroundImagePreview(mode, messages);
 							await this.persistAndApplyBackgroundImage();
 						});
 				});
@@ -614,24 +1022,30 @@ export class SettingsTab extends PluginSettingTab {
 						.setIcon('shuffle')
 						.setTooltip(messages.settings.buttons.randomBackgroundImageValue)
 						.onClick(async () => {
-							const value = this.pickRandomBackgroundImageValue();
+							// Global rows resolve the mode from the row's own
+							// document, so shuffling follows the current
+							// light/dark mode even when per-mode is disabled.
+							// Light/dark rows always pick for their own mode.
+							const value = this.pickRandomBackgroundImageValue(
+								config.imageValue,
+								mode === 'global'
+									? resolveBackgroundImageMode(
+											setting.settingEl.ownerDocument,
+										)
+									: mode,
+							);
 							if (!value) {
 								new Notice(messages.notices.noImageVariables);
 								return;
 							}
-							background.imageValue = value;
+							config.imageValue = value;
+							this.plugin.recordRandomImagePick(value);
 							variableText?.setValue(value);
 							if (variableText) {
 								this.clearInputError(variableText.inputEl);
 							}
-							this.refreshBackgroundImageValuePreview(
-								this.backgroundImageValuePreview,
-								messages,
-							);
-							this.refreshBackgroundImagePreview(
-								this.backgroundImagePreview,
-								messages,
-							);
+							this.refreshBackgroundImageValuePreview(mode, messages);
+							this.refreshBackgroundImagePreview(mode, messages);
 							await this.persistAndApplyBackgroundImage();
 						}),
 				);
@@ -642,44 +1056,32 @@ export class SettingsTab extends PluginSettingTab {
 				const preview = previewRow.createDiv({
 					cls: ['sc-rule-preview-tile', 'sc-background-image-value-preview'],
 				});
-				this.backgroundImageValuePreview = preview;
-				this.refreshBackgroundImageValuePreview(preview, messages);
+				this.backgroundImageValuePreviews.set(mode, preview);
+				this.refreshBackgroundImageValuePreview(mode, messages);
 				return () => {
-					if (this.backgroundImageValuePreview === preview) {
-						this.backgroundImageValuePreview = null;
+					if (this.backgroundImageValuePreviews.get(mode) === preview) {
+						this.backgroundImageValuePreviews.delete(mode);
 					}
 				};
 			},
 		};
 	}
 
-	private backgroundImageValidationMessage(
-		value: unknown,
-		messages: Messages,
-	): string {
-		return isBareBackgroundImageVariable(value)
-			? messages.settings.validation.backgroundImageVariableRequiresVar
-			: messages.settings.validation.invalidBackgroundImageValue;
-	}
-
 	private refreshBackgroundImageValuePreview(
-		preview: HTMLElement | null,
+		mode: BackgroundImageMode,
 		messages: Messages,
 	): void {
+		const preview = this.backgroundImageValuePreviews.get(mode);
 		if (!preview) return;
 		preview.style.removeProperty('background-image');
 		preview.removeClass('is-valid');
 
-		const resolved = resolveBackgroundImageStyle(
-			this.plugin.settings.backgroundImage,
-		);
+		const config = this.backgroundImageConfig(mode);
+		const resolved = resolveBackgroundImageStyle(config);
 		if (!resolved) {
 			setTooltip(
 				preview,
-				this.backgroundImageValidationMessage(
-					this.plugin.settings.backgroundImage.imageValue,
-					messages,
-				),
+				messages.settings.validation.invalidBackgroundImageValue,
 				{ placement: 'top' },
 			);
 			return;
@@ -692,6 +1094,7 @@ export class SettingsTab extends PluginSettingTab {
 
 	private buildBackgroundImagePreview(
 		messages: Messages,
+		mode: BackgroundImageMode,
 	): SettingGroupItem<ControlKey> {
 		return {
 			name: messages.settings.labels.backgroundImageValue,
@@ -700,11 +1103,11 @@ export class SettingsTab extends PluginSettingTab {
 				const preview = setting.controlEl.createDiv({
 					cls: ['sc-rule-preview-tile', 'sc-background-image-preview'],
 				});
-				this.backgroundImagePreview = preview;
-				this.refreshBackgroundImagePreview(preview, messages);
+				this.backgroundImagePreviews.set(mode, preview);
+				this.refreshBackgroundImagePreview(mode, messages);
 				return () => {
-					if (this.backgroundImagePreview === preview) {
-						this.backgroundImagePreview = null;
+					if (this.backgroundImagePreviews.get(mode) === preview) {
+						this.backgroundImagePreviews.delete(mode);
 					}
 				};
 			},
@@ -712,9 +1115,10 @@ export class SettingsTab extends PluginSettingTab {
 	}
 
 	private refreshBackgroundImagePreview(
-		preview: HTMLElement | null,
+		mode: BackgroundImageMode,
 		messages: Messages,
 	): void {
+		const preview = this.backgroundImagePreviews.get(mode);
 		if (!preview) return;
 		const properties = {
 			image: '--sc-background-image-preview-value',
@@ -725,22 +1129,21 @@ export class SettingsTab extends PluginSettingTab {
 			repeat: '--sc-background-image-preview-repeat',
 			opacity: '--sc-background-image-preview-opacity',
 			filter: '--sc-background-image-preview-filter',
+			overlayColor: '--sc-background-image-preview-overlay-color',
+			overlayOpacity: '--sc-background-image-preview-overlay-opacity',
+			overlayBlendMode: '--sc-background-image-preview-overlay-blend-mode',
 		} as const;
 		for (const property of Object.values(properties)) {
 			preview.style.removeProperty(property);
 		}
 		preview.removeClass('is-valid');
 
-		const resolved = resolveBackgroundImageStyle(
-			this.plugin.settings.backgroundImage,
-		);
+		const config = this.backgroundImageConfig(mode);
+		const resolved = resolveBackgroundImageStyle(config);
 		if (!resolved) {
 			setTooltip(
 				preview,
-				this.backgroundImageValidationMessage(
-					this.plugin.settings.backgroundImage.imageValue,
-					messages,
-				),
+				messages.settings.validation.invalidBackgroundImageValue,
 				{ placement: 'top' },
 			);
 			return;
@@ -754,6 +1157,9 @@ export class SettingsTab extends PluginSettingTab {
 		preview.style.setProperty(properties.repeat, resolved.repeat);
 		preview.style.setProperty(properties.opacity, resolved.opacity);
 		preview.style.setProperty(properties.filter, resolved.filter);
+		preview.style.setProperty(properties.overlayColor, resolved.overlayColor);
+		preview.style.setProperty(properties.overlayOpacity, resolved.overlayOpacity);
+		preview.style.setProperty(properties.overlayBlendMode, resolved.overlayBlendMode);
 		preview.addClass('is-valid');
 		setTooltip(preview, resolved.imageValue, { placement: 'top' });
 	}
@@ -813,12 +1219,15 @@ export class SettingsTab extends PluginSettingTab {
 			name,
 			desc: description,
 			render: (setting) => {
+				const currentValue = getPath(this.plugin.settings, key);
+				const initialValue =
+					typeof currentValue === 'number' ? currentValue : value;
 				let slider: SliderComponent;
 				let resetButton: ExtraButtonComponent;
 				setting.addSlider((component) => {
 					slider = component
 						.setLimits(min, max, step)
-						.setValue(value)
+						.setValue(initialValue)
 						.setDisplayFormat(displayFormat)
 						.onChange(async (newValue) => {
 							resetButton.setDisabled(newValue === defaultValue);
@@ -829,7 +1238,7 @@ export class SettingsTab extends PluginSettingTab {
 					resetButton = button
 						.setIcon('rotate-ccw')
 						.setTooltip(t().settings.buttons.reset)
-						.setDisabled(value === defaultValue)
+						.setDisabled(initialValue === defaultValue)
 						.onClick(async () => {
 							slider.setValue(defaultValue);
 							resetButton.setDisabled(true);
@@ -840,10 +1249,16 @@ export class SettingsTab extends PluginSettingTab {
 		};
 	}
 
-	private pickRandomBackgroundImageValue(): string | null {
+	private pickRandomBackgroundImageValue(
+		currentValue: string,
+		mode: RandomImageMode,
+	): string | null {
 		return pickRandomBackgroundImageValue(
 			this.plugin.settings.resourceRules,
-			this.plugin.settings.backgroundImage.imageValue,
+			currentValue,
+			Math.random,
+			mode,
+			this.plugin.recentRandomImagePicks,
 		);
 	}
 
@@ -863,20 +1278,15 @@ export class SettingsTab extends PluginSettingTab {
 					this.plugin.resourceVarCtx.applyToDocument(
 						setting.settingEl.ownerDocument,
 					);
-					setting.setClass('sc-resource-toggle');
-					// Rich description: explain why this module exists + show the
-					// CSS contract. descEl is rebuilt (not setDesc) so we can embed
-					// a <pre><code> block the way Obsidian's own settings do.
-					const descEl = setting.descEl;
-					descEl.empty();
-					descEl.appendText(
-						messages.settings.descriptions.publishLocalImageVariables,
-					);
-					const pre = descEl.createEl('pre');
-					pre.createEl('code', {
-						text: '.hero {\n  background-image: var(--my-banner);\n}',
-					});
-					setting.addToggle((toggle) =>
+				setting.setClass('sc-resource-toggle');
+				// Rich description: explain why this module exists. descEl is
+				// rebuilt (not setDesc) so the copy stays plain text.
+				const descEl = setting.descEl;
+				descEl.empty();
+				descEl.appendText(
+					messages.settings.descriptions.publishLocalImageVariables,
+				);
+				setting.addToggle((toggle) =>
 						toggle
 							.setValue(this.plugin.settings.resourceVariablesEnabled)
 							.onChange(async (value) => {
@@ -886,35 +1296,110 @@ export class SettingsTab extends PluginSettingTab {
 					);
 				},
 			},
-			...this.plugin.settings.resourceRules.map((rule) =>
-				this.buildResourceRuleRow(messages, rule),
-			),
-			{
-				name: '',
-				searchable: false,
-				render: (setting) => {
-					setting.addButton((button) =>
-						button
-							.setButtonText(messages.settings.buttons.addImageVariable)
-							.setCta()
-							.onClick(async () => {
-								this.plugin.settings.resourceRules.push({
-									id: generateId('rr'),
-									filePath: '',
-									variableName: this.generateDefaultVarName(),
-									enabled: true,
-								});
-								await this.persistAndApply();
-								this.update();
-							}),
-					);
-				},
-			},
+			this.buildResourceListPage(messages),
 		];
 		return {
 			type: 'group',
 			heading: messages.settings.groups.localImageVariable,
 			items,
+		};
+	}
+
+	/**
+	 * The variable list as its own subpage: the toolbar (filter + add) on
+	 * top, then one row per rule. A subpage keeps the main tab short no
+	 * matter how many variables are registered.
+	 */
+	private buildResourceListPage(
+		messages: Messages,
+	): SettingGroupItem<ControlKey> {
+		return {
+			type: 'page',
+			name: messages.settings.pages.manageImageVariables,
+			desc: `${messages.settings.pages.manageImageVariablesDesc} ${messages.settings.pages.imageVariableCount(this.plugin.settings.resourceRules.length)}`,
+			items: [
+				{
+					name: '',
+					searchable: false,
+					render: (setting) => {
+						setting.settingEl.removeClass(
+							'sc-path-rule-row',
+							'sc-resource-rule-row',
+							'mod-toggle',
+						);
+						setting.setClass('sc-rule-toolbar');
+						// Filter sits on the left of the same row; the add button
+						// stays on the right. Filter lives in-memory only.
+						setting.addText((text) => {
+							text.setPlaceholder(
+								messages.settings.placeholders.filter,
+							)
+								.setValue(this.resourceFilter)
+								.onChange((value) => {
+									this.resourceFilter = value;
+									this.applyResourceFilter();
+								});
+							text.inputEl.addClass('sc-resource-filter-input');
+						});
+						setting.addButton((button) => {
+							this.resourceAddButton = button;
+							if (this.resourceAdding) {
+								button.setDisabled(true);
+							}
+							button
+								.setButtonText(
+									messages.settings.buttons.addImageVariable,
+								)
+								.setCta()
+								.onClick(async () => {
+									if (this.resourceAdding) return;
+									this.resourceAdding = true;
+									button.setDisabled(true);
+									// Insert at the top so the new row appears
+									// right under the toolbar, ready to edit
+									// immediately.
+									const newRule: ResourceRule = {
+										id: generateId('rr'),
+										filePath: '',
+										variableName: this.generateDefaultVarName(),
+										enabled: true,
+										randomScope: 'all',
+									};
+									this.plugin.settings.resourceRules.unshift(
+										newRule,
+									);
+									// Reset the filter so the freshly added
+									// (empty) row is visible after the rebuild.
+									this.resourceFilter = '';
+									await this.persistAndApply();
+									this.update();
+									this.resourceAdding = false;
+									// The rebuild swapped the component —
+									// re-enable the current one through Obsidian's
+									// own setDisabled so its disabled state
+									// classes are cleaned up too.
+									this.resourceAddButton?.setDisabled(false);
+									// Move the caret into the new row's vault
+									// file path input; the rebuild would
+									// otherwise drop focus on the toolbar filter.
+									window.setTimeout(() => {
+										const rowEl = this.resourceRuleRowEls.get(
+											newRule.id,
+										);
+										rowEl
+											?.querySelector<HTMLInputElement>(
+												'input[type="text"]',
+											)
+											?.focus();
+									}, 0);
+								});
+						});
+					},
+				},
+				...this.plugin.settings.resourceRules.map((rule) =>
+					this.buildResourceRuleRow(messages, rule),
+				),
+			],
 		};
 	}
 
@@ -936,6 +1421,57 @@ export class SettingsTab extends PluginSettingTab {
 		return name;
 	}
 
+	/**
+	 * Applies the current filter query to every registered rule row.
+	 * Called on each keystroke in the toolbar filter input.
+	 */
+	private applyResourceFilter(): void {
+		const query = this.resourceFilter.trim().toLowerCase();
+		for (const [ruleId, rowEl] of this.resourceRuleRowEls) {
+			const rule = this.plugin.settings.resourceRules.find(
+				(r) => r.id === ruleId,
+			);
+			this.applyResourceFilterToRow(rule, rowEl, query);
+		}
+	}
+
+	/**
+	 * Shows or hides a single rule row based on the filter query. A row
+	 * matches when the query is empty or appears in the image path or
+	 * the variable name (case-insensitive).
+	 */
+	private applyResourceFilterToRow(
+		rule: ResourceRule | undefined,
+		rowEl: HTMLElement,
+		query = this.resourceFilter.trim().toLowerCase(),
+	): void {
+		const matches =
+			query.length === 0 ||
+			(rule !== undefined &&
+				(rule.filePath.toLowerCase().includes(query) ||
+					rule.variableName.toLowerCase().includes(query)));
+		rowEl.style.display = matches ? '' : 'none';
+	}
+
+	/**
+	 * Applies the current path-rule filter query to every registered rule
+	 * row. Called on each keystroke in the toolbar filter input.
+	 */
+	private applyPathFilter(): void {
+		const query = this.pathFilter.trim().toLowerCase();
+		for (const [ruleId, rowEl] of this.pathRuleRowEls) {
+			const rule = this.plugin.settings.pathRules.find(
+				(r) => r.id === ruleId,
+			);
+			const matches =
+				query.length === 0 ||
+				(rule !== undefined &&
+					(rule.pattern.toLowerCase().includes(query) ||
+						rule.className.toLowerCase().includes(query)));
+			rowEl.style.display = matches ? '' : 'none';
+		}
+	}
+
 	private buildResourceRuleRow(
 		messages: Messages,
 		rule: ResourceRule,
@@ -945,6 +1481,10 @@ export class SettingsTab extends PluginSettingTab {
 			searchable: false,
 			render: (setting) => {
 				setting.setClass('sc-resource-rule-row');
+				// Register the row so the toolbar filter can toggle it live;
+				// apply the current filter immediately so a rebuild keeps it.
+				this.resourceRuleRowEls.set(rule.id, setting.settingEl);
+				this.applyResourceFilterToRow(rule, setting.settingEl);
 				setting
 					.addText((text) => {
 						text.setPlaceholder(messages.settings.placeholders.vaultFilePath)
@@ -990,13 +1530,61 @@ export class SettingsTab extends PluginSettingTab {
 								this.refreshRuleTile(rule);
 							});
 					})
-					.addToggle((toggle) =>
+					.addToggle((toggle) => {
 						toggle.setValue(rule.enabled).onChange(async (value) => {
 							rule.enabled = value;
 							await this.persistAndApply();
 							this.refreshRuleTile(rule);
-						}),
-					)
+						});
+						setTooltip(
+							toggle.toggleEl,
+							messages.settings.tooltips.resourceVariableEnabled,
+							{ placement: 'top' },
+						);
+					})
+					.addExtraButton((button) => {
+						const currentScope = (): RandomImageScope =>
+							rule.randomScope ?? 'all';
+						const scopeOptions: readonly [
+							RandomImageScope,
+							string,
+						][] = [
+							['all', messages.settings.tooltips.randomScopeAll],
+							['light', messages.settings.tooltips.randomScopeLightOnly],
+							['dark', messages.settings.tooltips.randomScopeDarkOnly],
+							['none', messages.settings.tooltips.randomScopeNone],
+						];
+						button
+							.setIcon(randomScopeIcon(currentScope()))
+							.setTooltip(messages.settings.tooltips.randomScope, {
+								placement: 'top',
+							})
+							.onClick(() => {
+								// Compact picker: the button itself only shows the
+								// current scope's icon; choices live in this menu.
+								const menu = new Menu();
+								for (const [value, label] of scopeOptions) {
+									menu.addItem((item) =>
+										item
+											.setTitle(label)
+											.setIcon(randomScopeIcon(value))
+											.setChecked(value === currentScope())
+											.onClick(async () => {
+												rule.randomScope = value;
+												// Keep the legacy flag in sync for downgrade safety.
+												rule.useForBackgroundImage = value !== 'none';
+												button.setIcon(randomScopeIcon(value));
+												await this.persistAndApply();
+												this.refreshRuleTile(rule);
+											}),
+									);
+								}
+								// ExtraButtonComponent.onClick exposes no event, so
+								// anchor the menu to the button's own bounding box.
+								const rect = button.extraSettingsEl.getBoundingClientRect();
+								menu.showAtPosition({ x: rect.left, y: rect.bottom });
+							});
+					})
 					.addExtraButton((button) =>
 						button
 							.setIcon('trash')
@@ -1023,6 +1611,7 @@ export class SettingsTab extends PluginSettingTab {
 
 				return () => {
 					this.rulePreviewTiles.delete(rule.id);
+					this.resourceRuleRowEls.delete(rule.id);
 				};
 			},
 		};
@@ -1077,8 +1666,11 @@ export class SettingsTab extends PluginSettingTab {
 		// Final guard: confirm the variable is actually published on :root.
 		// Without this, an unset var() would resolve to nothing but still
 		// override the checkerboard via inline style — leaving the tile blank.
-		const published = activeDocument.defaultView
-			?.getComputedStyle(activeDocument.documentElement)
+		// Read the tile's OWN document: activeDocument can lag behind on the
+		// first detached-Settings open and would check the wrong window.
+		const tileDocument = tile.ownerDocument;
+		const published = tileDocument.defaultView
+			?.getComputedStyle(tileDocument.documentElement)
 			.getPropertyValue(varName);
 		if (!published) {
 			placeholder(messages.settings.tooltips.variableNotPublished);
@@ -1153,12 +1745,14 @@ export class SettingsTab extends PluginSettingTab {
 									}),
 							);
 
-						// The live panel is not a setting row; anchor it
-						// directly after this row inside the group list.
+						// The live panel must live INSIDE the setting row: the
+						// declarative settings framework owns the group list
+						// container and silently detaches any sibling it did
+						// not create on every re-render.
+						setting.settingEl.addClass('sc-has-diagnostics');
 						const panel = setting.settingEl.createDiv({
 							cls: 'sc-settings-diagnostics',
 						});
-						setting.settingEl.insertAdjacentElement('afterend', panel);
 						this.diagnosticsEl = panel;
 						this.refreshDiagnostics();
 						this.startDiagnosticsRefresh();
@@ -1364,6 +1958,13 @@ export class SettingsTab extends PluginSettingTab {
 	private async persistAndApply(): Promise<void> {
 		await this.plugin.saveSettings();
 		this.plugin.applyAll();
+		// On the first detached-Settings open, getAppDocuments() can miss
+		// this tab's window (activeDocument race), so a freshly typed rule's
+		// variable would never reach the preview's document. Republish
+		// directly into the tab's own document.
+		this.plugin.resourceVarCtx.applyToDocument(
+			this.containerEl.ownerDocument,
+		);
 	}
 
 	private async persistAndApplyBackgroundImage(): Promise<void> {

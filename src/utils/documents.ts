@@ -15,7 +15,10 @@ export function getAppDocuments(app?: App): Document[] {
 		if (candidate?.documentElement && candidate.body) documents.add(candidate);
 	};
 
-	add(globalThis.document);
+	// Plugin code loads in the main window realm, so window.document is
+	// the module-global document even on Obsidian versions that predate
+	// the activeDocument global.
+	add(window.document);
 	if (typeof activeDocument !== 'undefined') add(activeDocument);
 
 	const workspace = app?.workspace;

@@ -371,7 +371,9 @@ async function main() {
 	applyReleaseMetadata(preflight.metadata, preflight.changelog);
 	npm(['run', 'check']);
 	git(['add', ...METADATA_FILES]);
-	git(['commit', '-m', `build: ${version}`]);
+	git(['commit', '-m', `chore: release ${version}`, '-m',
+		`Synchronize the package, lockfile, plugin manifest, compatibility mapping, and dated changelog for ${version}. Publish the matching annotated tag so the release workflow builds, attests, and uploads the plugin assets.`,
+	]);
 	git(['tag', '-a', version, '-m', `Release ${version}`]);
 
 	const headSha = git(['rev-parse', 'HEAD'], { capture: true }).stdout;

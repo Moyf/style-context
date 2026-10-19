@@ -20,6 +20,6 @@ div[data-type="file-explorer"] > div.nav-files-container::before {
     max-height: 180px;
     height: 100%;
     width: 100%;
-    -webkit-mask-image: linear-gradient(to top, transparent 5%, black 20%, black 75%, transparent 95%);
-    mask-image: linear-gradient(to top, transparent 5%, black 20%, black 75%, transparent 95%);
+    -webkit-mask-image: linear-gradient(to top, transparent 5%, #000 20%, #000 75%, transparent 95%);
+    mask-image: linear-gradient(to top, transparent 5%, #000 20%, #000 75%, transparent 95%);
 }

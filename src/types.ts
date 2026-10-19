@@ -8,6 +8,13 @@ import type {
 
 export type PathMatchMode = 'folder' | 'keyword';
 
+/**
+ * Which random background pools include an image.
+ * 'all' (default): eligible everywhere. 'light' / 'dark': eligible only
+ * while randomizing for that mode. 'none': never picked by randomization.
+ */
+export type RandomImageScope = 'all' | 'light' | 'dark' | 'none';
+
 export type BackgroundBlendMode = (typeof BACKGROUND_BLEND_MODES)[number];
 export type BackgroundSize = (typeof BACKGROUND_SIZE_OPTIONS)[number];
 export type BackgroundPosition = (typeof BACKGROUND_POSITION_OPTIONS)[number];
@@ -33,6 +40,16 @@ export interface ResourceRule {
 	filePath: string;
 	variableName: string;
 	enabled: boolean;
+	/** Which random background pools include this image. Defaults to 'all'. */
+	randomScope?: RandomImageScope;
+	/**
+	 * Legacy on/off flag, superseded by `randomScope`. Still written so
+	 * newer data files keep working after a downgrade; new code should
+	 * read `randomScope` only. Intentionally carries no deprecation tag:
+	 * ObsidianReviewBot forbids disabling eslint's no-deprecated rule,
+	 * and the migration boundary in loadSettings must touch this flag.
+	 */
+	useForBackgroundImage?: boolean;
 }
 
 /**
@@ -59,17 +76,51 @@ export interface BackgroundFilterSettings {
 	blur: number;
 }
 
-export interface BackgroundImageSettings {
-	enabled: boolean;
+/**
+ * Image value plus appearance for one rendering target. The global settings
+ * carry these fields directly; per-mode configs nest them under
+ * `BackgroundImageSettings.light` / `.dark`.
+ */
+export interface BackgroundModeSettings {
 	/** A complete CSS background-image value. */
 	imageValue: string;
 	opacity: number;
+	overlayEnabled: boolean;
+	overlayColor: string;
+	overlayOpacity: number;
+	overlayBlendMode: BackgroundBlendMode;
 	blendMode: BackgroundBlendMode;
 	size: BackgroundSize;
 	position: BackgroundPosition;
 	repeat: BackgroundRepeat;
 	attachment: BackgroundAttachment;
 	filter: BackgroundFilterSettings;
+}
+
+export interface BackgroundImageSettings extends BackgroundModeSettings {
+	enabled: boolean;
+	randomOnStartup: boolean;
+	randomBackgroundRibbon: boolean;
+	/**
+	 * Seconds for the fade-in animation when the background image layer
+	 * first appears. 0 keeps the legacy instant appearance. Applies
+	 * globally, not per light/dark mode.
+	 */
+	fadeDuration: number;
+	mobileToolbarTransparent: boolean;
+	statusBarTransparent: boolean;
+	ribbonTransparent: boolean;
+	titlebarTransparent: boolean;
+	modalTransparent: boolean;
+	activeTabTransparent: boolean;
+	/**
+	 * When true, documents whose body carries Obsidian's `theme-light` /
+	 * `theme-dark` class use the matching per-mode config instead of the
+	 * global image value and appearance above.
+	 */
+	perModeEnabled: boolean;
+	light: BackgroundModeSettings;
+	dark: BackgroundModeSettings;
 }
 
 export interface StyleContextSettings {
@@ -83,6 +134,35 @@ export interface StyleContextSettings {
 	backgroundImage: BackgroundImageSettings;
 }
 
+const DEFAULT_BACKGROUND_FILTER: BackgroundFilterSettings = {
+	brightness: 1,
+	contrast: 1,
+	saturate: 1,
+	grayscale: 0,
+	sepia: 0,
+	invert: 0,
+	hueRotate: 0,
+	blur: 0,
+};
+
+/** Fresh object per call so the light/dark defaults never alias each other. */
+function defaultBackgroundModeSettings(): BackgroundModeSettings {
+	return {
+		imageValue: '',
+		opacity: 0.35,
+		overlayEnabled: false,
+		overlayColor: '#000000',
+		overlayOpacity: 0.3,
+		overlayBlendMode: 'normal',
+		blendMode: 'normal',
+		size: 'cover',
+		position: 'center',
+		repeat: 'no-repeat',
+		attachment: 'fixed',
+		filter: { ...DEFAULT_BACKGROUND_FILTER },
+	};
+}
+
 export const DEFAULT_SETTINGS: StyleContextSettings = {
 	version: 1,
 	themeClassPrefix: 'theme-mod-',
@@ -93,22 +173,29 @@ export const DEFAULT_SETTINGS: StyleContextSettings = {
 	resourceRules: [],
 	backgroundImage: {
 		enabled: false,
+		randomOnStartup: false,
+		randomBackgroundRibbon: true,
+		fadeDuration: 0.6,
 		imageValue: '',
 		opacity: 0.35,
+		overlayEnabled: false,
+		overlayColor: '#000000',
+		overlayOpacity: 0.3,
+		overlayBlendMode: 'normal',
 		blendMode: 'normal',
 		size: 'cover',
 		position: 'center',
 		repeat: 'no-repeat',
 		attachment: 'fixed',
-		filter: {
-			brightness: 1,
-			contrast: 1,
-			saturate: 1,
-			grayscale: 0,
-			sepia: 0,
-			invert: 0,
-			hueRotate: 0,
-			blur: 0,
-		},
+		mobileToolbarTransparent: true,
+		statusBarTransparent: true,
+		ribbonTransparent: true,
+		titlebarTransparent: true,
+		modalTransparent: false,
+		activeTabTransparent: true,
+		filter: { ...DEFAULT_BACKGROUND_FILTER },
+		perModeEnabled: false,
+		light: defaultBackgroundModeSettings(),
+		dark: defaultBackgroundModeSettings(),
 	},
 };

@@ -1,4 +1,4 @@
-# Style Context - Obsidian CSS variable helper
+# Style Context
 
 English | [中文文档](#样式上下文)
 
@@ -106,6 +106,16 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 
 you can run `npm run build:local` to build and auto-copy into your vault.
 
+`npm run build:local:set` does the same and then opens the plugin's settings page in your running Obsidian (requires the Obsidian CLI on PATH), so settings changes are immediately visible after Hot Reload.
+
+### Theme compatibility
+
+The built-in background image supports theme canvas gradients such as Composer's `--background-gradient`. To support another theme, add its canvas image token to the `--sc-style-context-theme-canvas` fallback in `styles.css`. If the theme paints an opaque workspace surface, add that surface to the transparency reset selectors in the same file.
+
+Solid-canvas themes need no gradient mapping and go through the same reset list: AnuPpuccin (`--tab-container-background` on the workspace containers, including card-layout and colorful-frame modes), Underwater (`--uw-background` on the tab containers), and Terminal Workbench (a body-level `--background-primary`). All three paint an opaque canvas on `.horizontal-main-container`, which is why that surface joins the reset selectors. AnuPpuccin's card layout re-paints the tab containers, side-split leaves and card surfaces, Terminal Workbench paints the note views (`.markdown-source-view`, `.markdown-reading-view`, `.markdown-preview-view`), and Maple's app-layout-card tints the splits; those surfaces are reset again with an html-prefixed, theme-class-qualified form that stays strictly above theme rules — without `!important`, so themes painting with `!important` (Border's card-layout tab strips) remain out of reach.
+
+Some themes ship their own background-image feature (Fancy-a-Story's Style Settings toggle, for example). Both implement the same canvas idea; when the plugin's module is enabled, its reset supersedes the theme's surfaces, so use one or the other. If you prefer the theme's native rendering (textures, per-note cssclasses), turn off the plugin's Background image group and the theme's feature works untouched.
+
 ## Release
 
 After writing complete notes under `## [Unreleased]`, run `npm run release -- <version>`. The command requires a clean, synchronized default branch; it synchronizes all version metadata, promotes the changelog entry, runs checks, commits, creates and atomically pushes the tag, then waits for GitHub Actions to verify the published Release and its three plugin assets. Use `npm run release:dry-run -- <version>` to validate without changing anything.
@@ -114,7 +124,7 @@ If a version was already committed and annotated locally, but has not reached Gi
 
 ## Support
 
-Nah, this is a small utility. No sponsorship needed, enjoy it <3
+If you like Style Context, consider [buying me a coffee on Ko-fi](https://ko-fi.com/moy) ☕
 
 If you like my plugin design, you can check my other plugins here:
 
@@ -225,6 +235,16 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 
 那么你就可以直接使用 `npm run build:local` 来构建并自动拷贝到你的仓库内 `;)`
 
+另外，`npm run build:local:set` 会在构建拷贝之后自动打开运行中 Obsidian 的本插件设置页（需要 PATH 中有 Obsidian CLI），Hot Reload 重载完即可立即看到设置页改动。
+
+### 主题兼容
+
+内置背景图支持 Composer 等主题的渐变画布。兼容其他主题时，可在 `styles.css` 中将画布图片变量加入 `--sc-style-context-theme-canvas` 的兜底链；如果主题还在工作区元素上绘制不透明背景，将对应选择器加入同文件的透明化规则。
+
+纯色画布主题无需映射渐变，走同一套透明化规则：AnuPpuccin（工作区容器上的 `--tab-container-background`，含 card-layout 与 colorful-frame 模式）、Underwater（标签容器上的 `--uw-background`）和 Terminal Workbench（body 级重定义的 `--background-primary`）。三者都会在 `.horizontal-main-container` 上绘制不透明画布，因此该表面已加入透明化选择器。AnuPpuccin 的 card-layout 会重绘标签容器、侧栏 leaf 和卡片表面，Terminal Workbench 会绘制笔记视图（`.markdown-source-view`、`.markdown-reading-view`、`.markdown-preview-view`），Maple 的 app-layout-card 会给分栏加色调；这些表面以 `html` 前缀 + 主题类限定的形式二次重置，在同量级 class 下严格压过主题规则 —— 不使用 `!important`，因此用 `!important` 绘制的主题（Border 的 card-layout 标签条）无法覆盖。
+
+部分主题自带背景图功能（如 Fancy-a-Story 的 Style Settings 开关）。两者是同一画布理念的两种实现；插件背景图模块开启时，其重置规则会接管相应表面，因此二选一使用。若更偏好主题原生渲染（纹理、单篇 cssclass），关闭插件的「背景图」分组即可，主题功能不受影响。
+
 ## 发布
 
 在 `## [Unreleased]` 下写完完整更新说明后，运行 `npm run release -- 0.3.0`。该命令要求默认分支干净且已和远端同步；它会同步所有版本元数据、将 Changelog 条目提升为正式版本、执行检查、提交、创建并原子推送 tag，最后等待 GitHub Actions 验证正式 Release 与三个插件资产。使用 `npm run release:dry-run -- 0.3.0` 可只做校验，不修改任何内容。
@@ -232,7 +252,7 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 若版本已在本地提交并创建注释 tag，但尚未到达 GitHub，使用 `npm run release:resume -- 0.3.0`。它会校验本地 tag 中不可变的版本元数据与更新日志、执行完整检查，再原子插入默认分支并推送 tag，之后执行同样的 CI 和资产验证。可用 `npm run release:resume:dry-run -- 0.3.0` 不改动任何内容地校验此恢复路径。这只用于恢复中断的发布；正常发应始终使用 `release`。
 
 ## 赞助
-Nah，我不觉得这种小工具有什么值得赞助的，用得愉快！ <3
+如果 Style Context 对你有帮助，欢迎[请我喝杯咖啡（Ko-fi）](https://ko-fi.com/moy) ☕
 
 如果你认可我的插件设计，可以查看我的其他插件：
 

@@ -21,6 +21,228 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 </details>
 
+## [0.6.3] - 2026-10-14
+### 🚀 Added
+
+- **Modal background (opt-in)**: A new `Modal background` toggle in Interface blending paints modal dialogs and the command palette with the same canvas background as the note panes — image, blend, sizing, opacity, and filters all follow the background image settings. Default off; the card keeps its own size and opening animation.
+
+### 🐛 Fixed
+
+- **Detached Settings window missed published variables**: On its first open, the detached Settings window could be missed by the document scan, leaving the image-variable chain (and therefore the background layer, and any modal background) unresolved there. The settings tab now publishes its own document directly before rendering.
+
+### ⚡ Changed
+
+- The **Interface transparency** sub-page is renamed to **Interface blending**: its scope now covers surfaces that receive the canvas background (such as the new modal background), not only transparency. Display name only — setting keys and behavior are unchanged.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **弹窗背景（默认关闭）**：界面融合中新增「弹窗背景」开关，为弹窗与命令面板应用与笔记窗体一致的画布背景——图片、混合、尺寸、不透明度、滤镜全部跟随背景图设置。默认关闭；弹窗保持自身尺寸与打开动画。
+
+### 🐛 修复
+
+- **分离设置窗漏收已发布变量**：分离设置窗首次打开时可能被文档扫描遗漏，导致图片变量链（进而背景图层与弹窗背景）在该窗口内无法解析。设置页现在会在渲染前向自己的文档直接发布。
+
+### ⚡ 变更
+
+- 「界面透明度」子页面更名为「界面融合」：它的范围现在也包含应用画布背景的表面（如新的弹窗背景），不再只是透明度。仅显示名称变化，设置键名与行为不变。
+
+</details>
+
+---
+
+## [0.6.2] - 2026-10-14
+### 🐛 Fixed
+
+- **Theme canvas compatibility (AnuPpuccin, Underwater, Terminal Workbench)**: Solid-canvas themes no longer hide built-in background images. All three paint an opaque canvas on `.horizontal-main-container` — via `--tab-container-background`, `--uw-background`, or a body-level `--background-primary` — so that surface now joins the transparency reset list. AnuPpuccin's card layout re-paints the tab containers, side-split leaves and card surfaces, Terminal Workbench paints the note views (`.markdown-source-view` / `.markdown-reading-view` / `.markdown-preview-view`), and Maple's app-layout-card tints the splits; those surfaces join the reset list too, repeated with an html-prefixed, theme-class-qualified form that stays strictly above theme rules without `!important`. Themes painting with `!important` (Border's card-layout tab strips) cannot be overridden.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **主题画布兼容（AnuPpuccin、Underwater、Terminal Workbench）**：纯色画布主题不再遮住内置背景图。三者都会在 `.horizontal-main-container` 上绘制不透明画布（分别为 `--tab-container-background`、`--uw-background` 和 body 级重定义的 `--background-primary`），该表面现已加入透明化重置列表。AnuPpuccin 的 card-layout 会重绘标签容器、侧栏 leaf 和卡片表面，Terminal Workbench 会绘制笔记视图（`.markdown-source-view` / `.markdown-reading-view` / `.markdown-preview-view`），Maple 的 app-layout-card 会给分栏加色调；这些表面同样加入重置列表，并以 `html` 前缀 + 主题类限定的形式二次声明，在不使用 `!important` 的前提下严格压过主题规则。使用 `!important` 绘制的主题（Border 的 card-layout 标签条）无法覆盖。
+
+</details>
+
+---
+
+## [0.6.1] - 2026-10-05
+### Fixed
+
+- Rename the active tab transparency control to match the other transparent interface controls in all supported languages.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 修复
+
+- 将活动标签透明开关的名称与其他透明度选项统一，同步所有支持的语言。
+
+</details>
+
+---
+
+## [0.6.0] - 2026-10-05
+### 🚀 Added
+
+- Active tab transparency (enabled by default) with a 2px outline and no curved shadows; ribbon transparency now also clears the primary ribbon pseudo-element.
+- Optional background color overlay with a color picker, blend modes, opacity slider, live preview, and separate light/dark settings.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **活动标签透明**：默认启用，移除两侧曲线阴影，使用 2px 边框；Ribbon 透明也会清除主侧边栏伪元素背景。
+- **背景图叠加颜色层**：可开启独立颜色层，选择颜色、混合模式并调节不透明度；支持实时预览和亮色／暗色分别配置，默认关闭。
+
+</details>
+
+---
+
+## [0.5.1] - 2026-09-23
+### 🐛 Fixed
+
+- **Gradient theme backgrounds**: Built-in background images now show through themes such as Composer that paint a gradient over the workspace. The gradient remains visible beneath the image and in its settings preview.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **渐变主题背景**：修复 Composer 等主题在工作区绘制渐变时遮住内置背景图的问题；主题渐变会保留在图片下方，设置预览也与画布一致。
+
+</details>
+
+---
+
+## [0.5.0] - 2026-09-18
+### 🚀 Added
+
+- **Background image first-show fade**: Background images now fade in smoothly when the plugin starts or is enabled, including after the workspace finishes loading. Later image changes and appearance adjustments remain immediate.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **背景图首次显示淡入**：插件启动或启用后，背景图会在工作区准备好时平滑淡入；之后更换图片或调整外观仍会立即生效。
+
+</details>
+
+---
+
+## [0.4.1] - 2026-09-09
+### 🚀 Added
+
+- **Shuffle button hint**: The image value row now shows a visible hint under the input explaining that the shuffle button picks one of the local image variables — the explanation moved out of the crowded field description.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **随机按钮提示**：图片值输入框下方现在会显示一条可见提示，说明随机按钮会从本地图片变量中选择一个——说明文字从原本拥挤的字段描述中独立出来。
+
+</details>
+
+---
+
+## [0.4.0] - 2026-09-09
+### 🚀 Added
+
+- **Per-image random scope**: Each registered image variable can now choose which random background pools include it — all (default), light only, dark only, or none. The choice lives on a compact icon button that opens the picker on click.
+- **Settings page restructure**: The image variable list and the note path rules moved into their own subpages. The add button was repositioned and a filter box added for when the list grows long.
+- **Appearance reset all**: Each Appearance page now ends with a "Reset all" button that restores every parameter on the page — display, filter, and layout — to that mode's defaults. The image value itself is not part of the page and stays untouched.
+
+### ⚡ Changed
+
+- **Filter slider ranges**: Brightness, contrast, and saturate cap at 150% (down from 200%) since values beyond that are rarely useful, and the blur slider now steps in whole pixels (1 px instead of 0.5 px). Saved values above the new caps are kept until the slider is moved.
+- **Bare variable names in Image value**: The background image value now accepts a bare custom property name — typing `--image-1` is stored as `var(--image-1)` automatically, so both forms validate, preview, and resolve identically.
+- **No-repeat randomness**: Randomizing the background image now keeps an in-memory cache of the last three picks and avoids them, so consecutive randoms no longer alternate between the same images.
+- **Diagnostics panel polish**: The "Live status" panel is capped at 400 px and scrolls internally, so long rule lists no longer stretch the settings page.
+
+### 🐛 Fixed
+
+- **Preview tile on first open**: Image preview tiles now refresh immediately after typing a vault path, including the first settings open after a plugin reload — the variable is republished into the settings document directly instead of relying on `activeDocument`, which can lag on detached settings windows.
+- **Add button overflow**: In narrow panels the button now shrinks and truncates its label with an ellipsis ("Add image...") instead of overflowing the frame.
+- **Diagnostics panel visible again**: The "Live status" panel is now anchored inside its setting row. Obsidian 1.14's declarative settings re-render silently detaches extra siblings placed in the group list, which left the panel empty; wrapping the row keeps the panel on its own full-width line and preserves it across re-renders.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **图片随机范围**：每个注册的图片变量现在可以选择参与哪些随机背景池——全部（默认）、仅亮色、仅暗色，或不参与随机。选项收纳在一个紧凑的图标按钮上，点击弹出选择菜单。
+- **设置页面重构**：图片变量列表和笔记路径规则移入独立的子页面。调整添加按钮的位置，并增加过滤框，用于列表项目较多的时候。
+- **外观页全部重置**：每个外观页底部新增「全部重置」按钮，一键将该页显示、滤镜、布局参数恢复到对应模式的默认值。图片值本身不属于该页，不会被改动。
+
+### ⚡ 变更
+
+- **滤镜滑块范围**：亮度、对比度、饱和度上限从 200% 降为 150%（更高的值很少实用）；模糊滑块步长改为整像素（1 px，原为 0.5 px）。已保存的超上限数值会保留，直到再次拖动滑块。
+- **图片值支持裸变量名**：背景图片值现在接受不带 var() 的变量名——输入 `--image-1` 会自动存为 `var(--image-1)`，两种写法的校验、预览和解析行为完全一致。
+- **随机不重复**：随机背景图现在会在内存中缓存最近三次的选择并避开它们，连续随机不再出现来回切换的情况。
+- **诊断面板优化**：「实时状态」面板高度上限 400 px，内部滚动，超长规则列表不再拉长设置页。
+
+### 🐛 修复
+
+- **首次打开时预览不刷新**：输入路径后图片预览立即刷新，包括插件重载后第一次打开设置页的情况——现在直接向设置页所在文档重新发布变量，不再依赖在独立设置窗口可能滞后更新的 `activeDocument`。
+- **添加按钮溢出**：窄面板下按钮自动收缩并以省略号截断文字（"Add image..."），不再超出边框。
+- **诊断面板重新可见**：「实时状态」面板现在固定在所属设置行内部。Obsidian 1.14 的声明式设置重渲染时会静默移除挂在分组列表里的额外兄弟节点，导致面板空白；让设置行换行后，面板独占一行并在重渲染后保持可见。
+
+</details>
+
+---
+
+## [0.3.5] - 2026-08-07
+### 🐛 Fixed
+
+- **Appearance slider values**: Read the current setting value when rendering each slider so mobile Settings pages show the latest Dark appearance value after navigating away and back.
+- **Frameless title bar background**: Make the top-right title bar button container transparent in non-fullscreen frameless windows.
+- **Dynamic list button layout**: Clear stale rule-row classes from Add path rule and Add image variable rows after dynamic list updates.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🐛 修复
+
+- **外观滑块数值**：每次渲染滑块时读取当前设置值，修复移动端离开并重新进入 Dark 外观页面后仍显示旧值的问题。
+- **无框窗口标题栏背景**：让非全屏无框窗口右上角的标题栏按钮容器保持透明。
+- **动态列表按钮布局**：动态列表更新后清理「添加路径规则」和「添加图片变量」按钮行残留的规则行 class。
+
+</details>
+
+---
+
+## [0.3.4] - 2026-08-07
+### 🚀 Added
+
+- **Light/dark background images**: Optionally configure separate image values and appearance settings for `theme-light` and `theme-dark` windows, while retaining the existing global configuration as the default.
+- **Mode-aware random backgrounds**: Random background selection now updates the image value for the current light or dark mode when separate backgrounds are enabled.
+
+### ⚡ Changed
+
+- **Background settings layout**: Keep each image value directly paired with its corresponding Appearance page.
+- **Startup randomization default**: Keep `Choose a random background image on startup` disabled by default.
+
+<details>
+<summary>中文说明（点击展开）</summary>
+
+### 🚀 新增
+
+- **明暗模式背景图**：可分别为 `theme-light` 和 `theme-dark` 窗口设置图片值与外观，同时保留原有全局配置作为默认配置。
+- **按模式随机背景**：启用明暗模式背景后，随机背景图片只更新当前明暗模式对应的图片值。
+
+### ⚡ 变更
+
+- **背景设置布局**：每个 Image value 都会紧跟对应的 Appearance 设置。
+- **启动随机背景默认值**：默认关闭「Choose a random background image on startup」。
+
+</details>
+
 ---
 
 ## [0.3.3] - 2026-08-07

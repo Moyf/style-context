@@ -3,11 +3,13 @@ export interface Messages {
 		copyCurrentContext: string;
 		reparseResourceVariables: string;
 		copyThemeSelector: string;
+		randomBackgroundImage: string;
 	};
 	notices: {
 		styleContextCopied: string;
 		resourceVariablesReparsed: string;
 		noImageVariables: string;
+		backgroundImageRandomized: string;
 		copied: (value: string) => string;
 	};
 	settings: {
@@ -19,6 +21,7 @@ export interface Messages {
 			localImageVariable: string;
 			backgroundImage: string;
 			backgroundDisplay: string;
+			backgroundOverlay: string;
 			backgroundFilter: string;
 			backgroundLayout: string;
 			diagnostics: string;
@@ -26,6 +29,19 @@ export interface Messages {
 		pages: {
 			backgroundAppearance: string;
 			backgroundAppearanceDesc: string;
+			lightBackgroundAppearance: string;
+			darkBackgroundAppearance: string;
+			interfaceTransparency: string;
+			interfaceTransparencyDesc: string;
+			interfaceTransparencyImportantNote: string;
+			backgroundRandomization: string;
+			backgroundRandomizationDesc: string;
+			manageImageVariables: string;
+			manageImageVariablesDesc: string;
+			managePathRules: string;
+			managePathRulesDesc: string;
+			imageVariableCount: (count: number) => string;
+			pathRuleCount: (count: number) => string;
 		};
 		labels: {
 			publishThemeClass: string;
@@ -36,8 +52,15 @@ export interface Messages {
 			folder: string;
 			keyword: string;
 			publishBackgroundImage: string;
+			perModeBackground: string;
 			backgroundImageValue: string;
+			lightBackgroundImageValue: string;
+			darkBackgroundImageValue: string;
 			backgroundOpacity: string;
+			backgroundOverlayEnabled: string;
+			backgroundOverlayColor: string;
+			backgroundOverlayOpacity: string;
+			backgroundOverlayBlendMode: string;
 			backgroundBlendMode: string;
 			backgroundSize: string;
 			backgroundPosition: string;
@@ -51,23 +74,45 @@ export interface Messages {
 			filterInvert: string;
 			filterHueRotate: string;
 			filterBlur: string;
+			mobileToolbarTransparent: string;
+			statusBarTransparent: string;
+			ribbonTransparent: string;
+			titlebarTransparent: string;
+			activeTabTransparent: string;
+			modalTransparent: string;
+			randomBackgroundOnStartup: string;
+			addRandomBackgroundRibbon: string;
 		};
 		descriptions: {
+			backgroundOverlay: string;
+			backgroundOverlayBlendMode: string;
 			publishThemeClass: string;
 			publishPathClasses: string;
 			publishLocalImageVariables: string;
 			liveStatus: string;
 			themePrefixBefore: string;
-			themePrefixExample: string;
+			themePrefixExampleBefore: string;
+			themePrefixExampleAfter: string;
+			themeClassCopyHint: string;
 			currentThemeClass: string;
 			publishBackgroundImage: string;
+			perModeBackground: string;
 			backgroundImageValue: string;
+			backgroundImageShuffleHint: string;
 			backgroundOpacity: string;
 			backgroundBlendMode: string;
 			backgroundSize: string;
 			backgroundPosition: string;
 			backgroundRepeat: string;
 			backgroundAttachment: string;
+			mobileToolbarTransparent: string;
+			statusBarTransparent: string;
+			ribbonTransparent: string;
+			titlebarTransparent: string;
+			activeTabTransparent: string;
+			modalTransparent: string;
+			randomBackgroundOnStartup: string;
+			addRandomBackgroundRibbon: string;
 		};
 		placeholders: {
 			themeClassPrefix: string;
@@ -77,6 +122,7 @@ export interface Messages {
 			vaultFilePath: string;
 			cssVariable: string;
 			backgroundImageValue: string;
+			filter: string;
 		};
 		buttons: {
 			addPathRule: string;
@@ -86,9 +132,11 @@ export interface Messages {
 			copySnapshot: string;
 			randomBackgroundImageValue: string;
 			reset: string;
+			resetAll: string;
 		};
 		tooltips: {
 			clickToCopy: (value: string) => string;
+			resourceVariableEnabled: string;
 			ruleDisabled: string;
 			setCssVariableName: string;
 			variableNameInvalid: string;
@@ -96,13 +144,17 @@ export interface Messages {
 			imageFileNotFound: string;
 			notAnImageFile: string;
 			variableNotPublished: string;
+			randomScope: string;
+			randomScopeAll: string;
+			randomScopeLightOnly: string;
+			randomScopeDarkOnly: string;
+			randomScopeNone: string;
 		};
 		validation: {
 			invalidPrefix: string;
 			invalidClassNames: string;
 			invalidCssVariableName: string;
 			invalidBackgroundImageValue: string;
-			backgroundImageVariableRequiresVar: string;
 			duplicateVariableName: (count: number) => string;
 		};
 		diagnostics: {

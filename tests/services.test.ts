@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS, type StyleContextSettings } from '../src/types';
 import { ThemeContextService } from '../src/services/ThemeContextService';
 import { ResourceVariableService } from '../src/services/ResourceVariableService';
 import { NotePathContextService } from '../src/services/NotePathContextService';
-import { BackgroundImageService } from '../src/services/BackgroundImageService';
+import { BackgroundImageService, MAX_FADE_STYLESHEET_WAIT_FRAMES } from '../src/services/BackgroundImageService';
 import {
 	ResourcePathSyncService,
 	type ResourcePathSyncResult,
@@ -58,7 +58,20 @@ function settings(
 beforeEach(() => {
 	document.documentElement.removeAttribute('style');
 	document.body.removeAttribute('style');
+	// jsdom cannot compute pseudo-element styles; default to "stylesheet
+	// applied" so fade reveals arm unless a test simulates otherwise.
+	vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+		content: '""',
+	} as unknown as CSSStyleDeclaration);
 	document.body.classList.remove('sc-style-context-background-image');
+	document.body.classList.remove('sc-style-context-background-image-fade-pending');
+	document.body.classList.remove('sc-style-context-mobile-toolbar-transparent');
+	document.body.classList.remove('sc-style-context-status-bar-transparent');
+	document.body.classList.remove('sc-style-context-ribbon-transparent');
+	document.body.classList.remove('sc-style-context-titlebar-transparent');
+	document.body.classList.remove('sc-style-context-active-tab-transparent');
+	document.body.classList.remove('theme-light');
+	document.body.classList.remove('theme-dark');
 	Object.defineProperty(globalThis, 'activeDocument', {
 		configurable: true,
 		value: document,
@@ -66,6 +79,23 @@ beforeEach(() => {
 });
 
 describe('BackgroundImageService', () => {
+	it('defaults legacy active tabs to transparent and supports live opt-out and cleanup', () => {
+		const { activeTabTransparent, ...legacy } = DEFAULT_SETTINGS.backgroundImage;
+		const currentSettings = settings({ backgroundImage: { ...legacy, enabled: true,
+			imageValue: 'var(--image-1)', fadeDuration: 0,
+		} as typeof DEFAULT_SETTINGS.backgroundImage });
+		const service = new BackgroundImageService(() => currentSettings);
+		service.enable();
+		expect(document.body.classList.contains('sc-style-context-active-tab-transparent')).toBe(true);
+		currentSettings.backgroundImage.activeTabTransparent = false;
+		service.apply();
+		expect(document.body.classList.contains('sc-style-context-active-tab-transparent')).toBe(false);
+		expect(document.body.classList.contains('sc-style-context-ribbon-transparent')).toBe(true);
+		currentSettings.backgroundImage.activeTabTransparent = true;
+		service.apply();
+		service.disable();
+		expect(document.body.classList.contains('sc-style-context-active-tab-transparent')).toBe(false);
+	});
 	it('synchronizes background styles across the main and detached Settings documents', () => {
 		const settingsDocument = document.implementation.createHTMLDocument('Settings');
 		Object.defineProperty(globalThis, 'activeDocument', {
@@ -78,6 +108,9 @@ describe('BackgroundImageService', () => {
 				enabled: true,
 				imageValue: 'var(--image-1)',
 				opacity: 0.6,
+				overlayEnabled: true,
+				overlayColor: '#123456',
+				overlayOpacity: 0.4,
 			},
 		});
 		const service = new BackgroundImageService(() => currentSettings);
@@ -90,12 +123,33 @@ describe('BackgroundImageService', () => {
 					'--sc-style-context-background-image-opacity',
 				),
 			).toBe('0.6');
+			expect(targetDocument.body.style.getPropertyValue('--sc-style-context-background-overlay-color')).toBe('#123456');
+			expect(targetDocument.body.style.getPropertyValue('--sc-style-context-background-overlay-opacity')).toBe('0.4');
 			expect(
 				targetDocument.body.classList.contains(
 					'sc-style-context-background-image',
 				),
 			).toBe(true);
 		}
+	});
+
+	it('removes the overlay immediately when switched off and cleans up on disable', () => {
+		const currentSettings = settings({ backgroundImage: { ...DEFAULT_SETTINGS.backgroundImage,
+			enabled: true, fadeDuration: 0, imageValue: 'var(--image-1)',
+			overlayEnabled: true, overlayColor: '#123456', overlayOpacity: 0.4,
+		} });
+		const service = new BackgroundImageService(() => currentSettings);
+		service.enable();
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-opacity')).toBe('0.4');
+		currentSettings.backgroundImage.overlayBlendMode = 'screen';
+		service.apply();
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-blend-mode')).toBe('screen');
+		currentSettings.backgroundImage.overlayEnabled = false;
+		service.apply();
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-opacity')).toBe('0');
+		service.disable();
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-color')).toBe('');
+		expect(document.body.style.getPropertyValue('--sc-style-context-background-overlay-opacity')).toBe('');
 	});
 
 	it('keeps background styles inactive when the setting is disabled', () => {
@@ -112,6 +166,7 @@ describe('BackgroundImageService', () => {
 	it('renders the selected variable in an isolated, configurable layer', () => {
 		const currentSettings = settings({
 			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
 				enabled: true,
 				imageValue: 'var(--image-1)',
 				opacity: 0.6,
@@ -120,6 +175,8 @@ describe('BackgroundImageService', () => {
 				position: 'top right',
 				repeat: 'repeat',
 				attachment: 'scroll',
+				mobileToolbarTransparent: true,
+				statusBarTransparent: true,
 				filter: {
 					brightness: 1.2,
 					contrast: 1,
@@ -350,6 +407,1133 @@ describe('BackgroundImageService', () => {
 				'--sc-style-context-background-image-inset',
 			),
 		).toBe('0');
+	});
+
+	it('publishes the mobile toolbar transparency class by default', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+	});
+
+	it('publishes the status bar transparency class by default', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-status-bar-transparent',
+			),
+		).toBe(true);
+	});
+
+	it('omits the status bar transparency class when opted out', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				statusBarTransparent: false,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-status-bar-transparent',
+			),
+		).toBe(false);
+	});
+
+	it('treats legacy data without the status bar key as opted in', () => {
+		const { statusBarTransparent: _omitted, ...legacyBackground } =
+			DEFAULT_SETTINGS.backgroundImage;
+		const currentSettings = settings({
+			backgroundImage: {
+				...legacyBackground,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			} as never,
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-status-bar-transparent',
+			),
+		).toBe(true);
+	});
+
+	it('removes only the status bar class when that setting is turned off live', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				mobileToolbarTransparent: true,
+				statusBarTransparent: true,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-status-bar-transparent',
+			),
+		).toBe(true);
+
+		currentSettings.backgroundImage.statusBarTransparent = false;
+		service.apply();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-status-bar-transparent',
+			),
+		).toBe(false);
+		// The sibling surfaces are untouched by a status-bar-only change.
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+		expect(
+			document.body.classList.contains('sc-style-context-background-image'),
+		).toBe(true);
+	});
+
+	it('resolves the status bar flag independently of the mobile toolbar flag', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				mobileToolbarTransparent: false,
+				statusBarTransparent: true,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-status-bar-transparent',
+			),
+		).toBe(true);
+	});
+
+	it('clears the status bar class from every touched document on disable', () => {
+		const settingsDocument = document.implementation.createHTMLDocument('Settings');
+		Object.defineProperty(globalThis, 'activeDocument', {
+			configurable: true,
+			value: settingsDocument,
+		});
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		for (const targetDocument of [document, settingsDocument]) {
+			expect(
+				targetDocument.body.classList.contains(
+					'sc-style-context-status-bar-transparent',
+				),
+			).toBe(true);
+		}
+
+		service.disable();
+
+		for (const targetDocument of [document, settingsDocument]) {
+			expect(
+				targetDocument.body.classList.contains(
+					'sc-style-context-status-bar-transparent',
+				),
+			).toBe(false);
+		}
+	});
+
+	it('publishes the ribbon transparency class by default', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-ribbon-transparent'),
+		).toBe(true);
+	});
+
+	it('omits the ribbon transparency class when opted out', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				ribbonTransparent: false,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-ribbon-transparent'),
+		).toBe(false);
+	});
+
+	it('treats legacy data without the ribbon key as opted in', () => {
+		const { ribbonTransparent: _omitted, ...legacyBackground } =
+			DEFAULT_SETTINGS.backgroundImage;
+		const currentSettings = settings({
+			backgroundImage: {
+				...legacyBackground,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			} as never,
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-ribbon-transparent'),
+		).toBe(true);
+	});
+
+	it('publishes the title bar transparency class by default', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-titlebar-transparent'),
+		).toBe(true);
+	});
+
+	it('omits the title bar transparency class when opted out', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				titlebarTransparent: false,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-titlebar-transparent'),
+		).toBe(false);
+	});
+
+	it('treats legacy data without the title bar key as opted in', () => {
+		const { titlebarTransparent: _omitted, ...legacyBackground } =
+			DEFAULT_SETTINGS.backgroundImage;
+		const currentSettings = settings({
+			backgroundImage: {
+				...legacyBackground,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			} as never,
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-titlebar-transparent'),
+		).toBe(true);
+	});
+
+	it('omits the modal background class by default (opt-in)', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-modal-transparent'),
+		).toBe(false);
+	});
+
+	it('publishes the modal background class when opted in', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				modalTransparent: true,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-modal-transparent'),
+		).toBe(true);
+	});
+
+	it('resolves ribbon and title bar transparency independently of each other and of the other surfaces', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				mobileToolbarTransparent: false,
+				statusBarTransparent: true,
+				ribbonTransparent: true,
+				titlebarTransparent: false,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-ribbon-transparent'),
+		).toBe(true);
+		expect(
+			document.body.classList.contains('sc-style-context-titlebar-transparent'),
+		).toBe(false);
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-status-bar-transparent',
+			),
+		).toBe(true);
+	});
+
+	it('removes only the ribbon class when that setting is turned off live', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		expect(
+			document.body.classList.contains('sc-style-context-ribbon-transparent'),
+		).toBe(true);
+
+		currentSettings.backgroundImage.ribbonTransparent = false;
+		service.apply();
+
+		expect(
+			document.body.classList.contains('sc-style-context-ribbon-transparent'),
+		).toBe(false);
+		// The sibling surfaces are untouched by a ribbon-only change.
+		expect(
+			document.body.classList.contains('sc-style-context-titlebar-transparent'),
+		).toBe(true);
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-status-bar-transparent',
+			),
+		).toBe(true);
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+		expect(
+			document.body.classList.contains('sc-style-context-background-image'),
+		).toBe(true);
+	});
+
+	it('removes only the title bar class when that setting is turned off live', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		expect(
+			document.body.classList.contains('sc-style-context-titlebar-transparent'),
+		).toBe(true);
+
+		currentSettings.backgroundImage.titlebarTransparent = false;
+		service.apply();
+
+		expect(
+			document.body.classList.contains('sc-style-context-titlebar-transparent'),
+		).toBe(false);
+		// The sibling surfaces are untouched by a title-bar-only change.
+		expect(
+			document.body.classList.contains('sc-style-context-ribbon-transparent'),
+		).toBe(true);
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-status-bar-transparent',
+			),
+		).toBe(true);
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+		expect(
+			document.body.classList.contains('sc-style-context-background-image'),
+		).toBe(true);
+	});
+
+	it('clears the ribbon and title bar classes from every touched document on disable', () => {
+		const settingsDocument = document.implementation.createHTMLDocument('Settings');
+		Object.defineProperty(globalThis, 'activeDocument', {
+			configurable: true,
+			value: settingsDocument,
+		});
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		for (const targetDocument of [document, settingsDocument]) {
+			for (const className of [
+				'sc-style-context-ribbon-transparent',
+				'sc-style-context-titlebar-transparent',
+			]) {
+				expect(targetDocument.body.classList.contains(className)).toBe(true);
+			}
+		}
+
+		service.disable();
+
+		for (const targetDocument of [document, settingsDocument]) {
+			for (const className of [
+				'sc-style-context-ribbon-transparent',
+				'sc-style-context-titlebar-transparent',
+			]) {
+				expect(targetDocument.body.classList.contains(className)).toBe(false);
+			}
+		}
+	});
+
+	it('omits the mobile toolbar transparency class when opted out', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				mobileToolbarTransparent: false,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains('sc-style-context-background-image'),
+		).toBe(true);
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+	});
+
+	it('treats legacy data without the toolbar key as opted in', () => {
+		const { mobileToolbarTransparent: _omitted, ...legacyBackground } =
+			DEFAULT_SETTINGS.backgroundImage;
+		const currentSettings = settings({
+			backgroundImage: {
+				...legacyBackground,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			} as never,
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+	});
+
+	it('removes the stale toolbar class when the setting is turned off live', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+				mobileToolbarTransparent: true,
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+
+		currentSettings.backgroundImage.mobileToolbarTransparent = false;
+		service.apply();
+
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+		expect(
+			document.body.classList.contains('sc-style-context-background-image'),
+		).toBe(true);
+	});
+
+	it('withholds the toolbar class while the background is disabled or invalid', () => {
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'image-1',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+
+		currentSettings.backgroundImage.imageValue = 'var(--image-1)';
+		service.apply();
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(true);
+
+		currentSettings.backgroundImage.enabled = false;
+		service.apply();
+		expect(
+			document.body.classList.contains(
+				'sc-style-context-mobile-toolbar-transparent',
+			),
+		).toBe(false);
+	});
+
+	it('clears the toolbar class from every touched document on disable', () => {
+		const settingsDocument = document.implementation.createHTMLDocument('Settings');
+		Object.defineProperty(globalThis, 'activeDocument', {
+			configurable: true,
+			value: settingsDocument,
+		});
+		const currentSettings = settings({
+			backgroundImage: {
+				...DEFAULT_SETTINGS.backgroundImage,
+				enabled: true,
+				imageValue: 'var(--image-1)',
+			},
+		});
+		const service = new BackgroundImageService(() => currentSettings);
+
+		service.enable();
+		for (const targetDocument of [document, settingsDocument]) {
+			expect(
+				targetDocument.body.classList.contains(
+					'sc-style-context-mobile-toolbar-transparent',
+				),
+			).toBe(true);
+		}
+
+		service.disable();
+
+		for (const targetDocument of [document, settingsDocument]) {
+			expect(
+				targetDocument.body.classList.contains(
+					'sc-style-context-background-image',
+				),
+			).toBe(false);
+			expect(
+				targetDocument.body.classList.contains(
+					'sc-style-context-mobile-toolbar-transparent',
+				),
+			).toBe(false);
+		}
+	});
+
+	describe('per-mode backgrounds', () => {
+		const perMode = (
+			globalValue: string,
+			lightValue: string,
+			darkValue: string,
+		): StyleContextSettings =>
+			settings({
+				backgroundImage: {
+					...DEFAULT_SETTINGS.backgroundImage,
+					enabled: true,
+					// Synchronous image writes: these tests assert which
+					// image is selected, not the fade timing.
+					fadeDuration: 0,
+					imageValue: globalValue,
+					perModeEnabled: true,
+					light: {
+						...DEFAULT_SETTINGS.backgroundImage.light,
+						imageValue: lightValue,
+					},
+					dark: {
+						...DEFAULT_SETTINGS.backgroundImage.dark,
+						imageValue: darkValue,
+					},
+				},
+			});
+
+		it('applies the light and dark configs per document body class', () => {
+			const settingsDocument = document.implementation.createHTMLDocument('Settings');
+			Object.defineProperty(globalThis, 'activeDocument', {
+				configurable: true,
+				value: settingsDocument,
+			});
+			document.body.classList.add('theme-light');
+			settingsDocument.body.classList.add('theme-dark');
+			const currentSettings = perMode('var(--global)', 'var(--light)', 'var(--dark)');
+			currentSettings.backgroundImage.light.opacity = 0.5;
+			currentSettings.backgroundImage.dark.opacity = 0.8;
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--light)');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.5');
+			expect(
+				settingsDocument.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--dark)');
+			expect(
+				settingsDocument.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.8');
+		});
+
+		it('applies the global config to every document while per-mode is disabled', () => {
+			const settingsDocument = document.implementation.createHTMLDocument('Settings');
+			Object.defineProperty(globalThis, 'activeDocument', {
+				configurable: true,
+				value: settingsDocument,
+			});
+			document.body.classList.add('theme-light');
+			settingsDocument.body.classList.add('theme-dark');
+			const currentSettings = perMode('var(--global)', 'var(--light)', 'var(--dark)');
+			currentSettings.backgroundImage.perModeEnabled = false;
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+
+			for (const targetDocument of [document, settingsDocument]) {
+				expect(
+					targetDocument.body.style.getPropertyValue(
+						'--sc-style-context-background-image-value',
+					),
+				).toBe('var(--global)');
+			}
+		});
+
+		it('falls back to the global config for a document with neither theme class', () => {
+			const settingsDocument = document.implementation.createHTMLDocument('Settings');
+			Object.defineProperty(globalThis, 'activeDocument', {
+				configurable: true,
+				value: settingsDocument,
+			});
+			settingsDocument.body.classList.add('theme-dark');
+			const currentSettings = perMode('var(--global)', 'var(--light)', 'var(--dark)');
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--global)');
+			expect(
+				settingsDocument.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--dark)');
+		});
+
+		it('clears only the layer of the mode whose image value is empty', () => {
+			const settingsDocument = document.implementation.createHTMLDocument('Settings');
+			Object.defineProperty(globalThis, 'activeDocument', {
+				configurable: true,
+				value: settingsDocument,
+			});
+			document.body.classList.add('theme-light');
+			settingsDocument.body.classList.add('theme-dark');
+			const currentSettings = perMode('var(--global)', '', 'var(--dark)');
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+
+			// The empty light value clears the light document's layer instead
+			// of borrowing the dark (or global) image.
+			expect(
+				document.body.classList.contains('sc-style-context-background-image'),
+			).toBe(false);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('');
+			expect(
+				settingsDocument.body.classList.contains(
+					'sc-style-context-background-image',
+				),
+			).toBe(true);
+			expect(
+				settingsDocument.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--dark)');
+		});
+
+		it('re-resolves a document when its theme class flips', () => {
+			document.body.classList.add('theme-light');
+			const currentSettings = perMode('var(--global)', 'var(--light)', 'var(--dark)');
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--light)');
+
+			// Obsidian swaps the body class on css-change; the plugin's
+			// css-change listener then reapplies the background service.
+			document.body.classList.replace('theme-light', 'theme-dark');
+			service.apply();
+
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--dark)');
+		});
+
+		it('keeps a touched detached document in sync after it leaves the active set', () => {
+			const settingsDocument = document.implementation.createHTMLDocument('Settings');
+			Object.defineProperty(globalThis, 'activeDocument', {
+				configurable: true,
+				value: settingsDocument,
+			});
+			settingsDocument.body.classList.add('theme-dark');
+			const currentSettings = perMode('var(--global)', 'var(--light)', 'var(--dark)');
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			expect(
+				settingsDocument.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--dark)');
+
+			// Focus returns to the main window, so the detached document is no
+			// longer reachable through getAppDocuments — only tracked.
+			Object.defineProperty(globalThis, 'activeDocument', {
+				configurable: true,
+				value: document,
+			});
+			currentSettings.backgroundImage.dark.imageValue = 'var(--dark-2)';
+			service.apply();
+
+			expect(
+				settingsDocument.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--dark-2)');
+		});
+	});
+
+	describe('fade animation', () => {
+		const FADE_PENDING_CLASS = 'sc-style-context-background-image-fade-pending';
+		let frameCallbacks: FrameRequestCallback[];
+
+		const fadeSettings = (fadeDuration: number): StyleContextSettings =>
+			settings({
+				backgroundImage: {
+					...DEFAULT_SETTINGS.backgroundImage,
+					enabled: true,
+					fadeDuration,
+					imageValue: 'var(--image-1)',
+					opacity: 0.6,
+				},
+			});
+
+		/** Runs the queued animation frames (two flush the double rAF). */
+		const flushFrames = (count = 2): void => {
+			for (let frame = 0; frame < count; frame += 1) {
+				for (const callback of frameCallbacks.splice(0)) {
+					callback(performance.now());
+				}
+			}
+		};
+
+		beforeEach(() => {
+			frameCallbacks = [];
+			vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+				frameCallbacks.push(callback);
+				return frameCallbacks.length;
+			});
+		});
+
+		it('fades in from transparent on the first apply', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+
+			// The layer is written at its final values immediately, but the
+			// fade-pending class pins it invisible and the transition stays
+			// disarmed until the document has rendered.
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--image-1)');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.6');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+
+			// After the rendered frames, the transition is armed and the
+			// pending class released; CSS fades opacity 0 -> 0.6.
+			flushFrames();
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+		});
+
+		it('starts the first fade-in only after the workspace layout is ready', () => {
+			const currentSettings = fadeSettings(0.5);
+			let fireLayoutReady: (() => void) | undefined;
+			const app = {
+				workspace: {
+					layoutReady: false,
+					onLayoutReady: (callback: () => void) => {
+						fireLayoutReady = callback;
+					},
+				},
+			} as unknown as ConstructorParameters<typeof BackgroundImageService>[1];
+			const service = new BackgroundImageService(() => currentSettings, app);
+
+			service.enable();
+
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+
+			// Rendered frames alone do not start the fade while the layout
+			// is still being restored.
+			flushFrames();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+
+			fireLayoutReady?.();
+			flushFrames();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+		});
+
+		it('waits for the plugin stylesheet before arming the fade-in', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			// Right after a plugin enable, styles.css is not applied yet:
+			// the layer's pseudo-element does not render (content 'none').
+			const computed = vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+				content: 'none',
+			} as unknown as CSSStyleDeclaration);
+
+			service.enable();
+			flushFrames(5);
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+
+			// The stylesheet lands; the hidden state renders and the
+			// transition is armed, so the layer fades in instead of popping.
+			computed.mockReturnValue({ content: '""' } as unknown as CSSStyleDeclaration);
+			flushFrames(2);
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+		});
+
+		it('fails open when the plugin stylesheet never applies', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+				content: 'none',
+			} as unknown as CSSStyleDeclaration);
+
+			service.enable();
+			flushFrames(MAX_FADE_STYLESHEET_WAIT_FRAMES + 2);
+
+			// The reveal must never stay hidden forever: worst case the
+			// layer shows instantly once the wait cap is exceeded.
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+		});
+
+		it('keeps opacity updates instant when the image is unchanged', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			currentSettings.backgroundImage.opacity = 0.9;
+			service.apply();
+
+			// Same image: direct write, and the pending reveal is cancelled.
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.9');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--image-1)');
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+
+			flushFrames();
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+		});
+
+		it('delays nothing: an image swap writes instantly', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			currentSettings.backgroundImage.imageValue = 'var(--image-2)';
+			service.apply();
+
+			// Swaps are instant: same value and opacity written at once.
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--image-2)');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.6');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+		});
+
+		it('a repeat apply does not truncate the pending fade-in', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			// First show: the reveal is scheduled, the layer pinned invisible.
+			service.enable();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+
+			// The startup double-apply (randomize/applyAll): nothing
+			// changed, so the pending reveal must be left alone.
+			service.apply();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+
+			flushFrames();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0.5s');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-opacity',
+				),
+			).toBe('0.6');
+		});
+
+		it('disabling cancels a pending fade-in', () => {
+			const currentSettings = fadeSettings(0.5);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(true);
+
+			service.disable();
+			flushFrames();
+
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+			expect(
+				document.body.classList.contains('sc-style-context-background-image'),
+			).toBe(false);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('');
+		});
+
+		it('writes immediately when fade is disabled (legacy behavior)', () => {
+			const currentSettings = fadeSettings(0);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			currentSettings.backgroundImage.imageValue = 'var(--image-2)';
+			service.apply();
+
+			expect(document.body.classList.contains(FADE_PENDING_CLASS)).toBe(false);
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-value',
+				),
+			).toBe('var(--image-2)');
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('0s');
+		});
+
+		it('clamps the persisted fade duration to at most 2 seconds', () => {
+			const currentSettings = fadeSettings(99);
+			const service = new BackgroundImageService(() => currentSettings);
+
+			service.enable();
+			flushFrames();
+
+			expect(
+				document.body.style.getPropertyValue(
+					'--sc-style-context-background-image-fade-duration',
+				),
+			).toBe('2s');
+		});
 	});
 });
 
