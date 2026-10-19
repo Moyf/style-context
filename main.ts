@@ -4,6 +4,7 @@ import { ThemeContextService } from './src/services/ThemeContextService';
 import { NotePathContextService } from './src/services/NotePathContextService';
 import { ResourceVariableService } from './src/services/ResourceVariableService';
 import { BackgroundImageService } from './src/services/BackgroundImageService';
+import { ResourcePathSyncService } from './src/services/ResourcePathSyncService';
 import { SettingsTab } from './src/settings/SettingsTab';
 import { registerCommands } from './src/commands';
 import {
@@ -26,6 +27,7 @@ export default class StyleContextPlugin extends Plugin {
 	 * images; it is intentionally not persisted.
 	 */
 	private randomImageHistory: string[] = [];
+	private resourcePathSync!: ResourcePathSyncService;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -40,11 +42,21 @@ export default class StyleContextPlugin extends Plugin {
 			() => this.settings,
 			this.app,
 		);
+		this.settingsTab = new SettingsTab(this.app, this);
+		this.resourcePathSync = new ResourcePathSyncService(
+			this,
+			() => this.settings,
+			async ({ backgroundAffected }) => {
+				await this.saveSettings();
+				this.resourceVarCtx.apply();
+				if (backgroundAffected) this.applyBackgroundImage();
+				this.settingsTab.refreshIfRendered();
+			},
+		);
 
-			this.settingsTab = new SettingsTab(this.app, this);
-			this.addSettingTab(this.settingsTab);
-			registerCommands(this);
-			this.syncRandomBackgroundRibbon();
+		this.addSettingTab(this.settingsTab);
+		registerCommands(this);
+		this.syncRandomBackgroundRibbon();
 		this.registerEvent(
 			this.app.workspace.on('window-open', () => this.applyAll()),
 		);
@@ -56,6 +68,7 @@ export default class StyleContextPlugin extends Plugin {
 			),
 		);
 
+		this.resourcePathSync.enable();
 		if (this.settings.backgroundImage.randomOnStartup) {
 			await this.randomizeBackgroundImage();
 		}
@@ -224,5 +237,6 @@ export default class StyleContextPlugin extends Plugin {
 		this.notePathCtx.disable();
 		this.resourceVarCtx.disable();
 		this.backgroundImageCtx.disable();
+		this.resourcePathSync.disable();
 	}
 }

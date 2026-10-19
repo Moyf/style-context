@@ -6,6 +6,7 @@ import {
 	pickRandomBackgroundImageValue,
 	randomScopeIcon,
 	randomizeBackgroundImageValue,
+	referencesImageVariable,
 	resolveBackgroundImageMode,
 } from '../src/utils/background';
 import { DEFAULT_SETTINGS, type ResourceRule, type StyleContextSettings } from '../src/types';
@@ -368,5 +369,21 @@ describe('randomizeBackgroundImageValue', () => {
 		expect(current.backgroundImage.imageValue).toBe('var(--global)');
 		expect(current.backgroundImage.light.imageValue).toBe('var(--one)');
 		expect(current.backgroundImage.dark.imageValue).toBe('var(--one)');
+	});
+
+	it('detects matching var() values, including bare custom property names', () => {
+		const variables = ['--hero-image', '--cover-image'];
+
+		expect(referencesImageVariable(' var( --hero-image ) ', variables)).toBe(true);
+		expect(referencesImageVariable('var(--cover-image)', variables)).toBe(true);
+		expect(referencesImageVariable('url(var(--hero-image))', variables)).toBe(false);
+		expect(referencesImageVariable('var(--hero-image), var(--cover-image)', variables)).toBe(false);
+		expect(referencesImageVariable('linear-gradient(red, blue)', variables)).toBe(false);
+		expect(referencesImageVariable('none', variables)).toBe(false);
+		expect(referencesImageVariable('var(--other-image)', variables)).toBe(false);
+		// Bare custom property names normalize to var(--name) (0.4.0), so a
+		// bare matching name references the variable just like var(--name).
+		expect(referencesImageVariable('--hero-image', variables)).toBe(true);
+		expect(referencesImageVariable(null, variables)).toBe(false);
 	});
 });
