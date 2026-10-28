@@ -122,6 +122,16 @@ After writing complete notes under `## [Unreleased]`, run `npm run release -- <v
 
 If a version was already committed and annotated locally, but has not reached GitHub, use `npm run release:resume -- <version>`. It validates the local tag's immutable metadata and changelog, runs the full check, fast-forwards the default branch and tag atomically, then performs the same CI and asset verification. Use `npm run release:resume:dry-run -- <version>` to check this recovery path without changes. This is recovery only; ordinary releases must use `release`.
 
+## More from Moy
+
+If you appreciate my plugin design and quality, check out my other Obsidian plugins:
+
+| Plugin name | Description | Stats |
+| --- | --- | --- |
+| [Keyword Decorator](https://github.com/Moyf/keyword-decorator) | Keyword highlighting and decoration with Emoji/Lucide/image/SVG markers and once-per-note decoration. <!-- Draft; pending Moy review. --> | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22keyword-decorator%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=keyword-decorator) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/keyword-decorator?logo=github&label=Stars)](https://github.com/Moyf/keyword-decorator/stargazers) |
+
+> See all my plugins on my [Obsidian Community page](https://community.obsidian.md/users/moyf).
+
 ## Support
 
 If you like Style Context, consider [buying me a coffee on Ko-fi](https://ko-fi.com/moy) ☕
@@ -250,6 +260,16 @@ VAULT_PATH=C:/path/to/your/ObsidianVault
 在 `## [Unreleased]` 下写完完整更新说明后，运行 `npm run release -- 0.3.0`。该命令要求默认分支干净且已和远端同步；它会同步所有版本元数据、将 Changelog 条目提升为正式版本、执行检查、提交、创建并原子推送 tag，最后等待 GitHub Actions 验证正式 Release 与三个插件资产。使用 `npm run release:dry-run -- 0.3.0` 可只做校验，不修改任何内容。
 
 若版本已在本地提交并创建注释 tag，但尚未到达 GitHub，使用 `npm run release:resume -- 0.3.0`。它会校验本地 tag 中不可变的版本元数据与更新日志、执行完整检查，再原子插入默认分支并推送 tag，之后执行同样的 CI 和资产验证。可用 `npm run release:resume:dry-run -- 0.3.0` 不改动任何内容地校验此恢复路径。这只用于恢复中断的发布；正常发应始终使用 `release`。
+
+## 来自 Moy 的更多插件
+
+如果你欣赏我的插件设计和质量，可以看看我的其他 Obsidian 插件：
+
+| 插件名称 | 简介 | 数据 |
+| --- | --- | --- |
+| [Keyword Decorator](https://github.com/Moyf/keyword-decorator) | 关键词高亮与装饰，支持 Emoji/Lucide/图片/SVG 标记与整篇首次装饰。 <!-- Draft; pending Moy review. --> | [![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&logoColor=white&color=%23483699&label=downloads&query=%24%5B%22keyword-decorator%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?id=keyword-decorator) [![GitHub Stars](https://img.shields.io/github/stars/Moyf/keyword-decorator?logo=github&label=Stars)](https://github.com/Moyf/keyword-decorator/stargazers) |
+
+> 全部插件见 [Moy 的 Obsidian Community 页面](https://community.obsidian.md/users/moyf)。
 
 ## 赞助
 如果 Style Context 对你有帮助，欢迎[请我喝杯咖啡（Ko-fi）](https://ko-fi.com/moy) ☕
